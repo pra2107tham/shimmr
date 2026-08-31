@@ -14,7 +14,7 @@ Cheap checks that would each invalidate real work if skipped.
       and count. Resolves the 15-vs-16 discrepancy in `01-upstream-findings.md` §2.
 - [ ] Install upstream alongside a second copy and find out what the daemon
       admission barrier actually does (Q7).
-- [ ] Decide Q1, Q2, Q3.
+- [x] ~~Decide Q1, Q2, Q3~~ — done, ADR 0004 and 0005.
 
 ## Phase 1 — The harness (PRD §4) — `specs/SPEC-001`
 
@@ -48,12 +48,13 @@ Cursor.
 - the 24h heartbeat (PRD §9) — first time the product makes a network call at all
 - **depends on:** Phase 2 licence format
 
-## Phase 5 — First non-code source (PRD §5)
+## Phase 5 — Bridges: the first paid feature (PRD §5)
 
 - GitHub issues + PRs as an additional MCP source alongside the graph
-- the first thing that is *Shimmr's own product*, not a wrapper
-- **strategically the most important phase** if Q1 lands on (b)/(c), because it is
-  the first defensible paid feature
+- OpenHands and other agent runtimes
+- scheduled and triggered automations
+- **This is where revenue starts.** Per ADR 0004 everything before it is free, so this
+  is not merely the most valuable phase — it is the first one a customer can pay for.
 
 ## Phase 6 — Design partners (PRD §5)
 
@@ -69,8 +70,11 @@ opted-in numbers · revisit open-core only if adoption data demands it.
 
 ## The honest critical path
 
-Phases 1–4 are packaging. **Phase 5 is the first phase that builds something
-nobody else has.** If runway is short, the question worth asking early is whether
-to pull Phase 5 forward — a local-only bridge between an agent, a code graph, and
-a team's GitHub history is a product; a licence gate in front of an MIT binary is
-a wrapper. Q1 is where that gets decided.
+Phases 1–4 are packaging, and under ADR 0004 they are all given away. **Phase 5 is
+both the first defensible product and the first revenue.**
+
+That makes the ordering a financing question, not just a sequencing one. Phases 1–4
+buy an install base and the trust story; Phase 5 converts it. If runway is short, the
+lever is to compress 2–4 rather than to delay 5 — a local-only bridge between an
+agent, a code graph, and a team's GitHub history is the product; everything before it
+is how that product reaches a laptop.

@@ -212,3 +212,5 @@ a search-based read, not a verified WHOIS check.
 | A3 | §4, §11 | A rebranded *rebuild* collides with upstream's per-account daemon admission barrier. Strengthens the case for wrapping the unmodified binary | `01-upstream-findings.md` §3.2, `decisions/0001` |
 | A4 | §9 | "The only network call the harness makes" is true of the harness but not yet of the shipped product (engine has self-update, localhost UI, background watcher). Needs an egress test before it becomes a public claim | `01-upstream-findings.md` §3.3, `specs/SPEC-001` §6 |
 | A5 | §8 | `get_graph_schema` is documented upstream as "run this first" — gating it breaks the free-tier agent workflow | `03-tiers-and-gating.md` |
+| A6 | §8, §4 | **Tier table superseded.** Everything local is free permanently; the paywall moves to connected features (GitHub, OpenHands, automations, team sync). The harness still ships first, with its gate open | `decisions/0004` |
+| A7 | §5, §6 | GitHub/PR context and agent-runtime bridges (OpenHands) are promoted from "next/future" to **the first paid feature** — the thing Phase 5 exists to ship | `decisions/0004`, `roadmap.md` |

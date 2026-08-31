@@ -1,7 +1,12 @@
 # Tiers & gating
 
-**Status:** proposed revision of PRD §8, built on the verified tool list rather
-than the remembered one. Needs a decision on Q1 before it is final.
+**Status:** superseded in part by [ADR 0004](decisions/0004-local-free-connected-paid.md).
+
+> **All engine tools are free.** The tier table below is retained because the harness
+> still needs allow-list machinery for the *connected* features (GitHub, OpenHands,
+> automations, team sync), and because the Starter column documents which tools a
+> first-run user should be steered toward. But nothing in the engine is withheld:
+> ship the allow-list permissive. See ADR 0004 for why.
 
 ---
 

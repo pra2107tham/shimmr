@@ -9,6 +9,8 @@ supersedes the old one, not an edit.
 | [0001](0001-wrap-unmodified-upstream-binary.md) | Wrap the unmodified upstream binary; do not rebuild the C source | Accepted |
 | [0002](0002-stdio-proxy-harness.md) | The harness is a stdio JSON-RPC proxy | Accepted |
 | [0003](0003-name-shimmr.md) | Name the product Shimmr; defer the domain | Accepted, with known collisions |
+| [0004](0004-local-free-connected-paid.md) | Local is free; crossing the machine boundary is paid | Accepted |
+| [0005](0005-harness-in-go.md) | The harness is written in Go | Accepted |
 
 ## Template
 

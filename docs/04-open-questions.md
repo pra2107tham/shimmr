@@ -1,14 +1,17 @@
 # Open questions — decide before building
 
-Ordered by how much they change the work. Q1–Q3 should be settled before
-SPEC-001 implementation starts; Q4–Q8 can be settled during it.
+**Q1, Q2 and Q3 are now decided** (2026-08-31) — see ADR [0004](decisions/0004-local-free-connected-paid.md)
+and [0005](decisions/0005-harness-in-go.md). They are kept below with their answers so the
+reasoning stays visible.
+
+Q4–Q8 remain open and can be settled during the build.
 
 Each question records a **recommendation**, because a default that can be
 overruled beats an open loop.
 
 ---
 
-## Q1 — Does the paywall withhold upstream tools, or only things we build? 🔴 blocking
+## Q1 — Does the paywall withhold upstream tools, or only things we build? ✅ DECIDED
 
 **Context:** `01-upstream-findings.md` §3.1. The engine is MIT and installable in
 about two minutes, so withholding `get_architecture` from a free user stops only
@@ -22,6 +25,8 @@ that Shimmr's value is artificial scarcity — the opposite of the trust pitch.
 - **(c) Hybrid:** all upstream tools free, Team adds Shimmr-built features, and the
   Enterprise italic rows stay as-is.
 
+> **Decided: (b)/(c) — local free, connected paid.** ADR 0004.
+
 **Recommendation: (c).** It keeps a real paid tier without ever putting Shimmr in
 the position of being caught withholding something free. It also makes the free
 tier genuinely the best local code-graph setup a startup can get, which is the
@@ -31,7 +36,7 @@ adoption hook PRD §3 actually needs.
 product.** That is a large enough consequence that it deserves a deliberate answer
 before writing code, not after. See Q2.
 
-## Q2 — If Q1 lands on (b)/(c), what is v1? 🔴 blocking
+## Q2 — If Q1 lands on (b)/(c), what is v1? ✅ DECIDED
 
 If gating is not the moat, "a proxy that blocks tools" is not a product. v1 would
 instead be: **a branded, trustworthy install of the engine + a local usage log +
@@ -42,12 +47,17 @@ The work is nearly identical — the harness, the log, the licence file. What ch
 is the pitch and the acceptance criteria. SPEC-001 is written so this decision can
 land either way without rewriting it; only the tier map in §3 changes.
 
+> **Decided: build the harness first, sell later.** Gate ships open; the lock arrives on
+> external connections (GitHub, OpenHands) and automations. ADR 0004.
+
 **Recommendation:** build SPEC-001 as specified regardless. It is the same code
 either way, and it makes Q1 reversible.
 
-## Q3 — Harness implementation language 🟠 decide before coding
+## Q3 — Harness implementation language ✅ DECIDED
 
 Go vs. Node/TypeScript. See `02-architecture.md` §6.
+
+> **Decided: Go.** ADR 0005.
 
 **Recommendation: Go.** Single static binary matches the engine's own distribution
 story and the "just runs locally, no runtime" promise that this customer segment
@@ -113,3 +123,6 @@ show the working for.
 | Fork the C source or wrap the binary? | Wrap, unmodified | `decisions/0001` |
 | Is a stdio proxy the right shape? | Yes — upstream is stdio JSON-RPC | `decisions/0002` |
 | Domain / final name? | Deferred, explicitly not a v1 blocker | `00-prd.md` §14 |
+| Q1 — what does the paywall cover? | Local free, connected paid | `decisions/0004` |
+| Q2 — what is v1? | The harness, gate open; sell at Phase 5 | `decisions/0004` |
+| Q3 — language? | Go | `decisions/0005` |

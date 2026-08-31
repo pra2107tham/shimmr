@@ -1,6 +1,6 @@
 # SPEC-001 — Shimmr harness MVP
 
-**Phase:** 1 · **Status:** Ready to build once Q1–Q3 are decided
+**Phase:** 1 · **Status:** Ready to build — Q1–Q3 decided (ADR 0004, 0005)
 **Depends on:** Phase 0 verification (pinned commit, real tool list, coexistence test)
 **Implements:** PRD §4, §7, §9 (partially — no network in v1)
 
@@ -54,6 +54,11 @@ full, and it is the seam every later phase attaches to.
 
 **Tier map** comes from `03-tiers-and-gating.md` §2 and is the single source of
 truth. Aliases (`trace_path` / `trace_call_path`) gate as one.
+
+> **Per ADR 0004 the shipped v1 allow-list contains every engine tool.** The gating
+> code is still built and still tested (criteria 3 and 5 use a deliberately
+> restricted test config), because the connected features in Phase 5 need exactly
+> this machinery. What ships to customers is permissive.
 
 **Unknown tool names are allowed and logged.** If upstream adds a tool we have not
 classified, a free user gets it rather than hitting a wall for something our docs
@@ -169,8 +174,6 @@ Executable, in order. PRD §4's stated criteria are 4–6.
   correct as this enumeration.
 - `[VERIFY]` Q4 — refusal rendering in Claude Code and Cursor.
 - `[VERIFY]` Q7 — coexistence with an existing upstream install.
-- `[DECIDE]` Q1/Q2 — changes the tier map in §3.2, nothing else in this spec.
-- `[DECIDE]` Q3 — implementation language.
 - `[OPEN]` Whether `tools/list` filtering should be advertised to the user at
   startup ("Starter: 8 of 16 tools active") on stderr. Leans yes — it is honest,
   and it makes the upgrade path legible without a wall.
@@ -180,3 +183,4 @@ Executable, in order. PRD §4's stated criteria are 4–6.
 | Date | Change |
 |---|---|
 | 2026-08-30 | Initial spec |
+| 2026-08-31 | Q1–Q3 decided. Shipped allow-list is permissive (ADR 0004); language is Go (ADR 0005). Gating code and its tests are unchanged. |
