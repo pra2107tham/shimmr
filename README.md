@@ -4,8 +4,8 @@ A local-first context layer for AI coding agents. Gives Claude Code, Cursor,
 Windsurf and Copilot structural and semantic understanding of a codebase over MCP —
 with no code, file content, or query text ever leaving the machine.
 
-Built on [`DeusData/codebase-memory-mcp`](https://github.com/DeusData/codebase-memory-mcp)
-(MIT), wrapped in a licensing harness, an account layer, and a usage dashboard.
+A local indexing engine, a licensing harness, an account layer, and a usage
+dashboard — packaged as one product that installs in a single command.
 
 > **Status: pre-implementation.** Specs and decisions only; no harness code yet.
 > The three blocking product decisions are made — see
@@ -23,8 +23,8 @@ See [`docs/product-overview.html`](docs/product-overview.html) for the visual ve
 
 | Doc | What it is |
 |---|---|
-| [`docs/00-prd.md`](docs/00-prd.md) | The PRD as authored. Canonical intent, with an amendment log |
-| [`docs/01-upstream-findings.md`](docs/01-upstream-findings.md) | **Verified** facts about the upstream engine, and where the PRD was wrong |
+| [`docs/00-prd.md`](docs/00-prd.md) | The PRD as authored. Canonical intent, with an amendment log. **Internal only** |
+| [`docs/01-engine-findings.md`](docs/01-engine-findings.md) | **Verified** facts about the engine, and where the PRD was wrong |
 | [`docs/02-architecture.md`](docs/02-architecture.md) | How the harness works, and the constraints upstream imposes |
 | [`docs/03-tiers-and-gating.md`](docs/03-tiers-and-gating.md) | Tool→tier map, built on the real tool list |
 | [`docs/04-open-questions.md`](docs/04-open-questions.md) | Q1–Q3 answered; Q4–Q8 still open |
@@ -38,9 +38,9 @@ See [`docs/product-overview.html`](docs/product-overview.html) for the visual ve
 1. **The tool gate is not enforceable, so we don't use one.** The engine is MIT and
    installs in about two minutes; a locked tool stops only users who don't think to
    look. Hence ADR 0004 — local free, connected paid.
-   ([findings §3.1](docs/01-upstream-findings.md), [ADR 0004](docs/decisions/0004-local-free-connected-paid.md))
+   ([findings §3.1](docs/01-engine-findings.md), [ADR 0004](docs/decisions/0004-local-free-connected-paid.md))
 
-2. **Don't rebuild the engine binary.** Upstream runs a per-account daemon that
+2. **Don't rebuild the engine binary.** The engine runs a per-account daemon that
    rejects mismatched builds, so a rebranded rebuild collides with any existing
    install. Wrap the unmodified artifact.
    ([ADR 0001](docs/decisions/0001-wrap-unmodified-upstream-binary.md))
@@ -52,7 +52,14 @@ See [`docs/product-overview.html`](docs/product-overview.html) for the visual ve
 
 ## Licensing
 
-The upstream engine is MIT, © 2025 DeusData. Its licence and copyright notice are
-retained in everything redistributed. Per PRD §11, that the core engine is open and
-auditable is disclosed plainly — for a "nothing leaves your infra" pitch it is a
-selling point.
+Shimmr embeds a third-party MIT-licensed indexing engine. Its licence text and
+copyright notice ship with every release and are printed by `shimmr licenses` — that
+is the licence's only requirement of us, and it is release-blocking.
+
+MIT carries no advertising clause, so product and specification documents refer to
+"the engine" rather than naming the project. See
+[ADR 0006](docs/decisions/0006-engine-naming-and-attribution.md) for the policy and
+`docs/internal/ATTRIBUTION.md` (internal) for identity and compliance detail.
+
+The posture is that we don't advertise the engine — not that we deny it. A customer
+who asks what Shimmr is built on gets an honest answer.

@@ -1,6 +1,11 @@
-# Upstream findings — `DeusData/codebase-memory-mcp`
+# Engine findings
 
-**Status:** verified 2026-08-30 against the public repo README + LICENSE on `main`.
+**Status:** verified 2026-08-30 against the engine's public repository README and
+LICENSE on `main`.
+
+> Per [ADR 0006](decisions/0006-engine-naming-and-attribution.md) this document does
+> not name the upstream project. Identity, the copyright line, and our licence
+> obligations live in `internal/ATTRIBUTION.md`.
 **Why this doc exists:** the PRD makes several claims about the upstream engine from
 memory. Some are right, some are wrong, and three of them change what we should
 build. This is the ground truth the specs are written against.
@@ -15,17 +20,19 @@ build. This is the ground truth the specs are written against.
 
 | Field | Value |
 |---|---|
-| Repo | `https://github.com/DeusData/codebase-memory-mcp` |
-| License | **MIT** — confirmed, `Copyright (c) 2025 DeusData` |
+| License | **MIT** — confirmed (copyright line in `internal/ATTRIBUTION.md`) |
 | Implementation | **Pure C**, single static binary, no language runtime |
 | Transport | **stdio JSON-RPC** — "Stdout is reserved for MCP JSON-RPC", stderr for logs |
 | Launch shape | standard `mcpServers: { command, args }` entry |
-| Storage | SQLite under `~/.cache/codebase-memory-mcp` (`CBM_CACHE_DIR`) |
+| Storage | SQLite under a vendor-named cache dir, overridable by env var (see Q9) |
 | Distribution | `install.sh` \| `install.ps1`, signed releases, SLSA 3, VirusTotal-scanned |
 
-MIT is confirmed on `main`. **We still re-confirm on the exact pinned commit**
-(PRD §13 is right to insist on this) and retain the DeusData copyright notice in
-everything we redistribute.
+MIT is confirmed on `main`. **We still re-confirm on the exact pinned commit** (PRD
+§13 is right to insist on this) and ship the copyright notice with everything we
+redistribute — see `internal/ATTRIBUTION.md` for what that means concretely.
+
+MIT carries no advertising clause, so nothing obliges us to name the project in our
+own documentation or marketing. ADR 0006 says we don't.
 
 ## 2. The real tool surface
 
@@ -87,13 +94,13 @@ and canonical cache root."** Conflicting processes fail at a crash-safe admissio
 barrier before doing any work.
 
 A Shimmr-branded rebuild is a *different executable build*. So on a machine where a
-developer already runs upstream CBM — plausible for exactly our early-adopter
+developer already runs the engine directly — plausible for exactly our early-adopter
 audience — one of the two breaks. This is a direct threat to the PRD §12 metric
 "under 10 minutes to first index, zero support ticket."
 
 Mitigations, in preference order: wrap the **unmodified upstream binary** (PRD §13
 already leans this way, and this finding is a strong second argument for it); set a
-distinct `CBM_CACHE_DIR`; detect an existing CBM install during onboarding and say
+distinct cache root; detect an existing engine install during onboarding and say
 something honest about it. **[VERIFY-AT-FORK]** — confirm whether a distinct cache
 root alone is sufficient to avoid the barrier, or whether the build identity check
 is independent of it.
@@ -121,13 +128,16 @@ backed by an actual egress test, not by reading a README. See SPEC-001 §6.
   drawn** — a stdio middleman is the natural shape here.
 - "Wrap the binary rather than recompile the C source" is the right instinct, and
   finding 3.2 strengthens it.
-- Disclosing that the engine is open and auditable (§11). Upstream publishes SLSA 3
-  provenance, signed releases and VirusTotal scans — for a "nothing leaves your
-  infra" pitch that supply chain is an asset to point at, not a liability to hide.
+- Disclosing that the engine is open and auditable (§11). The engine publishes SLSA 3
+  provenance, signed releases and VirusTotal scans. That supply chain is real and
+  useful to us in a security review, though under ADR 0006 we present it as *our*
+  verified supply chain rather than by naming its origin.
 
 ## 5. Sources
 
-- <https://github.com/DeusData/codebase-memory-mcp> — README, LICENSE on `main`
-- Preprint: *Codebase-Memory: Tree-Sitter-Based Knowledge Graphs for LLM Code
-  Exploration via MCP*, arXiv:2603.27277
-- Precedent for a public MIT fork: `win4r/codebase-memory-mcp-pro`
+- The engine's public repository — README and LICENSE on `main` (URL in `internal/ATTRIBUTION.md`)
+- The engine's benchmark preprint, arXiv:2603.27277 — cited for the ~10× token figure.
+  **Note:** citing it publicly names the engine. Use the number only with our own
+  measurement behind it (see Q8), or not at all.
+- A third-party public MIT fork of the engine exists, establishing precedent for
+  redistribution under the licence.

@@ -11,6 +11,7 @@ supersedes the old one, not an edit.
 | [0003](0003-name-shimmr.md) | Name the product Shimmr; defer the domain | Accepted, with known collisions |
 | [0004](0004-local-free-connected-paid.md) | Local is free; crossing the machine boundary is paid | Accepted |
 | [0005](0005-harness-in-go.md) | The harness is written in Go | Accepted |
+| [0006](0006-engine-naming-and-attribution.md) | Do not name the engine in product or spec docs | Accepted |
 
 ## Template
 

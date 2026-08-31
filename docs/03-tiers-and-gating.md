@@ -12,7 +12,7 @@
 
 ## 1. What gating can and cannot do
 
-Read `01-upstream-findings.md` §3.1 first. In short: the engine is MIT and
+Read `01-engine-findings.md` §3.1 first. In short: the engine is MIT and
 installable in about two minutes, so a locked tool is **a packaging convention an
 honest customer respects**, not a control that stops anyone. Every choice below is
 made with that understood.

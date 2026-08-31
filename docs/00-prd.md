@@ -1,8 +1,10 @@
 # Shimmr — Product Requirements Document
 
 **Status:** canonical statement of intent, as authored 2026-08-30.
+**Circulation:** internal only — this document names the engine, which product and
+spec docs do not (see [ADR 0006](decisions/0006-engine-naming-and-attribution.md)).
 **Amendments:** this document is preserved as written. Where later verification
-contradicts it, the correction lives in `01-upstream-findings.md` and the specs —
+contradicts it, the correction lives in `01-engine-findings.md` and the specs —
 it is *not* silently edited here. Amendment log at the bottom.
 
 Local-first context layer for AI coding agents, sold to early-stage startups.
@@ -207,10 +209,11 @@ a search-based read, not a verified WHOIS check.
 
 | # | PRD section | Amendment | Where |
 |---|---|---|---|
-| A1 | §1, §8 | "14 MCP tools" and the named tool list are incomplete; real surface is ~15–16 and includes `delete_project`, `get_graph_schema`, `semantic_query`, `check_index_coverage`, `ingest_traces` | `01-upstream-findings.md` §2 |
-| A2 | §8 | Tier gating is a packaging convention, not enforcement — upstream is MIT and installable in ~2 min. Paid tier must rest on what we add, not on withheld upstream tools | `01-upstream-findings.md` §3.1, `04-open-questions.md` Q1 |
-| A3 | §4, §11 | A rebranded *rebuild* collides with upstream's per-account daemon admission barrier. Strengthens the case for wrapping the unmodified binary | `01-upstream-findings.md` §3.2, `decisions/0001` |
-| A4 | §9 | "The only network call the harness makes" is true of the harness but not yet of the shipped product (engine has self-update, localhost UI, background watcher). Needs an egress test before it becomes a public claim | `01-upstream-findings.md` §3.3, `specs/SPEC-001` §6 |
+| A1 | §1, §8 | "14 MCP tools" and the named tool list are incomplete; real surface is ~15–16 and includes `delete_project`, `get_graph_schema`, `semantic_query`, `check_index_coverage`, `ingest_traces` | `01-engine-findings.md` §2 |
+| A2 | §8 | Tier gating is a packaging convention, not enforcement — upstream is MIT and installable in ~2 min. Paid tier must rest on what we add, not on withheld upstream tools | `01-engine-findings.md` §3.1, `04-open-questions.md` Q1 |
+| A3 | §4, §11 | A rebranded *rebuild* collides with upstream's per-account daemon admission barrier. Strengthens the case for wrapping the unmodified binary | `01-engine-findings.md` §3.2, `decisions/0001` |
+| A4 | §9 | "The only network call the harness makes" is true of the harness but not yet of the shipped product (engine has self-update, localhost UI, background watcher). Needs an egress test before it becomes a public claim | `01-engine-findings.md` §3.3, `specs/SPEC-001` §6 |
 | A5 | §8 | `get_graph_schema` is documented upstream as "run this first" — gating it breaks the free-tier agent workflow | `03-tiers-and-gating.md` |
 | A6 | §8, §4 | **Tier table superseded.** Everything local is free permanently; the paywall moves to connected features (GitHub, OpenHands, automations, team sync). The harness still ships first, with its gate open | `decisions/0004` |
 | A7 | §5, §6 | GitHub/PR context and agent-runtime bridges (OpenHands) are promoted from "next/future" to **the first paid feature** — the thing Phase 5 exists to ship | `decisions/0004`, `roadmap.md` |
+| A8 | §11 | **Disclosure posture reversed.** Product and spec docs no longer name the engine; MIT carries no advertising clause. The licence notice still ships with every release. This document keeps the name as a historical record and is internal-only | `decisions/0006` |

@@ -7,10 +7,10 @@ stdio JSON-RPC). Unresolved items are marked and tracked in `04-open-questions.m
 
 ## 1. The shape
 
-Upstream is launched by every agent the same way — a `mcpServers` entry with a
+The engine is launched by every agent the same way — an `mcpServers` entry with a
 `command` and `args`, speaking JSON-RPC over stdio. That makes the harness a
-**stdio middleman**: the agent spawns `shimmr` instead of `codebase-memory-mcp`,
-and `shimmr` spawns the engine as a child.
+**stdio middleman**: the agent spawns `shimmr` instead of the engine binary, and
+`shimmr` spawns the engine as a child.
 
 ```
   agent (Claude Code / Cursor / Windsurf)
@@ -22,7 +22,7 @@ and `shimmr` spawns the engine as a child.
     │
     │  stdin/stdout — MCP JSON-RPC (allowed calls only)
     ▼
-  codebase-memory-mcp   (upstream binary, unmodified)
+  engine binary   (upstream, unmodified)
     │
     ▼
   ~/.cache/... — SQLite graph + bundled vector index   [never leaves the machine]
@@ -102,7 +102,7 @@ These are not stylistic preferences. Violating any one of them breaks the produc
 |---|---|---|
 | `~/.shimmr/license.json` | installer / account layer | org id, tier, seats, expiry, signature |
 | `~/.shimmr/usage.db` | harness | per-call rows: timestamp, tool, allowed/blocked, project, duration |
-| `~/.cache/codebase-memory-mcp/` | **upstream engine** | graph SQLite, vector index, daemon logs |
+| engine cache dir | **the engine** | graph SQLite, vector index, daemon logs (path is vendor-named today — see Q9) |
 
 The harness owns `~/.shimmr/` and treats the engine's cache as opaque. Nothing in
 `usage.db` contains code, file paths, query text, or repo names — only tool names
@@ -124,7 +124,7 @@ Either satisfies v1. Decide before SPEC-001 implementation starts, not during.
 
 Recorded so scope stays honest to PRD §13's "buildable by one person in days":
 
-- No parsing, indexing, or graph logic — ever. That is upstream's job.
+- No parsing, indexing, or graph logic — ever. That is the engine's job.
 - No network calls in v1 at all. The §9 heartbeat is deliberately deferred to the
   license-file spec; v1 reads a local file and makes zero connections.
 - No dashboard UI. v1 writes the log that the dashboard will later read.

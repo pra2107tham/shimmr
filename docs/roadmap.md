@@ -11,7 +11,7 @@ Cheap checks that would each invalidate real work if skipped.
 
 - [ ] Pin an upstream commit; re-confirm LICENSE **on that commit**; record the SHA.
 - [ ] Run the binary, enumerate `tools/list`, write down the **exact** tool names
-      and count. Resolves the 15-vs-16 discrepancy in `01-upstream-findings.md` §2.
+      and count. Resolves the 15-vs-16 discrepancy in `01-engine-findings.md` §2.
 - [ ] Install upstream alongside a second copy and find out what the daemon
       admission barrier actually does (Q7).
 - [x] ~~Decide Q1, Q2, Q3~~ — done, ADR 0004 and 0005.

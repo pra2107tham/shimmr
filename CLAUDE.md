@@ -8,9 +8,9 @@ change what v1 even is.
 
 ## Ground rules
 
-**Verify upstream claims; don't repeat them.** This project wraps
-`DeusData/codebase-memory-mcp`. The PRD described it partly from memory and was
-wrong in several places (see `docs/01-upstream-findings.md`). Anything about the
+**Verify upstream claims; don't repeat them.** This project wraps a third-party
+MIT-licensed engine. The PRD described it partly from memory and was wrong in several
+places (see `docs/01-engine-findings.md`). Anything about the
 engine's tools, behaviour, or licence gets checked against the pinned commit or the
 running binary. Facts that are not yet verified carry a `[VERIFY]` marker; never
 quietly promote one to settled.

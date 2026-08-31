@@ -8,8 +8,8 @@
 
 ## 1. Goal
 
-A single local process that an AI coding agent launches in place of
-`codebase-memory-mcp`, which forwards MCP traffic to the real engine, enforces a
+A single local process that an AI coding agent launches in place of the engine
+binary, which forwards MCP traffic to the real engine, enforces a
 tier-based tool allow-list, returns a branded upgrade message for anything blocked,
 and records every agent-initiated call to a local SQLite file. This is PRD §4 in
 full, and it is the seam every later phase attaches to.
@@ -95,7 +95,7 @@ fabricate a healthy response for a dead engine.
 {
   "org_id": "local-dev",
   "tier": "starter",
-  "engine_path": "/usr/local/lib/shimmr/codebase-memory-mcp"
+  "engine_path": "/usr/local/lib/shimmr/shimmr-engine"
 }
 ```
 
@@ -167,6 +167,10 @@ Executable, in order. PRD §4's stated criteria are 4–6.
 9. **Two clients** — criteria 3–6 pass under both Claude Code and Cursor.
 10. **Degradation** — delete the config mid-install: harness runs as Starter.
     Make `usage.db` read-only: harness still proxies.
+11. **Licence notice ships** — the install tree contains `LICENSES/engine-MIT.txt`
+    with the engine's full MIT text and copyright line, and `shimmr licenses` prints
+    it. This is the one MIT obligation we carry (ADR 0006) and it is
+    release-blocking, not a follow-up.
 
 ## 7. Open items
 

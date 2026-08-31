@@ -7,7 +7,7 @@
 
 ## Context
 
-Q1 asked whether the paywall should withhold upstream tools. `01-upstream-findings.md`
+Q1 asked whether the paywall should withhold upstream tools. `01-engine-findings.md`
 §3.1 established that it cannot meaningfully do so: the engine is MIT, publicly
 downloadable, and installs in about two minutes with an installer that auto-configures
 ~45 agent clients. A wall in front of `get_architecture` stops only users who never

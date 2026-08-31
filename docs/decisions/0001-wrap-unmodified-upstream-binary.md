@@ -5,8 +5,7 @@
 
 ## Context
 
-`DeusData/codebase-memory-mcp` is MIT-licensed pure C, shipped as a single static
-binary. PRD §13 already leans toward wrapping rather than recompiling, on speed
+The engine is MIT-licensed pure C, shipped as a single static binary. PRD §13 already leans toward wrapping rather than recompiling, on speed
 grounds. Verification surfaced a second, stronger reason.
 
 Upstream runs **one per-account coordination daemon** shared across every agent
@@ -15,8 +14,8 @@ executable build, coordination ABI, and canonical cache root." Conflicting
 processes are rejected at a crash-safe admission barrier before doing any work.
 
 A Shimmr-branded rebuild is, by definition, a different executable build. On any
-machine where a developer already runs upstream CBM — plausible for our exact
-early-adopter audience — one of the two would fail to start.
+machine where a developer already runs the engine directly — plausible for our exact early-adopter
+audience — one of the two would fail to start.
 
 Upstream also publishes SLSA 3 provenance, signed releases, and VirusTotal scans
 per release. Rebuilding discards all of that and replaces it with whatever supply
@@ -29,8 +28,10 @@ behaviour lives in the harness process in front of it. Rebranding is limited to
 what sits outside the binary: our installer, our CLI, our docs, our MCP server
 name in the agent's config.
 
-Retain upstream's LICENSE and copyright notice in everything we redistribute, and
-verify the published SHA-256 of the artifact at install time.
+Ship the engine's LICENSE and copyright notice with everything we redistribute (see
+`docs/internal/ATTRIBUTION.md`), and verify the published SHA-256 of the artifact at
+install time. Naming policy is ADR 0006 — the notice ships; the name does not appear
+in product docs.
 
 ## Consequences
 
@@ -38,14 +39,16 @@ verify the published SHA-256 of the artifact at install time.
 something we can point at in a security review. Upstream upgrades are a version
 bump, not a re-port. No C toolchain, no cross-compilation matrix.
 
-**Hard:** we cannot change engine behaviour at all — only gate access to it. The
-CLI banner and any in-binary strings stay upstream-branded, so a curious customer
-sees `codebase-memory-mcp` immediately. PRD §11's "own signed binary" is therefore
-only true of *our* binary, the harness.
+**Hard:** we cannot change engine behaviour at all — only gate access to it. The CLI
+banner and any in-binary strings stay vendor-branded, so a customer who inspects the
+process table or the cache path can identify the engine. PRD §11's "own signed binary"
+is therefore only true of *our* binary, the harness.
 
-**Accepted:** that the engine is visibly not ours. PRD §11 already commits to
-disclosing this, and it is the right call — for a "nothing leaves your infra"
-pitch, an auditable upstream with public provenance is an asset.
+**Accepted:** that the engine is identifiable to anyone who looks. Under ADR 0006 we
+do not name it in our own documentation or marketing — MIT does not require us to —
+but the licence notice ships with every release, and we answer honestly if a customer
+asks directly. Vendor strings that reach the customer through paths and environment
+variables are tracked as Q9.
 
 **Still open:** whether coexistence with an existing upstream install works even
 with an unmodified binary, given the cache-root rule. Tracked as Q7; must be tested

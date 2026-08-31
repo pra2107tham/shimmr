@@ -54,7 +54,7 @@ tool.
 
 ## 5. Honesty constraint
 
-Per `decisions/0001` and `01-upstream-findings.md` §3.1, this is **tamper-evidence,
+Per `decisions/0001` and `01-engine-findings.md` §3.1, this is **tamper-evidence,
 not DRM.** A determined user bypasses it by installing the MIT engine directly, and
 that is fine. The signature exists so that an honest org cannot casually
 self-upgrade, and so we can tell what a customer is entitled to. Do not spend

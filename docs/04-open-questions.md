@@ -13,7 +13,7 @@ overruled beats an open loop.
 
 ## Q1 — Does the paywall withhold upstream tools, or only things we build? ✅ DECIDED
 
-**Context:** `01-upstream-findings.md` §3.1. The engine is MIT and installable in
+**Context:** `01-engine-findings.md` §3.1. The engine is MIT and installable in
 about two minutes, so withholding `get_architecture` from a free user stops only
 the users who never think to look. Meanwhile it teaches every user who *does* look
 that Shimmr's value is artificial scarcity — the opposite of the trust pitch.
@@ -93,13 +93,28 @@ visible in our install tree. See `decisions/0001`.
 
 ## Q7 — Coexistence with an existing upstream install 🟠
 
-Per `01-upstream-findings.md` §3.2, an already-installed CBM may conflict. Needs an
-empirical test: install both, see what actually breaks, and whether a distinct
-`CBM_CACHE_DIR` is enough.
+Per `01-engine-findings.md` §3.2, an already-installed copy of the engine may
+conflict. Needs an empirical test: install both, see what actually breaks, and whether a
+distinct cache root is enough.
 
 **Recommendation:** test this early — it is a direct threat to the "10 minutes,
 zero support ticket" metric, and it is much cheaper to find now than in a design
 partner's onboarding call.
+
+## Q9 — Where does the engine's name still reach the customer? 🟠
+
+ADR 0006 keeps the engine unnamed in our documentation, but its identity still
+reaches the customer through the cache directory path, its environment variables, its
+per-project ignore filename, and the process name in a task manager.
+
+Not naming it in prose while its name sits in `~/.cache/` is not a coherent posture —
+and owning our own cache root and config surface is worth doing on product grounds
+regardless.
+
+**Recommendation:** have Shimmr set the engine's cache root to a Shimmr-owned path
+and wrap its environment variables behind `SHIMMR_*` equivalents. **[VERIFY]** — this
+interacts with the coexistence problem in Q7, where the engine rejects a differing
+cache root while another of its processes is active. Test both together in Phase 0.
 
 ## Q8 — What does "estimated tokens saved" actually mean? 🟡
 
@@ -109,9 +124,10 @@ assumptions visible, not a flattering multiplier.
 
 **Recommendation:** define it as *bytes returned by graph tools ÷ average bytes a
 naive file-read exploration would have returned for the same question*, with the
-baseline stated. Upstream's own preprint (arXiv:2603.27277) claims 10× fewer tokens
-across 31 repos and is a citable external anchor. Do not invent a number we cannot
-show the working for.
+baseline stated. The engine's own preprint reports ~10× fewer tokens across 31 repos, but citing it
+publicly names the engine (ADR 0006), so it is an internal sanity check rather than a
+marketing anchor. Publish only numbers we measured ourselves and can show the working
+for.
 
 ---
 
@@ -119,7 +135,7 @@ show the working for.
 
 | Question | Answer | Where |
 |---|---|---|
-| Is upstream really MIT? | Yes, confirmed on `main`; re-verify on the pinned commit | `01-upstream-findings.md` §1 |
+| Is the engine really MIT? | Yes, confirmed on `main`; re-verify on the pinned commit | `01-engine-findings.md` §1 |
 | Fork the C source or wrap the binary? | Wrap, unmodified | `decisions/0001` |
 | Is a stdio proxy the right shape? | Yes — upstream is stdio JSON-RPC | `decisions/0002` |
 | Domain / final name? | Deferred, explicitly not a v1 blocker | `00-prd.md` §14 |
