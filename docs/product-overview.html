@@ -1,0 +1,610 @@
+<title>Shimmr Product Overview</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --ground:#F4F7F5;
+    --surface:#FFFFFF;
+    --surface-2:#EDF2EF;
+    --ink:#0F201D;
+    --muted:#586B66;
+    --faint:#8497924D;
+    --line:#D7E1DD;
+    --line-strong:#B9C8C3;
+    --local:#0B7A66;
+    --local-soft:#0B7A661A;
+    --connected:#A2601A;
+    --connected-soft:#A2601A1A;
+    --shadow:0 1px 2px #0f201d0d, 0 8px 24px -12px #0f201d1f;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#0B1412;
+      --surface:#111D1A;
+      --surface-2:#16241F;
+      --ink:#E6EEEB;
+      --muted:#8CA29D;
+      --faint:#8CA29D40;
+      --line:#20312D;
+      --line-strong:#2E433D;
+      --local:#4ACBB0;
+      --local-soft:#4ACBB01F;
+      --connected:#E0A45E;
+      --connected-soft:#E0A45E1F;
+      --shadow:0 1px 2px #0000004d, 0 10px 30px -14px #00000080;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0B1412;
+    --surface:#111D1A;
+    --surface-2:#16241F;
+    --ink:#E6EEEB;
+    --muted:#8CA29D;
+    --faint:#8CA29D40;
+    --line:#20312D;
+    --line-strong:#2E433D;
+    --local:#4ACBB0;
+    --local-soft:#4ACBB01F;
+    --connected:#E0A45E;
+    --connected-soft:#E0A45E1F;
+    --shadow:0 1px 2px #0000004d, 0 10px 30px -14px #00000080;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--ground);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+    font-size:16px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:0 24px 96px}
+
+  h1,h2,h3{font-family:"Bricolage Grotesque","IBM Plex Sans",sans-serif;text-wrap:balance;margin:0}
+  h1{font-size:clamp(2.4rem,6vw,3.9rem);font-weight:700;line-height:1.02;letter-spacing:-.025em}
+  h2{font-size:clamp(1.5rem,3.4vw,2.05rem);font-weight:600;line-height:1.12;letter-spacing:-.018em}
+  h3{font-size:1.06rem;font-weight:600;letter-spacing:-.008em}
+  p{margin:0}
+  a{color:var(--local)}
+
+  .eyebrow{
+    font-family:"IBM Plex Mono",ui-monospace,monospace;
+    font-size:.7rem;text-transform:uppercase;letter-spacing:.16em;
+    color:var(--muted);
+  }
+
+  /* ---- rhythm ---- */
+  section{display:flex;flex-direction:column;gap:24px;padding:64px 0;border-top:1px solid var(--line)}
+  section:first-of-type{border-top:none}
+  .sec-head{display:flex;flex-direction:column;gap:10px}
+  .lede{color:var(--muted);font-size:1.06rem;max-width:64ch}
+
+  /* ---- hero ---- */
+  header{padding:72px 0 8px;display:flex;flex-direction:column;gap:24px}
+  .mark{display:flex;align-items:center;gap:11px}
+  .mark-dot{width:11px;height:11px;border-radius:50%;background:var(--local);box-shadow:0 0 0 4px var(--local-soft)}
+  .mark-name{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;letter-spacing:-.02em;font-size:1.05rem}
+  .thesis{font-size:clamp(1.06rem,2.3vw,1.28rem);color:var(--muted);max-width:60ch;line-height:1.55}
+  .thesis b{color:var(--ink);font-weight:600}
+  .hero-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+  .tag{
+    font-family:"IBM Plex Mono",monospace;font-size:.72rem;
+    padding:5px 10px;border:1px solid var(--line-strong);border-radius:2px;
+    color:var(--muted);background:var(--surface);
+  }
+  .tag.on{color:var(--local);border-color:var(--local);background:var(--local-soft)}
+
+  /* ---- compare ---- */
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:680px){.compare{grid-template-columns:1fr}}
+  .pane{
+    background:var(--surface);border:1px solid var(--line);border-radius:3px;
+    padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--shadow);
+  }
+  .pane.good{border-color:var(--local);border-width:1px}
+  .pane-label{display:flex;align-items:center;gap:8px}
+  .pane-label .eyebrow{color:var(--muted)}
+  .pane.good .pane-label .eyebrow{color:var(--local)}
+  .steps{display:flex;flex-direction:column;gap:9px;margin:0;padding:0;list-style:none}
+  .steps li{
+    display:flex;gap:10px;font-size:.92rem;color:var(--muted);
+    padding-left:0;line-height:1.5;
+  }
+  .steps li::before{content:"—";color:var(--faint);flex:none}
+  .cost{
+    display:flex;gap:20px;padding-top:14px;margin-top:auto;border-top:1px solid var(--line);
+    font-variant-numeric:tabular-nums;
+  }
+  .cost div{display:flex;flex-direction:column;gap:2px}
+  .cost .n{font-family:"Bricolage Grotesque",sans-serif;font-size:1.45rem;font-weight:600;letter-spacing:-.02em}
+  .pane.good .cost .n{color:var(--local)}
+  .cost .k{font-family:"IBM Plex Mono",monospace;font-size:.66rem;text-transform:uppercase;letter-spacing:.11em;color:var(--muted)}
+
+  /* ---- box table ---- */
+  .parts{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:3px;overflow:hidden;background:var(--surface)}
+  .part{
+    display:grid;grid-template-columns:170px 1fr 96px;gap:18px;align-items:baseline;
+    padding:16px 20px;border-top:1px solid var(--line);
+  }
+  .part:first-child{border-top:none}
+  @media(max-width:680px){
+    .part{grid-template-columns:1fr;gap:6px}
+    .part .who{order:-1}
+  }
+  .part .nm{font-weight:600;font-size:.95rem}
+  .part .ds{color:var(--muted);font-size:.9rem}
+  .part .who{
+    font-family:"IBM Plex Mono",monospace;font-size:.66rem;text-transform:uppercase;
+    letter-spacing:.09em;text-align:right;
+  }
+  @media(max-width:680px){.part .who{text-align:left}}
+  .who.ours{color:var(--local)}
+  .who.up{color:var(--muted)}
+  .who.later{color:var(--connected)}
+
+  /* ---- figures ---- */
+  figure{margin:0;display:flex;flex-direction:column;gap:12px}
+  .fig-frame{
+    background:var(--surface);border:1px solid var(--line);border-radius:3px;
+    padding:24px 20px;overflow-x:auto;box-shadow:var(--shadow);
+  }
+  svg{display:block;max-width:100%;height:auto;margin:0 auto}
+  figcaption{color:var(--muted);font-size:.87rem;max-width:70ch}
+
+  /* svg tokens */
+  .d-box{fill:var(--surface-2);stroke:var(--line-strong);stroke-width:1.25}
+  .d-box-ours{fill:var(--local-soft);stroke:var(--local);stroke-width:1.5}
+  .d-box-paid{fill:var(--connected-soft);stroke:var(--connected);stroke-width:1.5}
+  .d-bound{fill:none;stroke:var(--line-strong);stroke-width:1.25;stroke-dasharray:5 5}
+  .d-line{stroke:var(--muted);stroke-width:1.35;fill:none}
+  .d-line-paid{stroke:var(--connected);stroke-width:1.6;fill:none}
+  .d-t{fill:var(--ink);font-family:"IBM Plex Sans",sans-serif;font-size:13px;font-weight:500}
+  .d-t-sm{fill:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:10.5px}
+  .d-t-lbl{fill:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.09em}
+  .d-t-ours{fill:var(--local);font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.09em}
+  .d-t-paid{fill:var(--connected);font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.09em}
+  .d-ar{fill:var(--muted)}
+  .d-ar-paid{fill:var(--connected)}
+
+  /* ---- timeline ---- */
+  .tl{display:flex;flex-direction:column;gap:0}
+  .tl-row{
+    display:grid;grid-template-columns:104px 1fr;gap:24px;
+    padding:22px 0;border-top:1px solid var(--line);
+  }
+  .tl-row:first-child{border-top:none;padding-top:4px}
+  @media(max-width:680px){.tl-row{grid-template-columns:1fr;gap:10px}}
+  .tl-when{
+    font-family:"IBM Plex Mono",monospace;font-size:.72rem;text-transform:uppercase;
+    letter-spacing:.1em;color:var(--muted);padding-top:3px;
+  }
+  .tl-body{display:flex;flex-direction:column;gap:12px}
+  .tl-body p{color:var(--muted);font-size:.94rem;max-width:62ch}
+  .tl-body p b{color:var(--ink);font-weight:600}
+
+  .term{
+    background:var(--surface-2);border:1px solid var(--line);border-radius:3px;
+    font-family:"IBM Plex Mono",monospace;font-size:.79rem;line-height:1.75;
+    padding:14px 16px;overflow-x:auto;color:var(--muted);white-space:pre;
+  }
+  .term .c{color:var(--ink);font-weight:500}
+  .term .g{color:var(--local)}
+  .term .y{color:var(--connected)}
+
+  /* ---- money ---- */
+  .money{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:680px){.money{grid-template-columns:1fr}}
+  .mcard{
+    border:1px solid var(--line);border-radius:3px;padding:22px;background:var(--surface);
+    display:flex;flex-direction:column;gap:14px;box-shadow:var(--shadow);
+  }
+  .mcard.free{border-color:var(--local)}
+  .mcard.paid{border-color:var(--connected)}
+  .mprice{font-family:"Bricolage Grotesque",sans-serif;font-size:1.6rem;font-weight:600;letter-spacing:-.02em}
+  .mcard.free .mprice{color:var(--local)}
+  .mcard.paid .mprice{color:var(--connected)}
+  .mlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .mlist li{font-size:.91rem;color:var(--muted);display:flex;gap:9px;line-height:1.5}
+  .mlist li::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--faint);margin-top:8px;flex:none}
+  .mcard.free .mlist li::before{background:var(--local)}
+  .mcard.paid .mlist li::before{background:var(--connected)}
+
+  .callout{
+    border-left:2px solid var(--local);background:var(--local-soft);
+    padding:18px 20px;border-radius:0 3px 3px 0;display:flex;flex-direction:column;gap:8px;
+  }
+  .callout p{font-size:.95rem;color:var(--ink);max-width:66ch}
+  .callout .eyebrow{color:var(--local)}
+
+  /* ---- phases ---- */
+  .phases{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:3px;background:var(--surface);overflow:hidden}
+  .ph{display:grid;grid-template-columns:26px 1fr 116px;gap:16px;align-items:baseline;padding:15px 20px;border-top:1px solid var(--line)}
+  .ph:first-child{border-top:none}
+  @media(max-width:680px){.ph{grid-template-columns:26px 1fr;gap:10px}.ph .st{grid-column:2;text-align:left}}
+  .ph .no{font-family:"IBM Plex Mono",monospace;font-size:.75rem;color:var(--faint)}
+  .ph .tx{font-size:.93rem}
+  .ph .tx span{color:var(--muted);display:block;font-size:.86rem;margin-top:2px}
+  .ph .st{font-family:"IBM Plex Mono",monospace;font-size:.65rem;text-transform:uppercase;letter-spacing:.09em;text-align:right;color:var(--muted)}
+  .ph .st.now{color:var(--local)}
+  .ph.dim .tx{color:var(--muted)}
+
+  footer{padding:40px 0 0;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem;display:flex;flex-direction:column;gap:6px}
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="mark">
+    <div class="mark-dot"></div>
+    <div class="mark-name">Shimmr</div>
+  </div>
+  <h1>Your coding agent<br>has no map.</h1>
+  <p class="thesis">It reads your repo one file at a time, guessing where things are. Shimmr hands it a <b>map of your whole codebase</b> — every function, every call, every route — and the map never leaves your laptop.</p>
+  <div class="hero-tags">
+    <span class="tag on">Runs on your machine</span>
+    <span class="tag">Claude Code</span>
+    <span class="tag">Cursor</span>
+    <span class="tag">Windsurf</span>
+    <span class="tag">Copilot</span>
+  </div>
+</header>
+
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">The problem, in one question</span>
+    <h2>“Where do we check if a user can delete a project?”</h2>
+    <p class="lede">Same question, same repo. The difference is whether the agent has a map.</p>
+  </div>
+
+  <div class="compare">
+    <div class="pane">
+      <div class="pane-label"><span class="eyebrow">Without Shimmr</span></div>
+      <ul class="steps">
+        <li>Greps for “delete” across the repo</li>
+        <li>Opens 30-odd files looking for the check</li>
+        <li>Reads three that turn out to be tests</li>
+        <li>Answers “probably in the permissions middleware”</li>
+      </ul>
+      <div class="cost">
+        <div><span class="n">~80k</span><span class="k">tokens burned</span></div>
+        <div><span class="n">Maybe</span><span class="k">confidence</span></div>
+      </div>
+    </div>
+
+    <div class="pane good">
+      <div class="pane-label"><span class="eyebrow">With Shimmr</span></div>
+      <ul class="steps">
+        <li>Asks the graph for symbols matching the shape</li>
+        <li>Traces who calls them, two hops out</li>
+        <li>Pulls the exact function body it needs</li>
+        <li>Answers <code>permissions.go:142</code>, and names all four callers</li>
+      </ul>
+      <div class="cost">
+        <div><span class="n">~3k</span><span class="k">tokens burned</span></div>
+        <div><span class="n">Exact</span><span class="k">confidence</span></div>
+      </div>
+    </div>
+  </div>
+  <p class="lede" style="font-size:.87rem">Numbers are illustrative. The engine's published benchmark reports roughly 10× fewer tokens and 2.1× fewer tool calls across 31 real repositories.</p>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">What's in the box</span>
+    <h2>Six pieces</h2>
+    <p class="lede">The map-building engine is an embedded component we don't modify. Everything a customer actually experiences as “Shimmr” — the setup, the log, the dashboard, the team layer, the bridges — is ours.</p>
+  </div>
+
+  <div class="parts">
+    <div class="part">
+      <div class="nm">The engine</div>
+      <div class="ds">Reads your code and builds the map — 162 languages, functions, classes, call chains, HTTP routes. Plus offline semantic search, no API key.</div>
+      <div class="who up">Embedded</div>
+    </div>
+    <div class="part">
+      <div class="nm">The harness</div>
+      <div class="ds">Sits between your agent and the engine. Every request passes through it, which is what makes everything below possible.</div>
+      <div class="who ours">Ours</div>
+    </div>
+    <div class="part">
+      <div class="nm">The usage log</div>
+      <div class="ds">A local record of what your agent asked for. Tool names and counts only — never code, file paths, or what you searched for.</div>
+      <div class="who ours">Ours</div>
+    </div>
+    <div class="part">
+      <div class="nm">The dashboard</div>
+      <div class="ds">What your agent actually did all week, and what it saved you. Runs locally, shows its own math.</div>
+      <div class="who ours">Ours</div>
+    </div>
+    <div class="part">
+      <div class="nm">Teams &amp; accounts</div>
+      <div class="ds">Sign up, invite your team, one setup everyone shares. The thing a cloned repo can never give you.</div>
+      <div class="who later">Ours · later</div>
+    </div>
+    <div class="part">
+      <div class="nm">Bridges</div>
+      <div class="ds">GitHub issues and PRs, OpenHands, scheduled automations — the context that lives outside your code.</div>
+      <div class="who later">Ours · later</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">How it actually works</span>
+    <h2>One extra hop, and nothing leaves the laptop</h2>
+  </div>
+
+  <figure>
+    <div class="fig-frame">
+      <svg viewBox="0 0 880 330" role="img" aria-label="An agent sends a tool call to the Shimmr harness, which logs it locally and forwards it to the engine; the engine reads and writes a local graph and index. Every component sits inside a dashed boundary marked 'your laptop', with no arrow crossing it.">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" class="d-ar"/>
+          </marker>
+        </defs>
+
+        <rect x="10" y="34" width="860" height="264" rx="4" class="d-bound"/>
+        <text x="26" y="24" class="d-t-lbl">YOUR LAPTOP — NO ARROW CROSSES THIS LINE</text>
+
+        <rect x="34" y="72" width="176" height="62" rx="3" class="d-box"/>
+        <text x="122" y="98" text-anchor="middle" class="d-t">Your agent</text>
+        <text x="122" y="116" text-anchor="middle" class="d-t-sm">Claude Code, Cursor…</text>
+
+        <line x1="210" y1="103" x2="322" y2="103" class="d-line" marker-end="url(#ah)"/>
+        <text x="266" y="94" text-anchor="middle" class="d-t-sm">asks</text>
+
+        <rect x="324" y="72" width="196" height="62" rx="3" class="d-box-ours"/>
+        <text x="422" y="98" text-anchor="middle" class="d-t">Shimmr harness</text>
+        <text x="422" y="116" text-anchor="middle" class="d-t-ours">OURS</text>
+
+        <line x1="520" y1="103" x2="632" y2="103" class="d-line" marker-end="url(#ah)"/>
+        <text x="576" y="94" text-anchor="middle" class="d-t-sm">forwards</text>
+
+        <rect x="634" y="72" width="196" height="62" rx="3" class="d-box"/>
+        <text x="732" y="98" text-anchor="middle" class="d-t">The engine</text>
+        <text x="732" y="116" text-anchor="middle" class="d-t-sm">indexing + search</text>
+
+        <line x1="422" y1="134" x2="422" y2="212" class="d-line" marker-end="url(#ah)"/>
+        <text x="434" y="176" class="d-t-sm">writes one row</text>
+
+        <rect x="324" y="214" width="196" height="60" rx="3" class="d-box-ours"/>
+        <text x="422" y="240" text-anchor="middle" class="d-t">Usage log</text>
+        <text x="422" y="258" text-anchor="middle" class="d-t-sm">tool name + count only</text>
+
+        <line x1="732" y1="134" x2="732" y2="212" class="d-line" marker-end="url(#ah)"/>
+        <text x="744" y="176" class="d-t-sm">reads / writes</text>
+
+        <rect x="634" y="214" width="196" height="60" rx="3" class="d-box"/>
+        <text x="732" y="240" text-anchor="middle" class="d-t">Your code map</text>
+        <text x="732" y="258" text-anchor="middle" class="d-t-sm">graph + search index</text>
+      </svg>
+    </div>
+    <figcaption>The harness adds one hop. That hop is where the log, the licence, and every future feature attach — which is why it gets built first even though nothing is locked behind it yet.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">From a user's side of the screen</span>
+    <h2>The first ten minutes</h2>
+    <p class="lede">Rahul is CTO at a twelve-person startup. He has never heard of us. Here is his whole experience.</p>
+  </div>
+
+  <div class="tl">
+    <div class="tl-row">
+      <div class="tl-when">Minute 0</div>
+      <div class="tl-body">
+        <p>He downloads <b>one file</b>. Nothing to install first — no Node, no Python, no Docker. It just runs.</p>
+      </div>
+    </div>
+
+    <div class="tl-row">
+      <div class="tl-when">Minute 1</div>
+      <div class="tl-body">
+        <p>He runs one command. Shimmr finds the editors he already uses and sets them up for him.</p>
+        <div class="term"><span class="c">$ shimmr init</span>
+
+Found <span class="g">Claude Code</span>    → configured
+Found <span class="g">Cursor</span>         → configured
+
+Restart either one and you're ready.</div>
+      </div>
+    </div>
+
+    <div class="tl-row">
+      <div class="tl-when">Minute 3</div>
+      <div class="tl-body">
+        <p>He points it at his repo. The map builds in well under a minute.</p>
+        <div class="term"><span class="c">$ shimmr index .</span>
+
+Reading  ████████████████████  1,247 files
+Linking  ████████████████████  8,932 functions
+
+<span class="g">Done in 41s.</span>  14,201 connections mapped.
+Everything stored at ~/.shimmr — nothing was uploaded.</div>
+      </div>
+    </div>
+
+    <div class="tl-row">
+      <div class="tl-when">Minute 4</div>
+      <div class="tl-body">
+        <p>He asks Claude Code the question he always has to answer for new hires. It comes back in about two seconds with a file, a line number, and the four places that call it — <b>having read four functions instead of thirty files</b>.</p>
+      </div>
+    </div>
+
+    <div class="tl-row">
+      <div class="tl-when">Day 7</div>
+      <div class="tl-body">
+        <p>Curious what it has been doing, he checks. This is the screenshot he sends his co-founder.</p>
+        <div class="term"><span class="c">$ shimmr stats</span>
+
+This week          342 questions answered from the map
+
+  search_graph       118  ████████████████
+  get_code_snippet    87  ████████████
+  trace_path          64  █████████
+  get_architecture    41  █████
+  semantic_query      32  ████
+
+Tokens saved     ~2.1M   <span class="y">(how this is calculated: shimmr stats --method)</span>
+Left your laptop      0   bytes</div>
+      </div>
+    </div>
+
+    <div class="tl-row">
+      <div class="tl-when">Week 3</div>
+      <div class="tl-body">
+        <p>Two more engineers want it. He invites them from his account and they skip setup entirely — <b>this is the first moment he needs us</b> rather than a repo he could have cloned.</p>
+      </div>
+    </div>
+
+    <div class="tl-row">
+      <div class="tl-when">Later</div>
+      <div class="tl-body">
+        <p>He connects GitHub. Now when the agent looks at a strange-looking function, it can also see the PR that introduced it and the issue that asked for it — so it stops suggesting changes that were already tried and reverted. <b>This is the part he pays for.</b></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">The business model</span>
+    <h2>Local is free. Crossing the boundary is paid.</h2>
+    <p class="lede">Local code indexing is a solved, commoditised capability — so we don't build a business on charging for it. We charge for the one thing nobody can get anywhere else: their own team's context, wired into their agent, on their own infrastructure.</p>
+  </div>
+
+  <figure>
+    <div class="fig-frame">
+      <svg viewBox="0 0 880 342" role="img" aria-label="Everything inside a dashed 'your laptop' boundary — the code map, all sixteen tools, semantic search, the dashboard and usage log — is labelled free forever. Outside the boundary sit GitHub issues and pull requests, OpenHands, automations and team sync, labelled paid. A single amber arrow crosses the boundary and is labelled 'the only thing we charge for'.">
+        <defs>
+          <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" class="d-ar-paid"/>
+          </marker>
+        </defs>
+
+        <rect x="10" y="34" width="392" height="286" rx="4" class="d-bound"/>
+        <text x="26" y="24" class="d-t-lbl">INSIDE YOUR LAPTOP</text>
+        <text x="330" y="24" class="d-t-ours">FREE FOREVER</text>
+
+        <rect x="34" y="58" width="344" height="52" rx="3" class="d-box"/>
+        <text x="206" y="82" text-anchor="middle" class="d-t">Your code map</text>
+        <text x="206" y="99" text-anchor="middle" class="d-t-sm">162 languages · built in seconds</text>
+
+        <rect x="34" y="122" width="344" height="52" rx="3" class="d-box"/>
+        <text x="206" y="146" text-anchor="middle" class="d-t">All 16 tools + semantic search</text>
+        <text x="206" y="163" text-anchor="middle" class="d-t-sm">nothing held back, no wall</text>
+
+        <rect x="34" y="186" width="344" height="52" rx="3" class="d-box-ours"/>
+        <text x="206" y="210" text-anchor="middle" class="d-t">Dashboard &amp; usage log</text>
+        <text x="206" y="227" text-anchor="middle" class="d-t-ours">OURS</text>
+
+        <rect x="34" y="250" width="344" height="52" rx="3" class="d-box-ours"/>
+        <text x="206" y="274" text-anchor="middle" class="d-t">One-command setup</text>
+        <text x="206" y="291" text-anchor="middle" class="d-t-ours">OURS</text>
+
+        <line x1="404" y1="176" x2="474" y2="176" class="d-line-paid" marker-end="url(#ah2)"/>
+        <text x="440" y="164" text-anchor="middle" class="d-t-paid">YOU DECIDE</text>
+        <text x="440" y="196" text-anchor="middle" class="d-t-sm">opt in, per source</text>
+
+        <rect x="478" y="34" width="392" height="286" rx="4" class="d-bound"/>
+        <text x="494" y="24" class="d-t-lbl">OUTSIDE — THINGS YOU CONNECT</text>
+        <text x="820" y="24" class="d-t-paid">PAID</text>
+
+        <rect x="502" y="58" width="344" height="52" rx="3" class="d-box-paid"/>
+        <text x="674" y="82" text-anchor="middle" class="d-t">GitHub issues &amp; pull requests</text>
+        <text x="674" y="99" text-anchor="middle" class="d-t-sm">why the code is the way it is</text>
+
+        <rect x="502" y="122" width="344" height="52" rx="3" class="d-box-paid"/>
+        <text x="674" y="146" text-anchor="middle" class="d-t">OpenHands</text>
+        <text x="674" y="163" text-anchor="middle" class="d-t-sm">agents that act, not just answer</text>
+
+        <rect x="502" y="186" width="344" height="52" rx="3" class="d-box-paid"/>
+        <text x="674" y="210" text-anchor="middle" class="d-t">Automations</text>
+        <text x="674" y="227" text-anchor="middle" class="d-t-sm">scheduled and triggered runs</text>
+
+        <rect x="502" y="250" width="344" height="52" rx="3" class="d-box-paid"/>
+        <text x="674" y="274" text-anchor="middle" class="d-t">Team sync &amp; seats</text>
+        <text x="674" y="291" text-anchor="middle" class="d-t-sm">shared across the whole org</text>
+      </svg>
+    </div>
+    <figcaption>The same line does two jobs: it is the privacy promise <em>and</em> the price list. Nothing on the left is ever withheld, so nobody hits a paywall for something they could have downloaded free — and no customer discovers later that we were charging them for open source.</figcaption>
+  </figure>
+
+  <div class="money">
+    <div class="mcard free">
+      <span class="eyebrow">Free, permanently</span>
+      <div class="mprice">Everything local</div>
+      <ul class="mlist">
+        <li>The full code map, all 16 tools, semantic search</li>
+        <li>One-command setup for every editor you use</li>
+        <li>The local dashboard and usage log</li>
+        <li>No account required, no seat limit, no expiry</li>
+      </ul>
+    </div>
+    <div class="mcard paid">
+      <span class="eyebrow">Paid</span>
+      <div class="mprice">Everything connected</div>
+      <ul class="mlist">
+        <li>GitHub issues and PRs as agent context</li>
+        <li>OpenHands and other agent runtimes</li>
+        <li>Scheduled and triggered automations</li>
+        <li>Team accounts, shared setup, seats</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="eyebrow">Why this line holds</span>
+    <p>The left column is commodity — several tools do it, and a determined engineer can assemble it for free in an afternoon. Charging for it would be renting out something that isn't scarce. Nobody can assemble “my team's GitHub history, wired into my agent, on our own infrastructure.” The free half drives adoption honestly; the paid half is genuinely ours to sell.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">Build order</span>
+    <h2>What gets built, in what order</h2>
+    <p class="lede">Everything before the bridges is plumbing. It still gets built first — the harness is the seam every paid feature attaches to.</p>
+  </div>
+
+  <div class="phases">
+    <div class="ph">
+      <div class="no">0</div>
+      <div class="tx">Verify against the real binary<span>Pin the version, list the actual tools, test coexistence</span></div>
+      <div class="st now">Next</div>
+    </div>
+    <div class="ph">
+      <div class="no">1</div>
+      <div class="tx">The harness<span>The middleman, the log, and the no-network test</span></div>
+      <div class="st now">Spec ready</div>
+    </div>
+    <div class="ph dim">
+      <div class="no">2</div>
+      <div class="tx">Installer and licence file<span>One command, our domain, our setup — not upstream's</span></div>
+      <div class="st">Draft</div>
+    </div>
+    <div class="ph dim">
+      <div class="no">3</div>
+      <div class="tx">The dashboard<span>Turn the log into the screenshot people share</span></div>
+      <div class="st">Draft</div>
+    </div>
+    <div class="ph dim">
+      <div class="no">4</div>
+      <div class="tx">Accounts and teams<span>Signup, seats, invites</span></div>
+      <div class="st">Planned</div>
+    </div>
+    <div class="ph dim">
+      <div class="no">5</div>
+      <div class="tx">Bridges — GitHub, OpenHands, automations<span>The first thing that is genuinely ours, and the first thing anyone pays for</span></div>
+      <div class="st">Planned</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div>Shimmr embeds a third-party open-source component; its licence ships with every release and is printed by <code>shimmr licenses</code>.</div>
+  <div>Product overview · Shimmr · August 2026</div>
+</footer>
+
+</div>
