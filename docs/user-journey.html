@@ -1,0 +1,466 @@
+<title>Shimmr Zero to Paid</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --ground:#F4F7F5; --surface:#FFFFFF; --surface-2:#EDF2EF;
+    --ink:#0F201D; --muted:#586B66; --faint:#8497924D;
+    --line:#D7E1DD; --line-strong:#B9C8C3;
+    --local:#0B7A66; --local-soft:#0B7A661A;
+    --connected:#A2601A; --connected-soft:#A2601A1A;
+    --risk:#A3402F; --risk-soft:#A3402F14;
+    --shadow:0 1px 2px #0f201d0d, 0 8px 24px -12px #0f201d1f;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#0B1412; --surface:#111D1A; --surface-2:#16241F;
+      --ink:#E6EEEB; --muted:#8CA29D; --faint:#8CA29D40;
+      --line:#20312D; --line-strong:#2E433D;
+      --local:#4ACBB0; --local-soft:#4ACBB01F;
+      --connected:#E0A45E; --connected-soft:#E0A45E1F;
+      --risk:#E58573; --risk-soft:#E5857318;
+      --shadow:0 1px 2px #0000004d, 0 10px 30px -14px #00000080;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0B1412; --surface:#111D1A; --surface-2:#16241F;
+    --ink:#E6EEEB; --muted:#8CA29D; --faint:#8CA29D40;
+    --line:#20312D; --line-strong:#2E433D;
+    --local:#4ACBB0; --local-soft:#4ACBB01F;
+    --connected:#E0A45E; --connected-soft:#E0A45E1F;
+    --risk:#E58573; --risk-soft:#E5857318;
+    --shadow:0 1px 2px #0000004d, 0 10px 30px -14px #00000080;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--ground);color:var(--ink);
+    font-family:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+    font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:940px;margin:0 auto;padding:0 24px 96px}
+  h1,h2,h3{font-family:"Bricolage Grotesque","IBM Plex Sans",sans-serif;text-wrap:balance;margin:0}
+  h1{font-size:clamp(2.3rem,5.6vw,3.6rem);font-weight:700;line-height:1.03;letter-spacing:-.025em}
+  h2{font-size:clamp(1.35rem,3vw,1.85rem);font-weight:600;line-height:1.15;letter-spacing:-.018em}
+  p{margin:0}
+  code{font-family:"IBM Plex Mono",monospace;font-size:.88em}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:.7rem;text-transform:uppercase;letter-spacing:.16em;color:var(--muted)}
+  .lede{color:var(--muted);font-size:1.05rem;max-width:66ch}
+
+  header{padding:72px 0 40px;display:flex;flex-direction:column;gap:22px}
+  .mark{display:flex;align-items:center;gap:11px}
+  .mark-dot{width:11px;height:11px;border-radius:50%;background:var(--local);box-shadow:0 0 0 4px var(--local-soft)}
+  .mark-name{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;letter-spacing:-.02em;font-size:1.05rem}
+
+  section{display:flex;flex-direction:column;gap:22px;padding:56px 0;border-top:1px solid var(--line)}
+  .sec-head{display:flex;flex-direction:column;gap:9px}
+
+  figure{margin:0;display:flex;flex-direction:column;gap:12px}
+  .fig-frame{background:var(--surface);border:1px solid var(--line);border-radius:3px;padding:22px 18px;overflow-x:auto;box-shadow:var(--shadow)}
+  svg{display:block;max-width:100%;height:auto;margin:0 auto}
+  figcaption{color:var(--muted);font-size:.87rem;max-width:70ch}
+  .d-line{stroke:var(--muted);stroke-width:1.2;fill:none}
+  .d-curve{stroke:var(--local);stroke-width:2.2;fill:none;stroke-linejoin:round;stroke-linecap:round}
+  .d-curve-risk{stroke:var(--risk);stroke-width:2.2;fill:none;stroke-linejoin:round;stroke-linecap:round}
+  .d-dot{fill:var(--local)}
+  .d-dot-risk{fill:var(--risk)}
+  .d-grid{stroke:var(--line);stroke-width:1;stroke-dasharray:3 4}
+  .d-valley{fill:var(--risk-soft)}
+  .d-t{fill:var(--ink);font-family:"IBM Plex Sans",sans-serif;font-size:12px;font-weight:500}
+  .d-t-sm{fill:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:9.5px}
+  .d-t-risk{fill:var(--risk);font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.07em}
+  .d-t-lbl{fill:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.08em}
+
+  /* stages */
+  .stages{display:flex;flex-direction:column;gap:18px}
+  .stage{
+    background:var(--surface);border:1px solid var(--line);border-radius:3px;
+    box-shadow:var(--shadow);overflow:hidden;
+  }
+  .stage-top{display:flex;align-items:baseline;gap:14px;padding:20px 22px 0}
+  .stage-no{
+    font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--local);
+    border:1px solid var(--local);border-radius:2px;padding:2px 7px;flex:none;
+  }
+  .stage.paid .stage-no{color:var(--connected);border-color:var(--connected)}
+  .stage-ttl{display:flex;flex-direction:column;gap:2px}
+  .stage-ttl h3{font-family:"Bricolage Grotesque",sans-serif;font-size:1.12rem;font-weight:600;letter-spacing:-.012em}
+  .stage-when{font-family:"IBM Plex Mono",monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+  .stage-body{padding:16px 22px 22px;display:flex;flex-direction:column;gap:16px}
+
+  .trio{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+  @media(max-width:760px){.trio{grid-template-columns:1fr}}
+  .cell{padding:14px 16px;border-left:1px solid var(--line);display:flex;flex-direction:column;gap:7px}
+  .cell:first-child{border-left:none}
+  @media(max-width:760px){.cell{border-left:none;border-top:1px solid var(--line)}.cell:first-child{border-top:none}}
+  .cell h4{margin:0;font-family:"IBM Plex Mono",monospace;font-size:.63rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:400}
+  .cell.offer h4{color:var(--local)}
+  .stage.paid .cell.offer h4{color:var(--connected)}
+  .cell p{font-size:.88rem;color:var(--muted);line-height:1.5}
+  .cell.feel p{color:var(--ink);font-style:italic}
+  .cell ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+  .cell li{font-size:.86rem;color:var(--muted);display:flex;gap:7px;line-height:1.45}
+  .cell li::before{content:"";width:4px;height:4px;border-radius:50%;background:var(--local);margin-top:8px;flex:none}
+  .stage.paid .cell li::before{background:var(--connected)}
+
+  .term{
+    background:var(--surface-2);border:1px solid var(--line);border-radius:3px;
+    font-family:"IBM Plex Mono",monospace;font-size:.775rem;line-height:1.7;
+    padding:13px 15px;overflow-x:auto;color:var(--muted);white-space:pre;
+  }
+  .term .c{color:var(--ink);font-weight:500}
+  .term .g{color:var(--local)}
+  .term .y{color:var(--connected)}
+  .term .r{color:var(--risk)}
+
+  .risk{
+    display:flex;gap:9px;font-size:.85rem;color:var(--muted);
+    background:var(--risk-soft);border-left:2px solid var(--risk);
+    padding:11px 14px;border-radius:0 3px 3px 0;line-height:1.5;
+  }
+  .risk b{color:var(--risk);font-weight:600;font-family:"IBM Plex Mono",monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;flex:none;padding-top:2px}
+
+  .never{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:680px){.never{grid-template-columns:1fr}}
+  .ncard{border:1px solid var(--line);border-radius:3px;padding:18px;background:var(--surface);display:flex;flex-direction:column;gap:7px}
+  .ncard h4{margin:0;font-size:.94rem;font-weight:600}
+  .ncard p{font-size:.87rem;color:var(--muted)}
+
+  .decide{display:flex;flex-direction:column;border:1px solid var(--connected);border-radius:3px;overflow:hidden;background:var(--surface)}
+  .drow{padding:18px 20px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+  .drow:first-child{border-top:none}
+  .drow .q{font-weight:600;font-size:.97rem}
+  .drow .a{font-size:.88rem;color:var(--muted);line-height:1.55}
+  .drow .a b{color:var(--connected);font-weight:600}
+
+  footer{padding:40px 0 0;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem}
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="mark"><div class="mark-dot"></div><div class="mark-name">Shimmr</div></div>
+  <h1>Zero to paid,<br>as one person lives it.</h1>
+  <p class="lede">Nine moments between a stranger landing on the site and a team paying for a bridge. What they see, what they feel, and exactly what we're offering at each point — including the one stretch where we lose them.</p>
+</header>
+
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">The shape of it</span>
+    <h2>Attention peaks in the first ten minutes, then collapses</h2>
+    <p class="lede">This curve is the whole product problem. A free tool that runs silently is a tool people stop thinking about — and you cannot sell to someone who forgot you exist.</p>
+  </div>
+
+  <figure>
+    <div class="fig-frame">
+      <svg viewBox="0 0 880 300" role="img" aria-label="A curve of how much the user is thinking about Shimmr over time. It rises from the website through install, peaks sharply at the first indexed answer, then collapses through weeks one to three when the tool runs invisibly. A day-seven usage summary lifts it partway back, and it climbs again through teammate spread, team setup, and connecting GitHub.">
+        <line x1="60" y1="40" x2="860" y2="40" class="d-grid"/>
+        <line x1="60" y1="120" x2="860" y2="120" class="d-grid"/>
+        <line x1="60" y1="200" x2="860" y2="200" class="d-grid"/>
+        <line x1="60" y1="255" x2="860" y2="255" class="d-line"/>
+        <text x="52" y="44" text-anchor="end" class="d-t-lbl">HIGH</text>
+        <text x="52" y="204" text-anchor="end" class="d-t-lbl">LOW</text>
+
+        <rect x="352" y="34" width="128" height="221" class="d-valley"/>
+        <text x="416" y="24" text-anchor="middle" class="d-t-risk">THE GAP</text>
+
+        <polyline points="80,168 168,140 256,68 344,44" class="d-curve"/>
+        <polyline points="344,44 416,222 480,138" class="d-curve-risk"/>
+        <polyline points="480,138 568,110 656,96 744,58 832,40" class="d-curve"/>
+
+        <circle cx="80"  cy="168" r="4.5" class="d-dot"/>
+        <circle cx="168" cy="140" r="4.5" class="d-dot"/>
+        <circle cx="256" cy="68"  r="4.5" class="d-dot"/>
+        <circle cx="344" cy="44"  r="5.5" class="d-dot"/>
+        <circle cx="416" cy="222" r="5.5" class="d-dot-risk"/>
+        <circle cx="480" cy="138" r="4.5" class="d-dot-risk"/>
+        <circle cx="568" cy="110" r="4.5" class="d-dot"/>
+        <circle cx="656" cy="96"  r="4.5" class="d-dot"/>
+        <circle cx="744" cy="58"  r="4.5" class="d-dot"/>
+        <circle cx="832" cy="40"  r="4.5" class="d-dot"/>
+
+        <text x="80"  y="278" text-anchor="middle" class="d-t-sm">site</text>
+        <text x="168" y="278" text-anchor="middle" class="d-t-sm">install</text>
+        <text x="256" y="278" text-anchor="middle" class="d-t-sm">index</text>
+        <text x="344" y="278" text-anchor="middle" class="d-t-sm">1st answer</text>
+        <text x="416" y="278" text-anchor="middle" class="d-t-sm">wk 1–3</text>
+        <text x="480" y="278" text-anchor="middle" class="d-t-sm">day 7</text>
+        <text x="568" y="278" text-anchor="middle" class="d-t-sm">teammate</text>
+        <text x="656" y="278" text-anchor="middle" class="d-t-sm">team</text>
+        <text x="744" y="278" text-anchor="middle" class="d-t-sm">github</text>
+        <text x="832" y="278" text-anchor="middle" class="d-t-sm">renewal</text>
+
+        <text x="344" y="34" text-anchor="middle" class="d-t">the “oh” moment</text>
+        <text x="416" y="240" text-anchor="middle" class="d-t-sm">forgets we exist</text>
+      </svg>
+    </div>
+    <figcaption>Stages 5 and 6 are the only ones we do not currently have a product for. Everything else on this page is design work; the gap is a decision.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">Stage by stage</span>
+    <h2>The nine moments</h2>
+  </div>
+
+  <div class="stages">
+
+    <!-- 1 -->
+    <div class="stage">
+      <div class="stage-top">
+        <span class="stage-no">01</span>
+        <div class="stage-ttl"><h3>The site</h3><span class="stage-when">First 30 seconds · they are skeptical</span></div>
+      </div>
+      <div class="stage-body">
+        <p class="lede">They arrived from a comment thread. They have closed four AI dev-tool sites this month, all of which wanted a demo booking. They are scanning for a reason to close this one too.</p>
+        <div class="trio">
+          <div class="cell"><h4>Sees</h4><p>One sentence saying what it does. A 20-second recording of a real repo being indexed and a real question answered. The install command, in copyable text, above the fold. Pricing, without clicking. The words “no account needed”.</p></div>
+          <div class="cell feel"><h4>Feels</h4><p>“Oh — they're just showing me the thing.”</p></div>
+          <div class="cell offer"><h4>We offer</h4><ul><li>The claim and the proof on the same screen</li><li>A command they can run before trusting us</li><li>Honest pricing with the free half stated first</li></ul></div>
+        </div>
+        <div class="risk"><b>Kills it</b><span>A gradient hero, a “Book a demo” button, or an email field before the download. This audience reads those as “the product isn't ready.”</span></div>
+      </div>
+    </div>
+
+    <!-- 2 -->
+    <div class="stage">
+      <div class="stage-top">
+        <span class="stage-no">02</span>
+        <div class="stage-ttl"><h3>Install</h3><span class="stage-when">60 seconds · quietly suspicious</span></div>
+      </div>
+      <div class="stage-body">
+        <div class="term"><span class="c">$ curl -fsSL shimmr.dev/install | sh</span>
+
+Installed shimmr 0.1.0 → /usr/local/bin/shimmr
+
+<span class="c">$ shimmr init</span>
+
+I'd like to change 2 files. Here's exactly what:
+
+  ~/.claude.json          <span class="g">+ 4 lines</span>   (adds shimmr as an MCP server)
+  ~/.cursor/mcp.json      <span class="g">+ 4 lines</span>   (same)
+
+Nothing else is touched. Show the diff with --dry-run.
+
+Continue? [Y/n]</div>
+        <div class="trio">
+          <div class="cell"><h4>Sees</h4><p>One binary, no runtime to install first. A prompt that names every file it wants to edit, before editing it.</p></div>
+          <div class="cell feel"><h4>Feels</h4><p>“It asked. Nothing else asks.”</p></div>
+          <div class="cell offer"><h4>We offer</h4><ul><li>Single static binary — no Node, no Python, no Docker</li><li>Auto-detects the agents they already use</li><li><code>--dry-run</code>, and consent before touching config</li></ul></div>
+        </div>
+        <div class="risk"><b>Kills it</b><span>Silently rewriting <code>~/.claude.json</code>. For an audience that chose us over a cloud tool on privacy grounds, an unannounced write to their home directory is the whole pitch contradicting itself in the first minute.</span></div>
+      </div>
+    </div>
+
+    <!-- 3 -->
+    <div class="stage">
+      <div class="stage-top">
+        <span class="stage-no">03</span>
+        <div class="stage-ttl"><h3>First index</h3><span class="stage-when">60 seconds · peak anxiety, then relief</span></div>
+      </div>
+      <div class="stage-body">
+        <p class="lede">This is the moment they point a tool they downloaded four minutes ago at their company's private source code. Everything we say about trust is cashed out here or nowhere.</p>
+        <div class="term"><span class="c">$ shimmr index .</span>
+
+Reading   ████████████████████  1,247 files
+Linking   ████████████████████  8,932 functions
+
+<span class="g">Done in 41s.</span> 14,201 connections mapped.
+
+  Stored at   ~/.shimmr/graph
+  Network     <span class="g">0 bytes sent, 0 connections opened</span>
+
+Don't take my word for it: <span class="c">shimmr verify --network</span></div>
+        <div class="trio">
+          <div class="cell"><h4>Sees</h4><p>Speed. Then a network line that reports zero — and a command to check that claim themselves rather than trust it.</p></div>
+          <div class="cell feel"><h4>Feels</h4><p>“It let me verify instead of asking me to believe.”</p></div>
+          <div class="cell offer"><h4>We offer</h4><ul><li>A whole repo mapped in under a minute</li><li>Egress reported as an observable number, every run</li><li><code>shimmr verify --network</code> — the trust claim as a test they can run</li></ul></div>
+        </div>
+        <div class="risk"><b>Kills it</b><span>A silent progress bar. Every second without output on a private repo is a second they spend wondering what is being uploaded.</span></div>
+      </div>
+    </div>
+
+    <!-- 4 -->
+    <div class="stage">
+      <div class="stage-top">
+        <span class="stage-no">04</span>
+        <div class="stage-ttl"><h3>The first real answer</h3><span class="stage-when">2 minutes · the “oh” moment</span></div>
+      </div>
+      <div class="stage-body">
+        <p class="lede">They ask the question they always end up answering for new hires: <em>where do we check whether a user can delete a project?</em></p>
+        <div class="term">Instead of grepping and opening 30 files, the agent:
+
+  <span class="g">→</span> searched the map for permission-shaped symbols
+  <span class="g">→</span> traced who calls them, two hops out
+  <span class="g">→</span> read the four functions that actually mattered
+
+<span class="c">Answer in ~2s:</span>  api/permissions.go:142
+                 called from 4 places, all listed</div>
+        <div class="trio">
+          <div class="cell"><h4>Sees</h4><p>Their own agent, in their own editor, answering a structural question with exact locations instead of a paragraph of hedging.</p></div>
+          <div class="cell feel"><h4>Feels</h4><p>“It actually knows the codebase.”</p></div>
+          <div class="cell offer"><h4>We offer</h4><ul><li>The map, and the agent instructions that make it get used</li><li>Answers with file and line, not guesses</li><li>Roughly an order of magnitude fewer tokens per question</li></ul></div>
+        </div>
+        <div class="risk"><b>Kills it</b><span>The agent ignoring our tools and grepping anyway. Everything upstream of this moment is wasted if the model doesn't reach for the map — so tool descriptions and the agent-side instructions are product surface, not configuration.</span></div>
+      </div>
+    </div>
+
+    <!-- 5 -->
+    <div class="stage">
+      <div class="stage-top">
+        <span class="stage-no">05</span>
+        <div class="stage-ttl"><h3>Weeks one to three</h3><span class="stage-when">Invisible · and that is the danger</span></div>
+      </div>
+      <div class="stage-body">
+        <p class="lede">It just works. Branch switches reindex on their own. Nothing breaks, nothing asks for attention. Their agent is quietly better and they have stopped attributing that to us.</p>
+        <div class="trio">
+          <div class="cell"><h4>Sees</h4><p>Nothing. No prompts, no popups, no update nags.</p></div>
+          <div class="cell feel"><h4>Feels</h4><p>Nothing at all — which is correct for infrastructure, and fatal for a business.</p></div>
+          <div class="cell offer"><h4>We offer</h4><ul><li>Silence, reliability, automatic reindex on branch change</li><li>No account, no email, no telemetry</li></ul></div>
+        </div>
+        <div class="risk"><b>The real problem</b><span>We chose a free tier with no signup, so at this point we have no email, no account, and no way to reach them. If they never run a Shimmr command again, we have permanently lost a user who is actively benefiting from us. Stage 6 exists entirely to solve this.</span></div>
+      </div>
+    </div>
+
+    <!-- 6 -->
+    <div class="stage">
+      <div class="stage-top">
+        <span class="stage-no">06</span>
+        <div class="stage-ttl"><h3>The weekly summary</h3><span class="stage-when">Day 7 · the one touchpoint we get</span></div>
+      </div>
+      <div class="stage-body">
+        <p class="lede">Not a vanity dashboard. This is the only moment in the free tier where the product reminds someone it exists — so it has to be worth opening, and it has to arrive without us having their email.</p>
+        <div class="term"><span class="c">$ shimmr stats</span>
+
+This week          342 questions answered from the map
+
+  search_graph       118  ████████████████
+  get_code_snippet    87  ████████████
+  trace_path          64  █████████
+  get_architecture    41  █████
+
+Tokens saved     ~2.1M   <span class="y">(the method: shimmr stats --method)</span>
+Left your laptop      0   bytes</div>
+        <div class="trio">
+          <div class="cell"><h4>Sees</h4><p>A number big enough to screenshot, and a flag that shows exactly how it was calculated.</p></div>
+          <div class="cell feel"><h4>Feels</h4><p>“Huh. I should show someone this.”</p></div>
+          <div class="cell offer"><h4>We offer</h4><ul><li>Usage they can see, locally, with no account</li><li>A savings figure that shows its own working</li><li>A shareable artifact — the top of the referral loop</li></ul></div>
+        </div>
+        <div class="risk"><b>Kills it</b><span>A tokens-saved number we can't defend. The first CTO who asks “how did you calculate that?” and gets a shrug stops believing the zero-bytes line too.</span></div>
+      </div>
+    </div>
+
+    <!-- 7 -->
+    <div class="stage">
+      <div class="stage-top">
+        <span class="stage-no">07</span>
+        <div class="stage-ttl"><h3>A teammate notices</h3><span class="stage-when">Week 3–4 · growth, for free</span></div>
+      </div>
+      <div class="stage-body">
+        <p class="lede">Someone pairs with them and asks how their agent found that so fast. The honest answer is one command long, which is the entire distribution strategy.</p>
+        <div class="trio">
+          <div class="cell"><h4>Sees</h4><p>Their teammate installing it in under two minutes, on the strength of a recommendation rather than a sales page.</p></div>
+          <div class="cell feel"><h4>Feels</h4><p>Mildly proud. They found it first.</p></div>
+          <div class="cell offer"><h4>We offer</h4><ul><li>An install short enough to say out loud</li><li>Zero friction for the second user — still no account</li><li>The stats output as something worth pasting into Slack</li></ul></div>
+        </div>
+        <div class="risk"><b>Kills it</b><span>Nothing, at this stage. This is the one moment where asking for nothing is strictly the right move — a signup wall here converts a recommendation into a shrug.</span></div>
+      </div>
+    </div>
+
+    <!-- 8 -->
+    <div class="stage">
+      <div class="stage-top">
+        <span class="stage-no">08</span>
+        <div class="stage-ttl"><h3>Making it the team's</h3><span class="stage-when">Month 2 · the first thing we ask for</span></div>
+      </div>
+      <div class="stage-body">
+        <p class="lede">Four engineers now run it, each with their own settings and their own ignore rules. Someone wants everyone on the same configuration. This is the first time an account is genuinely the answer rather than a toll booth.</p>
+        <div class="term"><span class="c">$ shimmr team create acme</span>
+
+Created. Share this with your team:
+
+  <span class="c">shimmr team join acme-7f3a2b</span>
+
+They'll pick up your shared config and ignore rules.
+Free — we ask for an email so we can tell you when
+something breaks, and for nothing else.</div>
+        <div class="trio">
+          <div class="cell"><h4>Sees</h4><p>An account that solves a problem they actually have, offered at the moment they have it — not at download.</p></div>
+          <div class="cell feel"><h4>Feels</h4><p>“Fine, that's a fair trade.”</p></div>
+          <div class="cell offer"><h4>We offer</h4><ul><li>Free org, shared config and ignore rules, one-line join</li><li>A licence identity everything paid later hangs off</li><li>The email we've gone eight stages without asking for</li></ul></div>
+        </div>
+        <div class="risk"><b>Kills it</b><span>Asking any earlier. The account is only defensible here because it is doing real work; at stage 2 the same request is a signup wall in a costume.</span></div>
+      </div>
+    </div>
+
+    <!-- 9 -->
+    <div class="stage paid">
+      <div class="stage-top">
+        <span class="stage-no">09</span>
+        <div class="stage-ttl"><h3>Connecting GitHub</h3><span class="stage-when">Month 2–3 · the first money</span></div>
+      </div>
+      <div class="stage-body">
+        <p class="lede">The trigger is a specific irritation: the agent confidently suggests a refactor the team already tried and reverted in March. It knows what the code <em>is</em>; it has no idea what the team has already learned.</p>
+        <div class="term"><span class="c">$ shimmr connect github</span>
+
+Connecting acme/api …
+  Issues       <span class="y">1,204 indexed</span>
+  Pull requests  <span class="y">3,891 indexed</span>
+
+Stored locally, alongside your code map.
+<span class="y">14 days free, then $X/seat/month.</span>
+
+Ask your agent why something is the way it is.</div>
+        <div class="trio">
+          <div class="cell"><h4>Sees</h4><p>The agent answering “why is this retry loop here?” with the incident and the PR that put it there.</p></div>
+          <div class="cell feel"><h4>Feels</h4><p>“It knows things I never told it.”</p></div>
+          <div class="cell offer"><h4>We offer</h4><ul><li>Issues and PRs as agent context, indexed on their machine</li><li>The reasoning behind the code, not just its shape</li><li>Later: OpenHands and other runtimes, scheduled automations</li></ul></div>
+        </div>
+        <div class="risk"><b>Kills it</b><span>Sending repo history to our servers to do the indexing. The entire reason they trust us is the boundary — a paid feature that quietly crosses it costs more than it earns.</span></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">Rules that hold at every stage</span>
+    <h2>What we never do</h2>
+    <p class="lede">These are cheap to keep and extremely expensive to walk back. Each one is a promise a competitor with a cloud backend structurally cannot make.</p>
+  </div>
+  <div class="never">
+    <div class="ncard"><h4>Never gate the download behind an email</h4><p>Stages 1 through 7 ask for nothing. The account arrives at stage 8, when it earns its place.</p></div>
+    <div class="ncard"><h4>Never touch a config file without saying so</h4><p>Every write is named before it happens and reversible after. <code>--dry-run</code> is a first-class flag, not a debugging aid.</p></div>
+    <div class="ncard"><h4>Never claim local-only without a test</h4><p>The zero-bytes line is printed from a real measurement, and <code>shimmr verify --network</code> lets the customer reproduce it.</p></div>
+    <div class="ncard"><h4>Never publish a number we can't derive</h4><p>Tokens saved ships with <code>--method</code>. A figure we can't defend contaminates the claims that are true.</p></div>
+    <div class="ncard"><h4>Never wall a local capability</h4><p>Nothing that runs on their machine is ever withheld to force an upgrade. The paywall sits at the boundary, nowhere else.</p></div>
+    <div class="ncard"><h4>Never send usage anywhere by default</h4><p>Sharing is opt-in, off by default, and prints the exact payload before the first send.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">Before we build</span>
+    <h2>Three things this journey decides for us</h2>
+    <p class="lede">Each one changes what gets built in Phase 1, so they are worth settling now rather than discovering at stage 5.</p>
+  </div>
+  <div class="decide">
+    <div class="drow">
+      <div class="q">How does the day-7 summary reach someone who never runs a command?</div>
+      <div class="a">Stage 5 is the gap, and <code>shimmr stats</code> only helps people who remember to type it. Options: print a one-line weekly summary on the next agent session, an optional email at stage 2 purely for this, or accept the loss and lean on stage 7 word-of-mouth. <b>Leaning:</b> a single quiet line in the terminal on first use each week — no email, no popup, consistent with every rule above.</div>
+    </div>
+    <div class="drow">
+      <div class="q">Do we ship agent-side instructions, or only tools?</div>
+      <div class="a">Stage 4 dies if the model doesn't reach for the map. Shipping a short instruction file into the agent's config makes adoption dramatically more reliable — and means writing to one more file at stage 2. <b>Leaning:</b> ship them, name the file in the consent prompt, keep them short enough to read.</div>
+    </div>
+    <div class="drow">
+      <div class="q">What is the boundary rule for connected features?</div>
+      <div class="a">Stage 9 pulls GitHub data down. If that indexing happens on our servers, the promise breaks. <b>Leaning:</b> the customer's machine calls GitHub directly with their own token, and we never see the payload — which is harder to build and is the entire reason anyone would pay us rather than a competitor.</div>
+    </div>
+  </div>
+</section>
+
+<footer>Shimmr · user journey · drafted before implementation, to be corrected by contact with real users.</footer>
+
+</div>

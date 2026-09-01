@@ -31,7 +31,8 @@ See [`docs/product-overview.html`](docs/product-overview.html) for the visual ve
 | [`docs/roadmap.md`](docs/roadmap.md) | Phases 0–6 with dependencies |
 | [`docs/specs/`](docs/specs/) | SPEC-001 (ready to build), 002, 003 |
 | [`docs/decisions/`](docs/decisions/) | ADRs — 0004 and 0005 carry the product decisions |
-| [`docs/product-overview.html`](docs/product-overview.html) | Visual overview: what it is, what's in it, the user experience |
+| [`docs/product-overview.html`](docs/product-overview.html) | Visual overview: what it is, what's in it, the free/paid boundary |
+| [`docs/user-journey.html`](docs/user-journey.html) | Nine moments from landing page to paid — what we offer at each, and where we lose people |
 
 ## The three things worth knowing before reading anything else
 
