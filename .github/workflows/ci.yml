@@ -217,7 +217,12 @@ jobs:
           $env:SHIMMR_PREFIX   = "$env:RUNNER_TEMP\ShimmrTest"
           ./install.ps1
           & "$env:RUNNER_TEMP\ShimmrTest\shimmr.exe" version
-          & "$env:RUNNER_TEMP\ShimmrTest\shimmr.exe" licenses | Select-String 'Copyright \(c\)' -Quiet
+          $lic = & "$env:RUNNER_TEMP\ShimmrTest\shimmr.exe" licenses | Out-String
+          if ($lic -notmatch [regex]::Escape('Copyright (c)')) {
+            Write-Error "the installed binary prints no copyright notice"
+            exit 1
+          }
+          exit 0
 
       # The unix layout puts the engine under lib/, not beside the binary, so
       # what is checked here is the ../lib/shimmr candidate — and that the
@@ -262,6 +267,7 @@ jobs:
             Write-Error "doctor exited $code"
             exit 1
           }
+          exit 0
 
       - name: refuses a tampered archive
         shell: bash
@@ -296,6 +302,10 @@ jobs:
             exit 1
           }
           Write-Host "correctly refused"
+          # The runner ends a pwsh step on $LASTEXITCODE, which still carries
+          # the 1 the installer exited with on purpose. Refusing was the pass
+          # condition, so say so rather than inheriting it.
+          exit 0
 
   smoke:
     name: end-to-end
