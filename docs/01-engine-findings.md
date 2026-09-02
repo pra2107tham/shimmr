@@ -150,12 +150,17 @@ developer already runs the engine directly — plausible for exactly our early-a
 audience — one of the two breaks. This is a direct threat to the PRD §12 metric
 "under 10 minutes to first index, zero support ticket."
 
-Mitigations, in preference order: wrap the **unmodified upstream binary** (PRD §13
-already leans this way, and this finding is a strong second argument for it); set a
-distinct cache root; detect an existing engine install during onboarding and say
-something honest about it. **[VERIFY-AT-FORK]** — confirm whether a distinct cache
-root alone is sufficient to avoid the barrier, or whether the build identity check
-is independent of it.
+**Phase 0 tested this and half of it was wrong.** Two instances of the *same*
+build, run concurrently: sharing a cache root, both start; with different cache
+roots, one fails outright with `reason: "cache_root"`. So a distinct cache root
+does not avoid the barrier — it *is* a barrier, on its own, even when the builds
+match. See [ADR 0007](decisions/0007-do-not-override-the-cache-root.md); Shimmr
+never sets `CBM_CACHE_DIR`.
+
+What remains true: wrap the **unmodified upstream binary** (PRD §13 leans this
+way already), and detect an existing engine install during onboarding so a
+version mismatch is explained rather than experienced. That detection is now the
+whole mitigation, tracked as Q10.
 
 ### 3.3 The "only network call" claim in PRD §9 is not yet true
 

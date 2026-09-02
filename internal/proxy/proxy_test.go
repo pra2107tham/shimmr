@@ -191,3 +191,58 @@ func quote(s string) string {
 	b, _ := json.Marshal(s)
 	return string(b)
 }
+
+// The shape here is copied from a real index_repository response produced by
+// the engine at the pinned commit, trimmed to the fields we read.
+func TestGraphSizeFromRealResponseShape(t *testing.T) {
+	line := []byte(`{"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text",` +
+		`"text":"{\"project\":\"home-user-shimmr\",\"nodes\":314,\"edges\":709,` +
+		`\"status\":\"indexed\"}"}],"isError":false}}`)
+
+	nodes, edges := graphSize(line)
+	if nodes != 314 || edges != 709 {
+		t.Fatalf("graphSize = %d nodes / %d edges, want 314 / 709", nodes, edges)
+	}
+}
+
+// Absent counts are not an error — plenty of tools report neither.
+func TestGraphSizeAbsentOrMalformed(t *testing.T) {
+	for name, line := range map[string]string{
+		"no counts":     `{"id":1,"result":{"content":[{"text":"{\"status\":\"indexed\"}"}]}}`,
+		"not json text": `{"id":1,"result":{"content":[{"text":"indexed 3 files"}]}}`,
+		"no content":    `{"id":1,"result":{"isError":false}}`,
+		"junk":          `not json`,
+	} {
+		if n, e := graphSize([]byte(line)); n != 0 || e != 0 {
+			t.Errorf("%s: got %d/%d, want 0/0", name, n, e)
+		}
+	}
+}
+
+// A successful index must record the engine's counts alongside our own.
+func TestIndexRecordsGraphSize(t *testing.T) {
+	p, dir := newTestProxy(t)
+	repo := t.TempDir()
+	if err := writeFile(repo+"/main.go", "package main\n"); err != nil {
+		t.Fatal(err)
+	}
+
+	p.onRequest([]byte(`{"id":1,"method":"tools/call","params":{"name":"index_repository",
+		"arguments":{"repo_path":` + quote(repo) + `}}}`))
+	p.onResponse([]byte(`{"id":1,"result":{"content":[{"type":"text",` +
+		`"text":"{\"nodes\":42,\"edges\":99}"}],"isError":false}}`))
+	p.wg.Wait()
+
+	for _, e := range events(t, dir) {
+		if e.Kind == "index" {
+			if e.Nodes != 42 || e.Edges != 99 {
+				t.Fatalf("recorded %d nodes / %d edges, want 42 / 99", e.Nodes, e.Edges)
+			}
+			if e.Files != 1 {
+				t.Fatalf("our own measurement was lost: %d files", e.Files)
+			}
+			return
+		}
+	}
+	t.Fatal("no index event recorded")
+}

@@ -171,8 +171,13 @@ func (p *Proxy) onResponse(line []byte) {
 	// A successful index is also a coverage measurement. Do it off the hot
 	// path so the agent never waits on our metrics.
 	if ok2 && pd.repoPath != "" {
+		// Only index responses are re-parsed for their body. A search result
+		// can be megabytes, and paying to decode every one of those just to
+		// look for fields it never has would be a real cost on every call.
+		nodes, edges := graphSize(line)
+
 		p.wg.Add(1)
-		go func(path string) {
+		go func(path string, nodes, edges int) {
 			defer p.wg.Done()
 			abs, err := filepath.Abs(path)
 			if err != nil {
@@ -192,9 +197,48 @@ func (p *Proxy) onResponse(line []byte) {
 				Files:  st.Files,
 				Lines:  st.Lines,
 				Bytes:  st.Bytes,
+				Nodes:  nodes,
+				Edges:  edges,
 			})
-		}(pd.repoPath)
+		}(pd.repoPath, nodes, edges)
 	}
+}
+
+// toolResult is the MCP envelope an index response arrives in. The engine puts
+// its own JSON summary inside the text content, so there are two layers to peel.
+type toolResult struct {
+	Result struct {
+		Content []struct {
+			Text string `json:"text"`
+		} `json:"content"`
+	} `json:"result"`
+}
+
+// graphSize reads the node and edge counts the engine reports for an index.
+// Files and lines are what we measured on disk; these are what the engine
+// actually mapped, and the two differ because it applies its own ignore rules.
+// Zero means the engine did not say, which is not an error.
+func graphSize(line []byte) (nodes, edges int) {
+	var env toolResult
+	if err := json.Unmarshal(line, &env); err != nil {
+		return 0, 0
+	}
+	for _, c := range env.Result.Content {
+		if c.Text == "" {
+			continue
+		}
+		var summary struct {
+			Nodes int `json:"nodes"`
+			Edges int `json:"edges"`
+		}
+		if err := json.Unmarshal([]byte(c.Text), &summary); err != nil {
+			continue
+		}
+		if summary.Nodes > 0 || summary.Edges > 0 {
+			return summary.Nodes, summary.Edges
+		}
+	}
+	return 0, 0
 }
 
 func isIndexTool(name string) bool {

@@ -367,6 +367,10 @@ func cmdStats(args []string) error {
 
 	fmt.Printf("\n  Code covered      %s files, %s lines across %d repo(s)\n",
 		commas(int64(s.Files)), commas(int64(s.Lines)), s.Repos)
+	if s.Nodes > 0 {
+		fmt.Printf("  Graph size        %s nodes, %s edges\n",
+			commas(int64(s.Nodes)), commas(int64(s.Edges)))
+	}
 	fmt.Printf("  Tokens saved      ~%s   (shimmr stats --method)\n", commas(s.TokensSave))
 	fmt.Printf("  Left your laptop  0 bytes\n")
 	if s.Failed > 0 {

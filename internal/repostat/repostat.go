@@ -46,8 +46,14 @@ var codeExts = map[string]bool{
 	".dart": true, ".vue": true, ".svelte": true, ".sh": true, ".bash": true,
 	".zsh": true, ".ps1": true, ".sql": true, ".graphql": true, ".proto": true,
 	".tf": true, ".yaml": true, ".yml": true, ".json": true, ".toml": true,
-	".html": true, ".css": true, ".scss": true, ".less": true, ".md": true,
+	".html": true, ".css": true, ".scss": true, ".less": true,
 }
+
+// Deliberately absent: .md, .rst, .txt and friends. They are prose, not code.
+// Counting them inflated "code covered" by a third on this very repository,
+// and a figure that falls apart when a customer checks it damages every other
+// number beside it. Config and infra formats stay — the engine indexes
+// Dockerfiles, manifests and schemas as graph nodes, so they are fair game.
 
 // Measure walks root and counts source files, lines and bytes. Errors on
 // individual entries are skipped rather than propagated: a metrics walk must

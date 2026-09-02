@@ -21,9 +21,12 @@ func TestMeasureCountsSourceAndSkipsNoise(t *testing.T) {
 
 	write(t, filepath.Join(root, "main.go"), "package main\n\nfunc main() {}\n") // 3
 	write(t, filepath.Join(root, "app", "server.py"), "import os\nprint(1)\n")   // 2
-	write(t, filepath.Join(root, "README.md"), "# Title\n")                      // 1
+	write(t, filepath.Join(root, "config.yaml"), "a: 1\n")                       // 1
 
 	// None of these should count.
+	// Prose most of all: counting markdown inflated this repo's own "code
+	// covered" figure by a third.
+	write(t, filepath.Join(root, "README.md"), "# Title\nlots of prose\n")
 	write(t, filepath.Join(root, "node_modules", "dep", "index.js"), "var a=1;\n")
 	write(t, filepath.Join(root, ".git", "config"), "[core]\n")
 	write(t, filepath.Join(root, "vendor", "x.go"), "package x\n")
