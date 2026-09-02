@@ -52,6 +52,21 @@ else
   exit 1
 fi
 
+# Windows ships python.exe, not python3, and Git Bash inherits whatever is on
+# PATH. The candidate is run rather than merely located, because the Windows
+# Store puts a python3 stub on PATH that is not an interpreter.
+PY=""
+for candidate in python3 python; do
+  if command -v "$candidate" >/dev/null 2>&1 && "$candidate" -c "import sys" >/dev/null 2>&1; then
+    PY="$candidate"
+    break
+  fi
+done
+if [ -z "$PY" ]; then
+  echo "packaging needs python3 — it reads the engine pins and writes the zip" >&2
+  exit 1
+fi
+
 echo "==> $NAME"
 
 # ---------------------------------------------------------------- shimmr
@@ -82,8 +97,8 @@ if [ -n "${ENGINE_SRC:-}" ]; then
   echo "    engine        from ENGINE_SRC (development only)"
   cp "$ENGINE_SRC" "$engine_dest"
 else
-  url=$(python3 scripts/engine_manifest.py url "$GOOS" "$GOARCH")
-  want=$(python3 scripts/engine_manifest.py sha256 "$GOOS" "$GOARCH")
+  url=$("$PY" scripts/engine_manifest.py url "$GOOS" "$GOARCH")
+  want=$("$PY" scripts/engine_manifest.py sha256 "$GOOS" "$GOARCH")
   if [ -z "$url" ] || [ -z "$want" ]; then
     echo "packaging/engine.json has no entry for $GOOS/$GOARCH." >&2
     echo "Fill in the url and sha256 for the pinned engine release first." >&2
@@ -92,7 +107,7 @@ else
   # The engine is published as an archive, so what gets checksummed is the
   # archive exactly as downloaded — verify first, unpack second. Unpacking
   # before verifying would mean writing out files nobody has vouched for.
-  member="$(python3 scripts/engine_manifest.py archive_member "$GOOS" "$GOARCH")$EXE"
+  member="$("$PY" scripts/engine_manifest.py archive_member "$GOOS" "$GOARCH")$EXE"
   work="$OUT/.engine-$GOOS-$GOARCH"
   rm -rf "$work"
   mkdir -p "$work/unpacked"
@@ -119,14 +134,8 @@ else
   fi
 
   case "$engine_archive" in
-    *.zip)
-      command -v unzip >/dev/null 2>&1 \
-        || { echo "unzip is required to unpack the Windows engine" >&2; exit 1; }
-      unzip -qo "$engine_archive" -d "$work/unpacked"
-      ;;
-    *)
-      tar -xzf "$engine_archive" -C "$work/unpacked"
-      ;;
+    *.zip) "$PY" scripts/ziptool.py extract "$engine_archive" "$work/unpacked" ;;
+    *)     tar -xzf "$engine_archive" -C "$work/unpacked" ;;
   esac
 
   # The published archives are flat, but searching rather than assuming means a
@@ -197,7 +206,9 @@ EOF
 # ---------------------------------------------------------------- archive
 mkdir -p "$OUT"
 if [ "$GOOS" = "windows" ]; then
-  ( cd "$OUT" && zip -qr "$ASSET.zip" "$NAME" )
+  # Not zip(1): Git Bash on Windows does not ship it, and packaging has to work
+  # on the platform it is packaging for.
+  "$PY" scripts/ziptool.py create "$OUT/$ASSET.zip" "$STAGE"
   archive="$OUT/$ASSET.zip"
 else
   tar -czf "$OUT/$ASSET.tar.gz" -C "$OUT" "$NAME"

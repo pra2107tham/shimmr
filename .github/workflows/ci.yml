@@ -181,14 +181,26 @@ jobs:
           cp dist/shimmr-$goos-amd64.* serve/latest/download/
           ls -l serve/latest/download
 
+      # Windows ships python.exe, not python3. Backgrounding in a subshell always
+      # succeeds, so the old `python3 ... || python ...` fallback could never
+      # have fired — the job would have waited out the timeout and then failed
+      # with a confusing download error instead.
       - name: serve it
         shell: bash
         run: |
-          cd serve && (python3 -m http.server 8080 &) || (python -m http.server 8080 &)
+          for c in python3 python; do
+            if command -v $c >/dev/null 2>&1 && $c -c "import sys" >/dev/null 2>&1; then
+              py=$c; break
+            fi
+          done
+          [ -n "${py:-}" ] || { echo "::error::no python available to serve the archive"; exit 1; }
+          cd serve && $py -m http.server 8080 &
           for _ in $(seq 1 30); do
-            curl -sf -o /dev/null http://127.0.0.1:8080/ && break
+            curl -sf -o /dev/null http://127.0.0.1:8080/ && exit 0
             sleep 1
           done
+          echo "::error::the local server never came up"
+          exit 1
 
       - name: install (unix)
         if: matrix.os == 'ubuntu-latest'

@@ -122,6 +122,11 @@ if package windows amd64; then
   dir=$(find "$TMP/w" -maxdepth 1 -type d -name 'shimmr-*' | head -1)
   check "the engine is shimmr-engine.exe" "$(cat "$dir/shimmr-engine.exe" 2>/dev/null)" "windows engine"
   [ -f "$dir/shimmr.exe" ] && ok "shimmr.exe is in the archive" || bad "shimmr.exe is in the archive"
+  # Our zip is written by python and read back by unzip(1) here, which is the
+  # point: packaging no longer needs zip/unzip, but what it produces must still
+  # be an ordinary zip that other tools — and Expand-Archive — can open.
+  [ -x "$dir/shimmr-engine.exe" ] && ok "the mode survives the zip round trip" \
+    || bad "the mode survives the zip round trip"
 else
   bad "packages windows/amd64 from a .zip"; cat "$TMP/log"
 fi
