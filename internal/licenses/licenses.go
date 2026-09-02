@@ -10,6 +10,8 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"sort"
 )
 
@@ -46,6 +48,64 @@ func Write(w io.Writer) error {
 		}
 		if _, err := fmt.Fprintf(w, "── %s ──\n\n%s\n", n.Component, n.Text); err != nil {
 			return err
+		}
+	}
+
+	// The engine bundles libraries of its own, and their notices are generated
+	// when it is packaged — they cannot be embedded here. They ship as files in
+	// the release archive instead, so point at them rather than pretending the
+	// embedded notices are the whole obligation.
+	extra, err := onDisk()
+	if err != nil || len(extra) == 0 {
+		return nil
+	}
+	if _, err := fmt.Fprintf(w, "\nAlso shipped, in %s:\n", filepath.Dir(extra[0])); err != nil {
+		return err
+	}
+	for _, f := range extra {
+		if _, err := fmt.Fprintf(w, "  %s\n", filepath.Base(f)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// onDisk finds notices that travel as files beside the install: the engine's
+// third-party notices, which are generated at packaging time. It looks in the
+// two layouts the installers produce — everything in one directory, and the
+// unix prefix layout where bin/ and lib/ are siblings.
+func onDisk() ([]string, error) {
+	exe, err := os.Executable()
+	if err != nil {
+		return nil, err
+	}
+	dir := filepath.Dir(exe)
+	return noticeFiles([]string{
+		filepath.Join(dir, "LICENSES"),
+		filepath.Join(dir, "..", "lib", "shimmr", "LICENSES"),
+	}), nil
+}
+
+// noticeFiles returns the notices in the first of dirs that holds any, skipping
+// the ones already compiled in — listing those twice would suggest the embedded
+// copy is not the real thing.
+func noticeFiles(dirs []string) []string {
+	embedded := map[string]bool{"shimmr.txt": true, "engine-MIT.txt": true}
+	for _, d := range dirs {
+		entries, err := os.ReadDir(d)
+		if err != nil {
+			continue
+		}
+		var found []string
+		for _, e := range entries {
+			if e.IsDir() || embedded[e.Name()] {
+				continue
+			}
+			found = append(found, filepath.Join(d, e.Name()))
+		}
+		if len(found) > 0 {
+			sort.Strings(found)
+			return found
 		}
 	}
 	return nil

@@ -11,7 +11,7 @@ PLATFORMS := darwin/arm64 darwin/amd64 linux/amd64 linux/arm64 windows/amd64
 
 .PHONY: build test race fmt vet check smoke install dist clean \
         db-start db-stop db-reset db-push db-test db-query functions-serve deploy backend-check \
-        package package-all licenses
+        package package-all package-test licenses
 
 build:
 	CGO_ENABLED=0 go build -ldflags="$(LDFLAGS)" -o bin/$(BINARY) ./cmd/shimmr
@@ -54,6 +54,11 @@ package-all:
 		bash scripts/package.sh $${p%/*} $${p#*/} || exit 1; \
 	done
 	@echo; ls -lh dist/*.tar.gz dist/*.zip 2>/dev/null
+
+# Packaging against a synthetic engine release: no network, no 300 MB download,
+# and it fails if the archive we would ship is missing the engine or a notice.
+package-test:
+	bash scripts/package_test.sh
 
 # Print everything we ship licences for. This is the obligation, so it is a
 # first-class target rather than a buried flag.

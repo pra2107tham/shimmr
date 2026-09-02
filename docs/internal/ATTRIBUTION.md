@@ -15,7 +15,43 @@
 | Licence | MIT — re-confirmed on the pinned commit, not just on `main` |
 | Copyright line | `Copyright (c) 2025 DeusData` |
 | Pinned commit | `5fbab7bb7332bd06aaa880653ddfb2696e648f90` (2026-09-01) |
-| Artifact SHA-256 | **[OPEN]** — release assets are not reachable from the dev sandbox; record per platform when the installer is built |
+| Pinned release | `v0.10.8` |
+| Artifact SHA-256 | Recorded per platform in `packaging/engine.json` |
+
+## What we bundle, and why those assets
+
+`packaging/engine.json` pins one published upstream asset per platform, with its
+SHA-256 as published on the release. Packaging downloads that asset, verifies the
+archive against the pin, and lifts the engine binary out of it. A mismatch stops
+the release; there is no fallback path that ships an unverified binary.
+
+We bundle the project's **own** published artifacts, never a binary we built. The
+engine refuses to run two differing builds for one OS account ([ADR 0007](../decisions/0007-do-not-override-the-cache-root.md)),
+so a self-built bundle would fail to start for anyone who already runs the engine
+directly.
+
+| Platform | Asset |
+|---|---|
+| macOS arm64 / amd64 | `codebase-memory-mcp-darwin-<arch>.tar.gz` |
+| Linux amd64 / arm64 | `codebase-memory-mcp-linux-<arch>-portable.tar.gz` |
+| Windows amd64 | `codebase-memory-mcp-windows-amd64.zip` |
+
+Linux takes the `-portable` asset: upstream's build script documents `STATIC=1` as a
+"fully static portable build", and their own installer resolves the portable asset on
+Linux. Static is what survives being installed across arbitrary distributions. macOS
+and Windows publish no portable variant. The `-ui-` assets are byte-identical
+aliases, not separate builds.
+
+Each archive holds four files: the binary, `LICENSE`, an installer we do not use, and
+`THIRD_PARTY_NOTICES.md`.
+
+### Bumping the engine
+
+1. Update `version` and every `url` / `sha256` in `packaging/engine.json`.
+2. Update the pinned release row above.
+3. Re-check the licence on the new tag — `LICENSES/engine-MIT.txt` must still match
+   upstream's `LICENSE`. Packaging enforces this and will refuse to build if it
+   drifts, but knowing before the release job fails is better.
 
 ## What MIT actually requires of us
 
@@ -41,20 +77,31 @@ Every release installs, next to the binary:
 ```
 <install-root>/
   LICENSES/
-    engine-MIT.txt      # full MIT text + "Copyright (c) 2025 DeusData"
-    shimmr.txt          # our own licence
+    engine-MIT.txt          # full MIT text + "Copyright (c) 2025 DeusData"
+    engine-third-party.md   # notices for what the engine itself bundles
+    shimmr.txt              # our own licence
 ```
 
-And `shimmr licenses` prints them. Both are release-blocking for v1 — not a follow-up
-task. A release that ships the binary without the notice is a licence violation, and
-it is the one compliance failure here that is genuinely easy to avoid.
+`shimmr licenses` prints the first and third in full — they are compiled into the
+binary, so no `cp` can lose them — and names the third-party file, which is generated
+at packaging time and can only travel as a file.
+
+`engine-third-party.md` is the engine's own `THIRD_PARTY_NOTICES.md`, taken out of its
+release archive. The engine vendors libraries with their own attribution terms; we
+redistribute those libraries when we redistribute the binary, so their notices are as
+release-blocking as the MIT text itself.
+
+All of this is release-blocking for v1 — not a follow-up task. Packaging refuses to
+build an archive that is missing any of it. A release that ships the binary without
+the notices is a licence violation, and it is the one compliance failure here that is
+genuinely easy to avoid.
 
 ## Where the name may and may not appear
 
 | Surface | Name allowed? |
 |---|---|
-| `LICENSES/engine-MIT.txt`, `shimmr licenses` | **Required** |
-| This file, and `00-prd.md` (historical record) | Yes — internal only |
+| `LICENSES/`, `shimmr licenses` | **Required** |
+| This file, `packaging/engine.json`, `00-prd.md` (historical record) | Yes — internal only |
 | Specs, architecture, tiers, roadmap, README, product overview | **No** — say "the engine" |
 | Website, decks, sales conversations, support replies | **No** |
 | Answering a customer who asks directly what it's built on | Yes — answer honestly, point at `shimmr licenses` |

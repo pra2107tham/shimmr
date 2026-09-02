@@ -30,6 +30,12 @@ shimmr init
 shimmr doctor
 ```
 
+On Windows:
+
+```powershell
+irm https://raw.githubusercontent.com/pra2107tham/shimmr/main/install.ps1 | iex
+```
+
 One archive, checksum-verified, containing the binary, the engine and the
 licence notices. About 41 MB to download. See
 [`packaging/README.md`](packaging/README.md) for how releases are cut and what
