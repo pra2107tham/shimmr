@@ -3,7 +3,7 @@ VERSION := 0.1.0
 LDFLAGS := -s -w
 PLATFORMS := darwin/arm64 darwin/amd64 linux/amd64 linux/arm64 windows/amd64
 
-.PHONY: build test fmt vet check install dist clean
+.PHONY: build test race fmt vet check smoke install dist clean
 
 build:
 	CGO_ENABLED=0 go build -ldflags="$(LDFLAGS)" -o bin/$(BINARY) ./cmd/shimmr
@@ -21,6 +21,10 @@ vet:
 	go vet ./...
 
 check: fmt vet test
+
+# What CI runs end to end. Needs a built binary.
+smoke: build
+	./scripts/smoke.sh
 
 install: build
 	install -m 0755 bin/$(BINARY) /usr/local/bin/$(BINARY)

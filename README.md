@@ -26,6 +26,7 @@ See [`docs/product-overview.html`](docs/product-overview.html) for the visual ve
 ```bash
 make build            # one static binary at bin/shimmr, no dependencies
 make check            # gofmt, go vet, go test
+make smoke            # end-to-end: gate, proxy, metering, privacy
 make dist             # macOS / Linux / Windows binaries into dist/
 ```
 
@@ -58,6 +59,10 @@ The engine binary is found via `engine_path` in `~/.shimmr/config.json`, the
 
 Usage stays on the machine unless an `endpoint` is configured, and
 `shimmr sync --show` prints the payload in full before anything is sent.
+
+CI runs all of it on every push and pull request — unit tests with `-race` on
+Linux, macOS and Windows, a cross-compile of all five targets with a check that
+the binary is genuinely static, and the end-to-end smoke test.
 
 ## Read in this order
 
