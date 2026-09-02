@@ -10,7 +10,8 @@ LDFLAGS := -s -w -X $(ENDPOINT_PKG)=$(ENDPOINT)
 PLATFORMS := darwin/arm64 darwin/amd64 linux/amd64 linux/arm64 windows/amd64
 
 .PHONY: build test race fmt vet check smoke install dist clean \
-        db-start db-stop db-reset db-push db-test db-query functions-serve deploy backend-check
+        db-start db-stop db-reset db-push db-test db-query functions-serve deploy backend-check \
+        package package-all licenses
 
 build:
 	CGO_ENABLED=0 go build -ldflags="$(LDFLAGS)" -o bin/$(BINARY) ./cmd/shimmr
@@ -35,6 +36,29 @@ smoke: build
 
 install: build
 	install -m 0755 bin/$(BINARY) /usr/local/bin/$(BINARY)
+
+# ------------------------------------------------------------- packaging
+#
+# A release archive is the Shimmr binary, the engine, and the licence notices,
+# in one file with a checksum. Nothing is fetched at install time.
+#
+# ENGINE_SRC bundles a locally built engine for development. Releases take the
+# engine from packaging/engine.json instead: a self-built engine has a
+# different build fingerprint and would refuse to start alongside a customer's
+# existing install (ADR 0007).
+package:
+	bash scripts/package.sh $(or $(GOOS),$(shell go env GOOS)) $(or $(GOARCH),$(shell go env GOARCH))
+
+package-all:
+	@for p in $(PLATFORMS); do \
+		bash scripts/package.sh $${p%/*} $${p#*/} || exit 1; \
+	done
+	@echo; ls -lh dist/*.tar.gz dist/*.zip 2>/dev/null
+
+# Print everything we ship licences for. This is the obligation, so it is a
+# first-class target rather than a buried flag.
+licenses: build
+	@./bin/$(BINARY) licenses
 
 # One static binary per platform. No runtime for the customer to install.
 dist:

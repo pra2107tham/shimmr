@@ -1,0 +1,26 @@
+{
+  "_comment": [
+    "The indexing engine release Shimmr bundles.",
+    "",
+    "These must point at the ENGINE PROJECT'S OWN published release artifacts,",
+    "not at a binary we built ourselves. A build we produce has a different",
+    "build fingerprint, and the engine refuses to run two differing builds for",
+    "one OS account (ADR 0007) — so a self-built bundle would fail to start for",
+    "any customer who already runs the engine directly.",
+    "",
+    "Bumping the engine is therefore a deliberate act: update version, update",
+    "every sha256, and note the change in docs/internal/ATTRIBUTION.md.",
+    "",
+    "Empty values are intentional and make the release job fail loudly rather",
+    "than ship something unverified."
+  ],
+  "version": "",
+  "source_commit": "5fbab7bb7332bd06aaa880653ddfb2696e648f90",
+  "platforms": {
+    "darwin-arm64":  { "url": "", "sha256": "" },
+    "darwin-amd64":  { "url": "", "sha256": "" },
+    "linux-amd64":   { "url": "", "sha256": "" },
+    "linux-arm64":   { "url": "", "sha256": "" },
+    "windows-amd64": { "url": "", "sha256": "" }
+  }
+}
