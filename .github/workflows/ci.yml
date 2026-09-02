@@ -165,17 +165,17 @@ jobs:
         shell: bash
         run: bash scripts/package_test.sh
 
-      # A stub stands in for the engine. What is under test is the installer —
-      # download, checksum, extract, layout, and whether the installed binary
-      # can find the engine beside it. The real engine is 285 MB and adds
-      # nothing to any of that.
-      - name: build a release archive with a stub engine
+      # A stand-in engine that answers doctor's handshake, so the job can check
+      # the whole path: download, checksum, extract, install, find the engine
+      # in the packaged layout, and start it. The real engine is 285 MB and
+      # adds nothing to any of that.
+      - name: build a release archive with a stand-in engine
         shell: bash
         run: |
           set -eu
           goos=linux; [ "${{ matrix.os }}" = "windows-latest" ] && goos=windows
           exe=""; [ "$goos" = "windows" ] && exe=".exe"
-          go build -o "stub-engine$exe" ./cmd/shimmr
+          go build -o "stub-engine$exe" ./internal/engine/testdata/fakeengine
           ENGINE_SRC="$PWD/stub-engine$exe" bash scripts/package.sh "$goos" amd64
           mkdir -p serve/latest/download
           cp dist/shimmr-$goos-amd64.* serve/latest/download/
@@ -219,20 +219,47 @@ jobs:
           & "$env:RUNNER_TEMP\ShimmrTest\shimmr.exe" version
           & "$env:RUNNER_TEMP\ShimmrTest\shimmr.exe" licenses | Select-String 'Copyright \(c\)' -Quiet
 
+      # The unix layout puts the engine under lib/, not beside the binary, so
+      # what is checked here is the ../lib/shimmr candidate — and that the
+      # engine the installer placed actually starts.
+      - name: the installed binary finds and starts its engine (unix)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          export SHIMMR_HOME="$RUNNER_TEMP/home"
+          shimmr="$HOME/.local/bin/shimmr"
+          "$shimmr" signup --email ci@example.com --org "CI Org" > /dev/null
+          out=$("$shimmr" doctor 2>&1) || { echo "$out"; echo "::error::doctor exited non-zero"; exit 1; }
+          echo "$out"
+          echo "$out" | grep -q "lib/shimmr/shimmr-engine" \
+            || { echo "::error::doctor did not find the engine in the prefix layout"; exit 1; }
+          echo "$out" | grep -q "engine  ready" \
+            || { echo "::error::the installed engine did not start"; exit 1; }
+
       # The point of the Windows fix: the engine ships as shimmr-engine.exe, and
       # a bare "shimmr-engine" stat never finds it. doctor is what proves the
-      # installed binary can locate its own engine.
-      - name: the installed binary finds its engine (windows)
+      # installed binary can locate its own engine and run it.
+      - name: the installed binary finds and starts its engine (windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
           $env:SHIMMR_HOME = "$env:RUNNER_TEMP\home"
           $shimmr = "$env:RUNNER_TEMP\ShimmrTest\shimmr.exe"
           & $shimmr signup --email ci@example.com --org "CI Org" | Out-Null
-          $out = & $shimmr doctor 2>&1 | Out-String
+          $out  = & $shimmr doctor 2>&1 | Out-String
+          $code = $LASTEXITCODE
           Write-Host $out
-          if ($out -match 'not found') {
+          if ($out -notmatch [regex]::Escape('shimmr-engine.exe')) {
             Write-Error "doctor could not find shimmr-engine.exe beside the binary"
+            exit 1
+          }
+          # Matched loosely: the real line carries an em dash, and what matters
+          # here is that the engine started, not how the verdict is punctuated.
+          if ($out -notmatch 'engine\s+ready') {
+            Write-Error "the installed engine did not start"
+            exit 1
+          }
+          if ($code -ne 0) {
+            Write-Error "doctor exited $code"
             exit 1
           }
 
