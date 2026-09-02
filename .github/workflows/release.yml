@@ -1,0 +1,125 @@
+name: Release
+
+# Cutting a release is pushing a tag. Everything else happens here, so the
+# artifacts a customer downloads are built by a recorded, repeatable job rather
+# than on somebody's laptop.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Build and check the artifacts, but publish nothing"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - { goos: linux,   goarch: amd64 }
+          - { goos: linux,   goarch: arm64 }
+          - { goos: darwin,  goarch: amd64 }
+          - { goos: darwin,  goarch: arm64 }
+          - { goos: windows, goarch: amd64 }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # The engine manifest must name a published upstream artifact and its
+      # checksum. Empty entries are deliberate in the repository, and must stop
+      # a release rather than produce a bundle nobody verified.
+      - name: engine is pinned
+        run: |
+          url=$(python3 scripts/engine_manifest.py url "${{ matrix.goos }}" "${{ matrix.goarch }}")
+          sha=$(python3 scripts/engine_manifest.py sha256 "${{ matrix.goos }}" "${{ matrix.goarch }}")
+          if [ -z "$url" ] || [ -z "$sha" ]; then
+            echo "::error::packaging/engine.json has no url/sha256 for ${{ matrix.goos }}/${{ matrix.goarch }}."
+            echo "::error::Fill it in from the pinned engine release before tagging."
+            exit 1
+          fi
+
+      - name: package
+        env:
+          VERSION: ${{ github.ref_type == 'tag' && github.ref_name || '0.0.0-dev' }}
+          ENDPOINT: ${{ vars.SHIMMR_ENDPOINT }}
+        run: |
+          # Tags are v-prefixed; the version stamped into artifacts is not.
+          export VERSION="${VERSION#v}"
+          bash scripts/package.sh "${{ matrix.goos }}" "${{ matrix.goarch }}"
+
+      # An artifact that cannot run is worse than no artifact. For the native
+      # platform we can actually check, so we do.
+      - name: the built binary runs
+        if: matrix.goos == 'linux' && matrix.goarch == 'amd64'
+        run: |
+          mkdir -p /tmp/check
+          tar -xzf dist/shimmr-linux-amd64.tar.gz -C /tmp/check
+          dir=$(find /tmp/check -maxdepth 1 -type d -name 'shimmr-*' | head -1)
+          "$dir/shimmr" version
+          # The licence notice is a legal obligation, not a nicety: fail the
+          # release if the shipped binary cannot produce it.
+          "$dir/shimmr" licenses | grep -q "Copyright (c)" \
+            || { echo "::error::shipped binary prints no copyright notice"; exit 1; }
+          test -f "$dir/LICENSES/engine-MIT.txt" \
+            || { echo "::error::engine licence missing from the archive"; exit 1; }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shimmr-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/*.sha256
+          retention-days: 7
+
+  publish:
+    needs: package
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'tag' && !inputs.dry_run
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: staging
+          merge-multiple: true
+
+      - name: collect checksums
+        run: |
+          cd staging
+          ls -lh
+          cat *.sha256 > SHA256SUMS
+          echo "--- SHA256SUMS ---"
+          cat SHA256SUMS
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            staging/*.tar.gz
+            staging/*.zip
+            staging/*.sha256
+            staging/SHA256SUMS
+          generate_release_notes: true
+          body: |
+            Install:
+
+            ```sh
+            curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install.sh | sh
+            ```
+
+            Then `shimmr signup`, `shimmr init`, `shimmr doctor`.
+
+            Every archive contains the Shimmr binary, the indexing engine, and
+            the licence notices for both. Checksums are published alongside;
+            the installer verifies them and refuses to install without.

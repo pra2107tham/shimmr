@@ -21,6 +21,20 @@ what you pay for. ([why](docs/decisions/0004-local-free-connected-paid.md))
 See [`docs/product-overview.html`](docs/product-overview.html) for the visual version.
 
 
+## Installing
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/pra2107tham/shimmr/main/install.sh | sh
+shimmr signup --email you@company.com --org "Your Co"
+shimmr init
+shimmr doctor
+```
+
+One archive, checksum-verified, containing the binary, the engine and the
+licence notices. About 41 MB to download. See
+[`packaging/README.md`](packaging/README.md) for how releases are cut and what
+is not done yet.
+
 ## Running it
 
 ```bash
@@ -29,7 +43,8 @@ make build            # one static binary at bin/shimmr, no dependencies
                       # point a release at the backend; empty = fully offline
 make check            # gofmt, go vet, go test
 make smoke            # end-to-end: gate, proxy, metering, privacy
-make dist             # macOS / Linux / Windows binaries into dist/
+make package-all      # release archives for all five platforms
+make licenses         # everything we ship licences for
 ```
 
 Then, as a user would:

@@ -23,6 +23,7 @@ import (
 	"github.com/pra2107tham/shimmr/internal/agentcfg"
 	"github.com/pra2107tham/shimmr/internal/config"
 	"github.com/pra2107tham/shimmr/internal/engine"
+	"github.com/pra2107tham/shimmr/internal/licenses"
 	"github.com/pra2107tham/shimmr/internal/proxy"
 	"github.com/pra2107tham/shimmr/internal/usage"
 )
@@ -50,6 +51,8 @@ func main() {
 		err = cmdWhoami()
 	case "sync":
 		err = cmdSync(os.Args[2:])
+	case "licenses", "license":
+		err = licenses.Write(os.Stdout)
 	case "version", "--version", "-v":
 		fmt.Println("shimmr", version)
 	case "help", "--help", "-h":
@@ -75,6 +78,7 @@ func usageText() {
   shimmr whoami    show the account on this machine
   shimmr sync      send usage counts to your org (only if configured)
   shimmr serve     run the MCP server (your agent runs this, not you)
+  shimmr licenses  licences of everything shipped with Shimmr
 
 Start with: shimmr signup
 `)
@@ -318,17 +322,25 @@ func cmdDoctor(args []string) error {
 
 	fmt.Printf("  - account  %s / %s\n", c.Email, c.Org)
 
-	if agents := agentcfg.Installed(); len(agents) > 0 {
+	agents := agentcfg.Installed()
+	if len(agents) > 0 {
 		fmt.Printf("  - agents   %s\n", strings.Join(agents, ", "))
 	} else {
-		fmt.Printf("  x agents   none configured — run `shimmr init`\n")
+		fmt.Printf("  x agents   none configured\n")
 	}
 
 	res := probeEngine(c)
 	reportEngine(res, *verbose)
 
+	// A broken engine is a failure. No agents yet is a normal state between
+	// signup and init — but the summary must not contradict a line above it
+	// that is marked with an x.
 	if !res.Healthy() {
 		return errors.New("something needs attention")
+	}
+	if len(agents) == 0 {
+		fmt.Println("\n  The engine works. Run `shimmr init` to connect your editor.")
+		return nil
 	}
 	fmt.Println("\n  Everything checks out.")
 	return nil
