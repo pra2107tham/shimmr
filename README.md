@@ -7,17 +7,62 @@ with no code, file content, or query text ever leaving the machine.
 A local indexing engine, a licensing harness, an account layer, and a usage
 dashboard — packaged as one product that installs in a single command.
 
-> **Status: pre-implementation.** Specs and decisions only; no harness code yet.
-> The three blocking product decisions are made — see
-> [ADR 0004](docs/decisions/0004-local-free-connected-paid.md) and
-> [ADR 0005](docs/decisions/0005-harness-in-go.md). Next up is Phase 0 verification,
-> then SPEC-001.
+> **Status: v0.1.0 harness is built and tested.** `shimmr signup` → `shimmr init`
+> → your agent talks to the engine through us, and every call is metered.
+> Still to do: pin and bundle the engine binary, and stand up the backend that
+> `--endpoint` points at. See [ADR 0004](docs/decisions/0004-local-free-connected-paid.md)
+> and [ADR 0005](docs/decisions/0005-harness-in-go.md) for the product decisions
+> behind it.
 
 **The model in one line:** everything that runs on your machine is free, permanently.
 Connecting it to the outside world — GitHub, OpenHands, automations, team sync — is
 what you pay for. ([why](docs/decisions/0004-local-free-connected-paid.md))
 
 See [`docs/product-overview.html`](docs/product-overview.html) for the visual version.
+
+
+## Running it
+
+```bash
+make build            # one static binary at bin/shimmr, no dependencies
+make check            # gofmt, go vet, go test
+make smoke            # end-to-end: gate, proxy, metering, privacy
+make dist             # macOS / Linux / Windows binaries into dist/
+```
+
+Then, as a user would:
+
+```bash
+shimmr signup --email you@company.com --org "Your Co" --team Platform
+shimmr init --dry-run     # see exactly which agent config files would change
+shimmr init               # apply, after confirming
+shimmr stats              # what your agents used, and how much code we covered
+shimmr sync --show        # print the exact payload that would ever be sent
+```
+
+`shimmr serve` is what the agent runs, not you. It refuses to start without an
+account — that gate is the point of v1.
+
+The engine binary is found via `engine_path` in `~/.shimmr/config.json`, the
+`SHIMMR_ENGINE_PATH` environment variable, or next to the `shimmr` binary.
+
+### What v0.1.0 does
+
+| | |
+|---|---|
+| **Account gate** | No signup, no proxying. Email, org and team are captured before anything runs. |
+| **Transparent proxy** | Newline-delimited JSON-RPC relayed both ways; unknown messages pass through untouched. |
+| **Tool metering** | Every `tools/call` recorded with tool name, outcome and duration. |
+| **Coverage** | Every index measured: files, lines and bytes, deduplicated per repository. |
+| **Consent** | `shimmr init` names every file it wants to change, backs it up, and preserves every key it did not write. |
+| **Privacy** | The log has no field that can hold code, a path, a repo name, a symbol or a tool argument. Repos appear only as a per-machine salted hash. Enforced by a test. |
+
+Usage stays on the machine unless an `endpoint` is configured, and
+`shimmr sync --show` prints the payload in full before anything is sent.
+
+CI runs all of it on every push and pull request — unit tests with `-race` on
+Linux, macOS and Windows, a cross-compile of all five targets with a check that
+the binary is genuinely static, and the end-to-end smoke test.
 
 ## Read in this order
 
@@ -31,7 +76,8 @@ See [`docs/product-overview.html`](docs/product-overview.html) for the visual ve
 | [`docs/roadmap.md`](docs/roadmap.md) | Phases 0–6 with dependencies |
 | [`docs/specs/`](docs/specs/) | SPEC-001 (ready to build), 002, 003 |
 | [`docs/decisions/`](docs/decisions/) | ADRs — 0004 and 0005 carry the product decisions |
-| [`docs/product-overview.html`](docs/product-overview.html) | Visual overview: what it is, what's in it, the user experience |
+| [`docs/product-overview.html`](docs/product-overview.html) | Visual overview: what it is, what's in it, the free/paid boundary |
+| [`docs/user-journey.html`](docs/user-journey.html) | Nine moments from landing page to paid — what we offer at each, and where we lose people |
 
 ## The three things worth knowing before reading anything else
 

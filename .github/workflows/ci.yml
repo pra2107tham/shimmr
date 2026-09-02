@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: gofmt
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "These files need gofmt:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go test -race
+        run: go test -race ./...
+
+  build:
+    name: cross-compile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # The product promise is one file with no runtime to install, so a build
+      # that needs cgo is a broken build even when it compiles here.
+      - name: build every platform
+        run: make dist
+
+      - name: confirm the binary is static
+        run: |
+          file dist/shimmr-*-linux-amd64
+          file dist/shimmr-*-linux-amd64 | grep -q "statically linked"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shimmr-binaries
+          path: dist/
+          retention-days: 14
+
+  smoke:
+    name: end-to-end
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - run: make build
+
+      # Drives the real binary over stdio against a stand-in engine, checking
+      # the things unit tests cannot: that the account gate holds, that stdout
+      # carries only JSON-RPC, and that no path or query reaches the log.
+      - name: smoke test
+        run: ./scripts/smoke.sh
