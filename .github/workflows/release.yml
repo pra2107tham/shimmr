@@ -73,6 +73,22 @@ jobs:
             || { echo "::error::shipped binary prints no copyright notice"; exit 1; }
           test -f "$dir/LICENSES/engine-MIT.txt" \
             || { echo "::error::engine licence missing from the archive"; exit 1; }
+          test -f "$dir/LICENSES/engine-third-party.md" \
+            || { echo "::error::engine third-party notices missing from the archive"; exit 1; }
+
+          # The engine in the archive must expose the surface we document. We
+          # once published a count read from upstream main rather than from the
+          # release, and were wrong by two tools; this makes the number a fact
+          # about the artifact instead of a claim about some other code.
+          want=$(python3 scripts/engine_manifest.py tool_count linux amd64)
+          got=$(python3 scripts/engine_tools.py "$dir/shimmr-engine" --count)
+          echo "engine exposes $got tools (manifest says $want)"
+          if [ "$got" != "$want" ]; then
+            echo "::error::the engine exposes $got tools, but packaging/engine.json says $want."
+            echo "::error::Re-check the surface and update the manifest and docs/01-engine-findings.md."
+            python3 scripts/engine_tools.py "$dir/shimmr-engine"
+            exit 1
+          fi
 
       - uses: actions/upload-artifact@v4
         with:

@@ -1,7 +1,8 @@
 # Engine findings
 
 **Status:** verified 2026-08-30 against the engine's public repository README and
-LICENSE on `main`.
+LICENSE on `main`. §2's tool surface re-verified 2026-09-02 against the **bundled
+`v0.10.8` binary** — see the correction recorded there.
 
 > Per [ADR 0006](decisions/0006-engine-naming-and-attribution.md) this document does
 > not name the upstream project. Identity, the copyright line, and our licence
@@ -36,33 +37,60 @@ own documentation or marketing. ADR 0006 says we don't.
 
 ## 2. The real tool surface
 
-**Verified from source at the pinned commit**, not from README prose: the table
-`static const tool_def_t TOOLS[]` in `src/mcp/mcp.c` is the registry that
-`tools/list` is built from.
+The table `static const tool_def_t TOOLS[]` in `src/mcp/mcp.c` is the registry
+`tools/list` is built from — that much is read from source, not README prose.
 
-**17 tools:**
+**The count depends on which code you are looking at, and we ship one and read
+the other.**
+
+| | Tools |
+|---|---|
+| **The release we bundle** — `v0.10.8`, the artifact pinned in `packaging/engine.json` | **15** |
+| Upstream `main` at the commit we first read (246 commits later) | 17 |
+
+**Quote 15.** It is what a customer's `shimmr doctor` prints, and it is what the
+binary in the archive actually exposes.
+
+**The 15 in the release:**
 
 | | | |
 |---|---|---|
 | `index_repository` | `search_graph` | `query_graph` |
-| `trace_path` | `get_code_snippet` | `get_file_outline` |
-| `get_graph_schema` | `compare_graphs` | `get_architecture` |
-| `search_code` | `list_projects` | `delete_project` |
-| `index_status` | `check_index_coverage` | `detect_changes` |
-| `manage_adr` | `ingest_traces` | |
+| `trace_path` | `get_code_snippet` | `get_graph_schema` |
+| `get_architecture` | `search_code` | `list_projects` |
+| `delete_project` | `index_status` | `check_index_coverage` |
+| `detect_changes` | `manage_adr` | `ingest_traces` |
 
-Every earlier count was wrong, including the vendor's own README, which says 15.
+`get_file_outline` and `compare_graphs` are the two extra tools on `main`. They
+were added after the release, in `feat(mcp): add bounded file outline tool` and
+`feat(mcp): add bounded graph comparison tool`. They are not in what we ship, and
+must not appear in a spec, a tier map, or a sales claim until we pin a release
+that contains them.
 
-### Three things this corrects
+Verified three ways, all agreeing on 15: `TOOLS[]` at the release commit, a
+`tools/list` handshake against the bundled binary, and the vendor's README.
+
+### What this corrects, including in this document
+
+**Our own "17" was wrong for the product.** An earlier revision of this section
+read `TOOLS[]` from upstream `main` and stated 17 as "the real tool surface",
+while `packaging/engine.json` bundles the `v0.10.8` artifact. Reading source is
+not the same as reading the source of the thing you ship, and a pinned *commit*
+is not a pinned *release*.
+
+**The vendor's README was right.** That same revision said "every earlier count
+was wrong, including the vendor's own README, which says 15." The README
+describes the release. It was correct and we were not.
+
+This is the failure mode CLAUDE.md describes under metrics: a number that falls
+apart the moment a customer checks it discredits every number beside it. Anyone
+who had quoted 17 would have been contradicted by the product on first run.
 
 **`semantic_query` is not a tool.** It is a *property of `search_graph`'s input
 schema* — an array of keywords that triggers vector cosine search alongside the
 BM25 and regex modes. Our tier map listed it as a separately gateable tool; it
 cannot be gated, because gating it would mean rewriting `search_graph`'s
 arguments. Semantic search is reached through `search_graph`, full stop.
-
-**`get_file_outline` and `compare_graphs` exist** and had never appeared in any
-of our documents.
 
 **`trace_call_path` is not a callable alias.** It is the internal C handler name
 (`handle_trace_call_path`) behind the `trace_path` tool. Nothing needs to gate
@@ -78,8 +106,11 @@ the profile comes from a process-level flag:
 --tool-profile=scout        # a further-restricted surface
 ```
 
-`cbm_mcp_tool_profile_t` is `ALL | ANALYSIS | SCOUT`, and a restricted profile
-also refuses the hidden tools at call time, not just in the listing. Unknown
+`cbm_mcp_tool_profile_t` is `ALL | ANALYSIS | SCOUT`, but **`all` is the default,
+not a value you may pass** — the bundled binary rejects `--tool-profile=all` with
+"requires the supported value 'analysis' or 'scout'". Checked against the shipped
+artifact, because the enum name suggests otherwise. A restricted profile also
+refuses the hidden tools at call time, not just in the listing, and unknown
 values fail closed.
 
 This matters for us: **the seam our harness occupies already exists inside the

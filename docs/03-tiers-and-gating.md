@@ -32,8 +32,12 @@ Two corrections landed in Phase 0:
 - **`semantic_query` was never a tool** and has been removed from this map. It is
   a property of `search_graph`'s input schema, so semantic search cannot be
   gated separately from structural search at all — they are one tool.
-- **`get_file_outline` and `compare_graphs`** exist and had been missing from
-  every version of this document.
+- **`get_file_outline` and `compare_graphs` are not in the product.** They were
+  added to this map after being found in upstream source — but that source is
+  246 commits ahead of the `v0.10.8` release we bundle, and the shipped binary
+  exposes 15 tools, not 17. They stay listed below, struck through, so nobody
+  re-adds them from the same mistake; they become real when we pin a release
+  that contains them. See §2 of `01-engine-findings.md`.
 
 ### Starter (free) — 8 surfaces
 
@@ -52,14 +56,14 @@ This is a genuinely useful product on its own. That is intentional: the free tie
 job is adoption, and a crippled free tier converts worse than a good one when the
 alternative is two minutes of typing.
 
-### Team (paid) — adds 7
+### Team (paid) — adds 5 today, 7 once the extra two ship
 
 | Tool | Note |
 |---|---|
 | `get_architecture` | as PRD |
 | `search_code` | as PRD |
-| `get_file_outline` | **added** — found in source; was in no earlier document |
-| `compare_graphs` | **added** — found in source; was in no earlier document |
+| ~~`get_file_outline`~~ | **not in the shipped release** — exists only on upstream `main` |
+| ~~`compare_graphs`~~ | **not in the shipped release** — exists only on upstream `main` |
 | `detect_changes` | as PRD |
 | `manage_adr` | as PRD |
 | `check_index_coverage` | **added** — verification tier, fits "depth" |

@@ -14,8 +14,8 @@
 | Repository | `https://github.com/DeusData/codebase-memory-mcp` |
 | Licence | MIT — re-confirmed on the pinned commit, not just on `main` |
 | Copyright line | `Copyright (c) 2025 DeusData` |
-| Pinned commit | `5fbab7bb7332bd06aaa880653ddfb2696e648f90` (2026-09-01) |
-| Pinned release | `v0.10.8` |
+| Pinned release | `v0.10.8`, cut from `46ae198fc11cda80e817acbc5f5908d7c2de7032` (2026-08-18) — **this is what we ship** |
+| Commit first read for findings | `5fbab7bb7332bd06aaa880653ddfb2696e648f90` (2026-09-01), 246 commits ahead of the release |
 | Artifact SHA-256 | Recorded per platform in `packaging/engine.json` |
 
 ## What we bundle, and why those assets
@@ -52,6 +52,10 @@ Each archive holds four files: the binary, `LICENSE`, an installer we do not use
 3. Re-check the licence on the new tag — `LICENSES/engine-MIT.txt` must still match
    upstream's `LICENSE`. Packaging enforces this and will refuse to build if it
    drifts, but knowing before the release job fails is better.
+4. Re-check the tool count against the new binary, not against `main`. The two
+   diverge, and §2 of `../01-engine-findings.md` records what it cost to learn
+   that: we published 15 as 17 because we read source from a commit we do not
+   ship.
 
 ## What MIT actually requires of us
 
