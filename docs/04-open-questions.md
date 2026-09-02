@@ -122,7 +122,7 @@ regardless.
 > environment variables behind `SHIMMR_*` equivalents is still open and harmless;
 > the path stays where the engine puts it.
 
-## Q10 — What happens when the customer's engine version differs from ours? 🟠
+## Q10 — What happens when the customer's engine version differs from ours? ✅ ANSWERED
 
 Phase 0 disproved the cache-root theory but only tested *identical* builds. The
 engine treats version, build, ABI and cache root as four separate conditions, so
@@ -130,10 +130,21 @@ a customer running a different engine version than the one Shimmr bundles may
 still hit a startup conflict — now unavoidable, since ADR 0007 rules out
 separating the cache.
 
-**Recommendation:** detect an existing engine during `shimmr init`, compare
-versions, and say something honest when they differ, rather than letting the
-customer meet the daemon's error message cold. Cheap to build, and it is the
-remaining mitigation.
+> **Built.** `shimmr init` now probes the engine after configuring the agents, and
+> `shimmr doctor` does the same on demand. Rather than hunting the filesystem for
+> other copies, both simply start the engine and speak MCP to it — the only
+> honest test of "will this work here" is to try.
+>
+> The engine's two refusals are told apart, because they need different advice: a
+> cache-root conflict is fixed by closing other sessions and leaving
+> `CBM_CACHE_DIR` alone, while a version conflict cannot be fixed that way at all.
+> Anything else — a missing binary, a full disk — is reported as itself rather
+> than mislabelled as a conflict.
+>
+> Verified against the real engine: a second copy holding a different cache root
+> produces `blocked by another copy using different storage`, a plain-language
+> remedy, and exit 1. The engine's own words are kept behind
+> `shimmr doctor --verbose`.
 
 ## Q8 — What does "estimated tokens saved" actually mean? 🟡
 

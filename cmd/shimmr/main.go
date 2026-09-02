@@ -9,6 +9,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -21,6 +22,7 @@ import (
 
 	"github.com/pra2107tham/shimmr/internal/agentcfg"
 	"github.com/pra2107tham/shimmr/internal/config"
+	"github.com/pra2107tham/shimmr/internal/engine"
 	"github.com/pra2107tham/shimmr/internal/proxy"
 	"github.com/pra2107tham/shimmr/internal/usage"
 )
@@ -42,6 +44,8 @@ func main() {
 		err = cmdServe(os.Args[2:])
 	case "stats":
 		err = cmdStats(os.Args[2:])
+	case "doctor":
+		err = cmdDoctor(os.Args[2:])
 	case "whoami":
 		err = cmdWhoami()
 	case "sync":
@@ -66,6 +70,7 @@ func usageText() {
 
   shimmr signup    create your account and pick your org
   shimmr init      connect shimmr to the agents on this machine
+  shimmr doctor    check that everything actually works on this machine
   shimmr stats     what your agents used, and how much code we covered
   shimmr whoami    show the account on this machine
   shimmr sync      send usage counts to your org (only if configured)
@@ -245,10 +250,87 @@ func cmdInit(args []string) error {
 		fmt.Printf("  configured  %s\n", p.Agent)
 	}
 
-	if _, err := c.ResolveEngine(); err != nil {
-		fmt.Printf("\n  Note: %v\n", err)
+	// Configuring the agents is the easy half. The half that actually fails on
+	// other people's machines is whether the engine can start at all, so check
+	// it here rather than letting the agent discover it later.
+	fmt.Println()
+	if res := probeEngine(c); !res.Healthy() {
+		reportEngine(res, false)
+		return errors.New("shimmr is configured, but the engine cannot start yet — see above")
+	} else {
+		fmt.Printf("  engine ready  %d tools\n", len(res.Tools))
 	}
+
 	fmt.Println("\nRestart your agent, then ask it to index this repository.")
+	return nil
+}
+
+func probeEngine(c *config.Config) engine.Result {
+	path, err := c.ResolveEngine()
+	if err != nil {
+		return engine.Result{Status: engine.NotFound}
+	}
+	return engine.Probe(context.Background(), path, 45*time.Second)
+}
+
+// reportEngine prints the verdict in our own words. The engine's own output is
+// shown only on request: it is useful when debugging and noise otherwise.
+func reportEngine(res engine.Result, verbose bool) {
+	mark := "x"
+	if res.Healthy() {
+		mark = "-"
+	}
+	fmt.Printf("  %s engine  %s\n", mark, res.Summary())
+	if res.Path != "" {
+		fmt.Printf("      path  %s\n", res.Path)
+	}
+	if res.Version != "" {
+		fmt.Printf("   version  %s\n", res.Version)
+	}
+	if remedy := res.Remedy(); remedy != "" {
+		fmt.Printf("\n  %s\n", remedy)
+	}
+	if verbose && res.Stderr != "" {
+		fmt.Printf("\n  The engine printed:\n\n    %s\n",
+			strings.ReplaceAll(res.Stderr, "\n", "\n    "))
+	} else if res.Stderr != "" && !res.Healthy() {
+		fmt.Printf("\n  Run `shimmr doctor --verbose` to see what the engine printed.\n")
+	}
+}
+
+// ---- doctor ----
+
+func cmdDoctor(args []string) error {
+	fs := flag.NewFlagSet("doctor", flag.ExitOnError)
+	verbose := fs.Bool("verbose", false, "show what the engine printed")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	c, err := config.Load()
+	if errors.Is(err, config.ErrNoAccount) {
+		fmt.Println("  x account  none on this machine")
+		fmt.Println("\n  Run `shimmr signup` first.")
+		return errors.New("not set up yet")
+	} else if err != nil {
+		return err
+	}
+
+	fmt.Printf("  - account  %s / %s\n", c.Email, c.Org)
+
+	if agents := agentcfg.Installed(); len(agents) > 0 {
+		fmt.Printf("  - agents   %s\n", strings.Join(agents, ", "))
+	} else {
+		fmt.Printf("  x agents   none configured — run `shimmr init`\n")
+	}
+
+	res := probeEngine(c)
+	reportEngine(res, *verbose)
+
+	if !res.Healthy() {
+		return errors.New("something needs attention")
+	}
+	fmt.Println("\n  Everything checks out.")
 	return nil
 }
 

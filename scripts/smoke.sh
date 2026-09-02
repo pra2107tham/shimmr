@@ -144,7 +144,24 @@ for needle in "$REPO" "UniqueSecretQueryString" "repo_path" "arguments" "main.go
 done
 ok "no path, query, filename or argument in the log"
 
-echo "7. stats and payload transparency"
+echo "7. doctor reports engine health"
+"$BIN" doctor >"$WORK/doctor.txt" 2>&1 || fail "doctor exited non-zero with a working engine"
+grep -q "Everything checks out" "$WORK/doctor.txt" \
+  || fail "doctor did not confirm a healthy setup: $(cat "$WORK/doctor.txt")"
+ok "doctor confirms a healthy setup"
+
+# A broken engine must be reported, not glossed over. This is the Q10 path:
+# the person finds out from us, not from a cryptic failure inside their editor.
+sed -i.bak 's#"engine_path": "[^"]*"#"engine_path": "/definitely/not/an/engine"#' \
+  "$SHIMMR_HOME/config.json"
+if "$BIN" doctor >"$WORK/doctor-bad.txt" 2>&1; then
+  fail "doctor reported success with a missing engine"
+fi
+grep -qi "not found" "$WORK/doctor-bad.txt" || fail "doctor did not name the problem"
+ok "doctor fails loudly when the engine is missing"
+mv "$SHIMMR_HOME/config.json.bak" "$SHIMMR_HOME/config.json"
+
+echo "8. stats and payload transparency"
 "$BIN" stats | grep -q "2 files" || fail "stats did not report coverage"
 "$BIN" stats --method | grep -qi "capped" || fail "stats --method did not explain the cap"
 "$BIN" sync --show | grep -q "ci@example.com" || fail "sync --show did not print the payload"
