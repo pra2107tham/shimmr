@@ -23,8 +23,17 @@ that converts is one where the paid thing is something upstream cannot give.
 
 ## 2. Proposed allocation
 
-Changes from PRD §8 are marked. `[V]` = **[VERIFY-AT-FORK]**, the tool name must be
-confirmed against a real `tools/list` before it ships in an allow-list.
+Changes from PRD §8 are marked. **All 17 tool names are now verified from source
+at the pinned commit** (`docs/01-engine-findings.md` §2), so nothing here is a
+guess any more.
+
+Two corrections landed in Phase 0:
+
+- **`semantic_query` was never a tool** and has been removed from this map. It is
+  a property of `search_graph`'s input schema, so semantic search cannot be
+  gated separately from structural search at all — they are one tool.
+- **`get_file_outline` and `compare_graphs`** exist and had been missing from
+  every version of this document.
 
 ### Starter (free) — 8 surfaces
 
@@ -43,23 +52,24 @@ This is a genuinely useful product on its own. That is intentional: the free tie
 job is adoption, and a crippled free tier converts worse than a good one when the
 alternative is two minutes of typing.
 
-### Team (paid) — adds 6
+### Team (paid) — adds 7
 
 | Tool | Note |
 |---|---|
 | `get_architecture` | as PRD |
 | `search_code` | as PRD |
-| `semantic_query` | **named** — this is the PRD's unnamed "semantic search" |
+| `get_file_outline` | **added** — found in source; was in no earlier document |
+| `compare_graphs` | **added** — found in source; was in no earlier document |
 | `detect_changes` | as PRD |
 | `manage_adr` | as PRD |
-| `check_index_coverage` `[V]` | **added** — verification tier, fits "depth" |
+| `check_index_coverage` | **added** — verification tier, fits "depth" |
 
 ### Enterprise (custom) — adds 2, plus everything we build
 
 | Tool | Note |
 |---|---|
 | `query_graph` | as PRD — Cypher |
-| `ingest_traces` `[V]` | **added** — runtime trace ingestion is an ops-maturity feature |
+| `ingest_traces` | **added** — runtime trace ingestion is an ops-maturity feature |
 | *cross-repo intelligence* | Shimmr-built |
 | *team-shared sync, unlimited seats* | Shimmr-built |
 | *GitHub issue/PR context* | Shimmr-built |
@@ -84,7 +94,10 @@ one, and it should be decided deliberately.
 - The allow-list is derived from the license `tier` field at startup, and is a
   **static map from tier → tool names** held in the harness. No dynamic policy, no
   server round-trip.
-- Aliases gate together. `trace_path` and `trace_call_path` are one decision.
+- There are no aliases to worry about. `trace_call_path` is an internal handler
+  name, not a second callable tool.
+- If tool restriction is ever wanted, the engine's own `--tool-profile` flag is
+  the better seam — see `01-engine-findings.md` §2.
 - **Unknown tool names default to allowed.** When upstream adds a tool we have not
   classified, a Starter user gets it rather than hitting a wall for a tool our docs
   never mentioned. Fail open, and log the unknown name to stderr so we notice.
