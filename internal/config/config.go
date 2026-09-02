@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"time"
 )
 
@@ -136,16 +137,12 @@ func (c *Config) ResolveEndpoint() string {
 // ResolveEngine finds the engine binary: explicit config, then the env var,
 // then next to the shimmr executable, then PATH.
 func (c *Config) ResolveEngine() (string, error) {
-	candidates := []string{c.EnginePath, os.Getenv("SHIMMR_ENGINE_PATH")}
-
+	exeDir := ""
 	if exe, err := os.Executable(); err == nil {
-		dir := filepath.Dir(exe)
-		candidates = append(candidates,
-			filepath.Join(dir, "shimmr-engine"),
-			filepath.Join(dir, "..", "lib", "shimmr", "shimmr-engine"),
-		)
+		exeDir = filepath.Dir(exe)
 	}
-	for _, p := range candidates {
+	for _, p := range engineCandidates(
+		c.EnginePath, os.Getenv("SHIMMR_ENGINE_PATH"), exeDir, runtime.GOOS) {
 		if p == "" {
 			continue
 		}
@@ -156,4 +153,32 @@ func (c *Config) ResolveEngine() (string, error) {
 	return "", errors.New(
 		"engine binary not found — set engine_path in ~/.shimmr/config.json " +
 			"or the SHIMMR_ENGINE_PATH environment variable")
+}
+
+// engineCandidates lists where the engine might be, most explicit first: what
+// the config says, then the environment, then the two install layouts — beside
+// the binary, and the unix prefix layout where bin/ and lib/ are siblings.
+//
+// On Windows the executable suffix matters. The packaged engine is
+// shimmr-engine.exe, and a bare "shimmr-engine" stat finds nothing, so every
+// discovered path is tried with the suffix as well. Windows was in the build
+// matrix long before this layout was ever exercised on it.
+func engineCandidates(configured, env, exeDir, goos string) []string {
+	// Explicit paths are used as given: someone who names a file means it.
+	out := []string{configured, env}
+
+	if exeDir == "" {
+		return out
+	}
+	discovered := []string{
+		filepath.Join(exeDir, "shimmr-engine"),
+		filepath.Join(exeDir, "..", "lib", "shimmr", "shimmr-engine"),
+	}
+	for _, p := range discovered {
+		if goos == "windows" {
+			out = append(out, p+".exe")
+		}
+		out = append(out, p)
+	}
+	return out
 }

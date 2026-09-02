@@ -19,7 +19,9 @@ cd "$ROOT"
 GOOS="${1:?usage: package.sh <goos> <goarch>}"
 GOARCH="${2:?usage: package.sh <goos> <goarch>}"
 VERSION="${VERSION:-$(sed -n 's/^VERSION := //p' Makefile)}"
-ENDPOINT="${ENDPOINT:-}"
+# Packaged builds point at the live backend; a plain `make build` stays offline
+# so development never reports usage to production.
+ENDPOINT="${ENDPOINT:-$(cat packaging/endpoint 2>/dev/null || true)}"
 OUT="${OUT:-dist}"
 
 NAME="shimmr-${VERSION}-${GOOS}-${GOARCH}"

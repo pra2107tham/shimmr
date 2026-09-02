@@ -74,13 +74,35 @@ tested. It installs to `/usr/local` by default; `SHIMMR_PREFIX=$HOME/.local`
 avoids needing sudo. It never edits editor config; `shimmr init` does that,
 after showing what it intends to change.
 
+### Windows
+
+```powershell
+irm https://raw.githubusercontent.com/pra2107tham/shimmr/main/install.ps1 | iex
+```
+
+Installs per-user to `%LOCALAPPDATA%\Programs\Shimmr`, so no administrator
+prompt. Both binaries go in one directory, because `shimmr.exe` looks for
+`shimmr-engine.exe` beside itself.
+
+PATH is not modified unless you ask: set `$env:SHIMMR_ADD_TO_PATH = "1"` first,
+or run the command it prints. Changing someone's PATH without saying so is the
+kind of thing an installer should not do quietly.
+
+CI installs both scripts on their own operating system every push, against an
+archive built with a stub engine — what is under test is the installer, not the
+engine. It also checks that a tampered archive is refused and leaves nothing
+behind.
+
+## The endpoint
+
+`packaging/endpoint` holds the backend URL baked into packaged builds. A plain
+`make build` leaves it empty, so development never reports usage to production.
+Override per build with `ENDPOINT=`.
+
 ## Not done yet
 
-- **Windows.** The release workflow builds and packages a `.zip`, but there is
-  no `install.ps1`, and none of the Windows path handling has been exercised on
-  a Windows machine. Shipping an untested installer is worse than shipping
-  none, so Windows users install by hand from the archive for now.
 - **Code signing and notarisation.** macOS Gatekeeper will warn on an unsigned
-  binary. Needs an Apple Developer account.
+  binary, and Windows SmartScreen will warn on an unsigned `.exe`. Both need
+  paid certificates.
 - **A hosted install URL.** `shimmr.dev/install` in the docs is aspirational;
   today the raw GitHub URL is the real one.
