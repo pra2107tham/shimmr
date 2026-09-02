@@ -31,6 +31,14 @@ type Config struct {
 // that would use the engine checks for this first.
 var ErrNoAccount = errors.New("no Shimmr account on this machine")
 
+// DefaultEndpoint is baked in at build time so a released binary reaches the
+// backend without the user passing a flag:
+//
+//	go build -ldflags "-X github.com/pra2107tham/shimmr/internal/config.DefaultEndpoint=https://<ref>.supabase.co/functions"
+//
+// Left empty, the build is fully offline: nothing is ever sent anywhere.
+var DefaultEndpoint = ""
+
 // Dir is ~/.shimmr, overridable for tests via SHIMMR_HOME.
 func Dir() (string, error) {
 	if d := os.Getenv("SHIMMR_HOME"); d != "" {
@@ -114,6 +122,15 @@ func NewUserID() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(b), nil
+}
+
+// ResolveEndpoint prefers what the user configured, then the build-time
+// default. Empty means this install talks to nobody.
+func (c *Config) ResolveEndpoint() string {
+	if c.Endpoint != "" {
+		return c.Endpoint
+	}
+	return DefaultEndpoint
 }
 
 // ResolveEngine finds the engine binary: explicit config, then the env var,

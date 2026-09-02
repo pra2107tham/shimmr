@@ -25,6 +25,8 @@ See [`docs/product-overview.html`](docs/product-overview.html) for the visual ve
 
 ```bash
 make build            # one static binary at bin/shimmr, no dependencies
+                      # add ENDPOINT=https://<ref>.supabase.co/functions to
+                      # point a release at the backend; empty = fully offline
 make check            # gofmt, go vet, go test
 make smoke            # end-to-end: gate, proxy, metering, privacy
 make dist             # macOS / Linux / Windows binaries into dist/
@@ -60,6 +62,9 @@ The engine binary is found via `engine_path` in `~/.shimmr/config.json`, the
 Usage stays on the machine unless an `endpoint` is configured, and
 `shimmr sync --show` prints the payload in full before anything is sent.
 
+The backend is driven from this repo too — `make db-reset`, `make db-test`,
+`make db-query`, `make deploy`. See [`supabase/README.md`](supabase/README.md).
+
 CI runs all of it on every push and pull request — unit tests with `-race` on
 Linux, macOS and Windows, a cross-compile of all five targets with a check that
 the binary is genuinely static, and the end-to-end smoke test.
@@ -78,6 +83,7 @@ the binary is genuinely static, and the end-to-end smoke test.
 | [`docs/decisions/`](docs/decisions/) | ADRs — 0004 and 0005 carry the product decisions |
 | [`docs/product-overview.html`](docs/product-overview.html) | Visual overview: what it is, what's in it, the free/paid boundary |
 | [`docs/user-journey.html`](docs/user-journey.html) | Nine moments from landing page to paid — what we offer at each, and where we lose people |
+| [`supabase/README.md`](supabase/README.md) | The backend: schema, deploy steps, and what it does about security |
 
 ## The three things worth knowing before reading anything else
 

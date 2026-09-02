@@ -94,18 +94,19 @@ func cmdSignup(args []string) error {
 			"  Use --force to replace it", existing.Email, existing.Org)
 	}
 
-	in := bufio.NewReader(os.Stdin)
-	if *email == "" {
-		*email = prompt(in, "Work email")
-	}
-	if *org == "" {
-		*org = prompt(in, "Organisation")
-	}
-	if *team == "" {
-		*team = prompt(in, "Team (optional, press enter to skip)")
+	// Only prompt when a person is actually there. Piped or scripted input
+	// must fail with a message rather than block forever on a read.
+	if (*email == "" || *org == "") && interactive() {
+		in := bufio.NewReader(os.Stdin)
+		// && short-circuits, so end-of-input on any answer stops the rest
+		// rather than printing labels nobody is there to read.
+		_ = ask(in, "Work email", email) &&
+			ask(in, "Organisation", org) &&
+			ask(in, "Team (optional, press enter to skip)", team)
 	}
 	if *email == "" || *org == "" {
-		return errors.New("email and organisation are both required")
+		return errors.New("email and organisation are both required\n" +
+			"  shimmr signup --email you@company.com --org \"Your Co\"")
 	}
 	if !strings.Contains(*email, "@") {
 		return fmt.Errorf("%q does not look like an email address", *email)
@@ -130,9 +131,9 @@ func cmdSignup(args []string) error {
 		CreatedAt:  time.Now().UTC(),
 	}
 
-	if c.Endpoint != "" {
-		if err := register(c); err != nil {
-			fmt.Printf("  Could not reach %s (%v)\n", c.Endpoint, err)
+	if endpoint := c.ResolveEndpoint(); endpoint != "" {
+		if err := register(c, endpoint); err != nil {
+			fmt.Printf("  Could not reach %s (%v)\n", endpoint, err)
 			fmt.Println("  Saved locally — run `shimmr sync` later to register.")
 		} else {
 			c.Synced = true
@@ -153,10 +154,25 @@ func cmdSignup(args []string) error {
 	return nil
 }
 
-func prompt(r *bufio.Reader, label string) string {
+// interactive reports whether stdin is a terminal a person can type into.
+func interactive() bool {
+	st, err := os.Stdin.Stat()
+	return err == nil && st.Mode()&os.ModeCharDevice != 0
+}
+
+// ask fills dst if it is empty, and reports whether input is still readable.
+func ask(r *bufio.Reader, label string, dst *string) bool {
+	if *dst != "" {
+		return true
+	}
 	fmt.Printf("%s: ", label)
-	s, _ := r.ReadString('\n')
-	return strings.TrimSpace(s)
+	line, err := r.ReadString('\n')
+	*dst = strings.TrimSpace(line)
+	if err != nil {
+		fmt.Println()
+		return false
+	}
+	return true
 }
 
 // ---- init ----
@@ -210,9 +226,15 @@ func cmdInit(args []string) error {
 		fmt.Printf("\nThe entry that would be added:\n\n%s\n", plans[0].Preview)
 		return nil
 	}
-	if !*yes && !confirm() {
-		fmt.Println("Nothing was changed.")
-		return nil
+	if !*yes {
+		if !interactive() {
+			return errors.New("not a terminal, so there is nobody to confirm with.\n" +
+				"  Re-run with --yes to apply, or --dry-run to see the change")
+		}
+		if !confirm() {
+			fmt.Println("Nothing was changed.")
+			return nil
+		}
 	}
 
 	fmt.Println()
@@ -232,9 +254,15 @@ func cmdInit(args []string) error {
 
 func confirm() bool {
 	fmt.Print("\nContinue? [Y/n] ")
-	s, _ := bufio.NewReader(os.Stdin).ReadString('\n')
-	s = strings.ToLower(strings.TrimSpace(s))
-	return s == "" || s == "y" || s == "yes"
+	answer, err := bufio.NewReader(os.Stdin).ReadString('\n')
+	if err != nil && answer == "" {
+		// No answer is not consent. Anything that reaches here unattended
+		// leaves the user's config untouched.
+		fmt.Println()
+		return false
+	}
+	answer = strings.ToLower(strings.TrimSpace(answer))
+	return answer == "" || answer == "y" || answer == "yes"
 }
 
 // ---- serve ----
@@ -395,10 +423,10 @@ func cmdWhoami() error {
 	} else {
 		fmt.Printf("  Connected to   nothing yet — run `shimmr init`\n")
 	}
-	if c.Endpoint == "" {
+	if endpoint := c.ResolveEndpoint(); endpoint == "" {
 		fmt.Printf("  Usage sharing  off (no endpoint configured)\n")
 	} else {
-		fmt.Printf("  Usage sharing  %s\n", c.Endpoint)
+		fmt.Printf("  Usage sharing  %s\n", endpoint)
 	}
 	return nil
 }
@@ -441,26 +469,27 @@ func cmdSync(args []string) error {
 		"sent_at": time.Now().UTC(),
 	}
 
-	if *show || c.Endpoint == "" {
+	endpoint := c.ResolveEndpoint()
+	if *show || endpoint == "" {
 		b, _ := json.MarshalIndent(payload, "", "  ")
 		fmt.Println("This is the entire payload. No code, no paths, no repo names:")
 		fmt.Println()
 		fmt.Println(string(b))
-		if c.Endpoint == "" && !*show {
+		if endpoint == "" && !*show {
 			fmt.Println("\nNo endpoint configured, so nothing was sent.")
 		}
 		return nil
 	}
 
-	if err := post(c, c.Endpoint+"/v1/usage", payload); err != nil {
+	if err := post(c, endpoint+"/v1/usage", payload); err != nil {
 		return err
 	}
 	fmt.Println("Sent.")
 	return nil
 }
 
-func register(c *config.Config) error {
-	return post(c, c.Endpoint+"/v1/signup", map[string]any{
+func register(c *config.Config, endpoint string) error {
+	return post(c, endpoint+"/v1/signup", map[string]any{
 		"user_id":    c.UserID,
 		"email":      c.Email,
 		"org":        c.Org,
