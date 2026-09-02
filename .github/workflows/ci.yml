@@ -72,6 +72,27 @@ jobs:
           path: dist/
           retention-days: 14
 
+  edge-functions:
+    name: edge functions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: fmt
+        run: deno fmt --check supabase/functions
+
+      - name: lint
+        run: deno lint supabase/functions
+
+      # Type-checks against the real supabase-js types, so a wrong column name
+      # or a bad client call fails here rather than in production.
+      - name: type check
+        run: deno check supabase/functions/signup/index.ts supabase/functions/usage/index.ts
+
   smoke:
     name: end-to-end
     runs-on: ubuntu-latest

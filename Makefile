@@ -1,6 +1,12 @@
 BINARY := shimmr
 VERSION := 0.1.0
-LDFLAGS := -s -w
+
+# Where released binaries send signups and usage. Empty means a fully offline
+# build that talks to nobody — that is the default, on purpose.
+#   make build ENDPOINT=https://<ref>.supabase.co/functions
+ENDPOINT ?=
+ENDPOINT_PKG := github.com/pra2107tham/shimmr/internal/config.DefaultEndpoint
+LDFLAGS := -s -w -X $(ENDPOINT_PKG)=$(ENDPOINT)
 PLATFORMS := darwin/arm64 darwin/amd64 linux/amd64 linux/arm64 windows/amd64
 
 .PHONY: build test race fmt vet check smoke install dist clean
