@@ -21,15 +21,34 @@ work.
 
 ## Deploy
 
+CI does this automatically when backend code lands on `main`
+(`.github/workflows/deploy.yml`). By hand:
+
 ```bash
-supabase link --project-ref <your-project-ref>
-supabase db push                       # creates the tables, views and RLS
-supabase functions deploy signup
-supabase functions deploy usage
+make deploy          # db push + both functions
 ```
 
-`SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are injected into Edge Functions
-automatically — you do not set them yourself.
+### Repository secrets
+
+Three, under **Settings → Secrets and variables → Actions**:
+
+| Secret | What it is | Where to get it |
+|---|---|---|
+| `SUPABASE_ACCESS_TOKEN` | Your personal CLI token | Account → Access Tokens |
+| `SUPABASE_PROJECT_REF` | The `abcdefgh` in `abcdefgh.supabase.co` | Project settings → General |
+| `SUPABASE_DB_PASSWORD` | Database password | Project settings → Database |
+
+Repo-level secrets are the right scope here: they are not exposed to pull
+requests from forks, and the deploy job is the only thing that reads them.
+
+**`SUPABASE_SERVICE_ROLE_KEY` is deliberately not on that list.** Supabase
+injects it into Edge Functions at runtime, along with `SUPABASE_URL`. It never
+needs to sit in GitHub, and it should never be pasted into a chat, a commit, or
+an issue — it bypasses every row-level security rule in this schema.
+
+The deploy job ends by curling both endpoints: a GET must return 405, and a
+POST to `usage` without a token must return 401. A deploy that leaves `usage`
+answering 200 to an anonymous request fails the run rather than going live.
 
 Then build a client that points at it:
 
@@ -39,6 +58,57 @@ make build ENDPOINT=https://<project-ref>.supabase.co/functions
 
 Leaving `ENDPOINT` empty produces a fully offline binary that talks to nobody.
 That is the default.
+
+## Working on it locally
+
+Everything is driveable from this repo. No dashboard needed.
+
+```bash
+make db-start        # local Postgres + Edge runtime + Studio (needs Docker)
+make db-reset        # rebuild from migrations, then apply seed.sql
+make db-test         # assert the schema behaves
+make db-query        # run every saved query in supabase/queries/
+make db-query Q=01   # just that one
+make functions-serve # serve the Edge Functions against the local stack
+make backend-check   # deno fmt, lint and type check
+```
+
+`make db-test` and `make db-query` take a `PGURL`, so they work against any
+Postgres:
+
+```bash
+make db-test PGURL="postgresql://postgres:postgres@localhost:5432/postgres"
+```
+
+### What lives where
+
+| Path | Purpose |
+|---|---|
+| `migrations/` | The schema. The only way it ever changes. |
+| `seed.sql` | Local development data — two orgs, three people, a fortnight of usage. |
+| `tests/schema_test.sql` | Assertions on uniqueness, cascades, constraints, both views' maths, and RLS. |
+| `queries/` | The things you would otherwise click through the dashboard for. |
+| `functions/` | The two endpoints. |
+
+### Changing the schema
+
+Never edit an applied migration. Add a new one:
+
+```bash
+supabase migration new add_whatever
+# edit the generated file, then:
+make db-reset && make db-test
+```
+
+CI applies every migration in order to a clean Postgres and runs the schema
+tests on every push, so a broken migration fails before it reaches the project.
+
+### On ORMs
+
+There isn't one, deliberately. Nothing in the Go client touches Postgres — it
+only speaks to the two Edge Functions, and those use `supabase-js`. An ORM here
+would be a layer with no caller. If a dashboard later needs typed queries, that
+is the moment to add one, against the tables as they exist then.
 
 ## Verify it end to end
 

@@ -62,6 +62,9 @@ The engine binary is found via `engine_path` in `~/.shimmr/config.json`, the
 Usage stays on the machine unless an `endpoint` is configured, and
 `shimmr sync --show` prints the payload in full before anything is sent.
 
+The backend is driven from this repo too — `make db-reset`, `make db-test`,
+`make db-query`, `make deploy`. See [`supabase/README.md`](supabase/README.md).
+
 CI runs all of it on every push and pull request — unit tests with `-race` on
 Linux, macOS and Windows, a cross-compile of all five targets with a check that
 the binary is genuinely static, and the end-to-end smoke test.

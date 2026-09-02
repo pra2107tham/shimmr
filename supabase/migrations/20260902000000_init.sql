@@ -99,7 +99,9 @@ select distinct on (s.install_id)
   s.by_tool,
   s.sent_at
 from usage_snapshots s
-order by s.install_id, s.received_at desc;
+-- id breaks the tie: received_at defaults to now(), which is transaction time,
+-- so two snapshots written in one transaction would otherwise order arbitrarily.
+order by s.install_id, s.received_at desc, s.id desc;
 
 -- What a sales conversation actually needs: per org, how many people, how much
 -- code we covered, how many questions we answered.
@@ -138,5 +140,17 @@ alter view org_totals      set (security_invoker = on);
 
 -- The anon and authenticated roles get nothing at all for now. Being explicit
 -- here means a future `grant` has to be a deliberate act.
-revoke all on orgs, users, installs, usage_snapshots from anon, authenticated;
-revoke all on install_current, org_totals from anon, authenticated;
+--
+-- Guarded so this migration also runs on a plain Postgres, where those roles do
+-- not exist — that is how CI verifies the schema without a Supabase instance.
+do $$
+begin
+  if exists (select 1 from pg_roles where rolname = 'anon') then
+    revoke all on orgs, users, installs, usage_snapshots from anon;
+    revoke all on install_current, org_totals from anon;
+  end if;
+  if exists (select 1 from pg_roles where rolname = 'authenticated') then
+    revoke all on orgs, users, installs, usage_snapshots from authenticated;
+    revoke all on install_current, org_totals from authenticated;
+  end if;
+end $$;

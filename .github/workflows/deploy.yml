@@ -1,0 +1,91 @@
+name: Deploy backend
+
+# Applies migrations and deploys the Edge Functions when backend code lands on
+# main. Manual runs are allowed so a deploy can be retried without an empty
+# commit.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "supabase/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: check secrets are set
+        env:
+          ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          missing=""
+          [ -n "$ACCESS_TOKEN" ] || missing="$missing SUPABASE_ACCESS_TOKEN"
+          [ -n "$PROJECT_REF" ]  || missing="$missing SUPABASE_PROJECT_REF"
+          [ -n "$DB_PASSWORD" ]  || missing="$missing SUPABASE_DB_PASSWORD"
+          if [ -n "$missing" ]; then
+            echo "Missing repository secrets:$missing" >&2
+            echo "Add them under Settings → Secrets and variables → Actions." >&2
+            exit 1
+          fi
+
+      - name: link project
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+
+      # Prints what would change before changing it, so the run log is a record
+      # of every migration ever applied.
+      - name: pending migrations
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase migration list --linked
+
+      - name: apply migrations
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase db push --linked
+
+      - name: deploy functions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          supabase functions deploy signup --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+          supabase functions deploy usage  --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+
+      - name: smoke the deployed endpoints
+        run: |
+          BASE="https://${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co/functions/v1"
+
+          # A GET must be refused with 405 — proves the function is live and
+          # that the JWT gateway is not intercepting our own auth.
+          for fn in signup usage; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$BASE/$fn")
+            echo "GET /$fn -> $code"
+            [ "$code" = "405" ] || { echo "expected 405 from $fn" >&2; exit 1; }
+          done
+
+          # usage without a token must be 401, never 200.
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
+            -H 'content-type: application/json' -d '{}' "$BASE/usage")
+          echo "POST /usage with no token -> $code"
+          [ "$code" = "401" ] || { echo "expected 401, got $code" >&2; exit 1; }

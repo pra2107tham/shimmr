@@ -93,6 +93,52 @@ jobs:
       - name: type check
         run: deno check supabase/functions/signup/index.ts supabase/functions/usage/index.ts
 
+  database:
+    name: schema
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGURL: postgresql://postgres:postgres@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+
+      # Applies the real migration to a real Postgres, then asserts the schema
+      # behaves: uniqueness, cascades, the check constraint, both views' maths,
+      # and that RLS is on with no policies.
+      - name: apply migrations
+        run: |
+          for f in supabase/migrations/*.sql; do
+            echo "-- $f"
+            psql "$PGURL" -v ON_ERROR_STOP=1 -q -f "$f"
+          done
+
+      - name: schema tests
+        run: psql "$PGURL" -v ON_ERROR_STOP=1 -f supabase/tests/schema_test.sql
+
+      # The seed has to keep working too, or `supabase db reset` breaks for
+      # everyone the first time someone runs it.
+      - name: seed loads
+        run: |
+          psql "$PGURL" -v ON_ERROR_STOP=1 -q -f supabase/seed.sql
+          psql "$PGURL" -v ON_ERROR_STOP=1 -c "select count(*) as orgs from org_totals;"
+
+      - name: inspection queries run
+        run: |
+          for q in supabase/queries/*.sql; do
+            echo "-- $q"
+            psql "$PGURL" -v ON_ERROR_STOP=1 -q -f "$q" > /dev/null
+          done
+
   smoke:
     name: end-to-end
     runs-on: ubuntu-latest
