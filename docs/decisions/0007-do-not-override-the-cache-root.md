@@ -16,7 +16,7 @@ Phase 0 tested it. Two engine instances, **identical build**, run concurrently:
 
 | Setup | Result |
 |---|---|
-| Same `CBM_CACHE_DIR` | Both start. 17 tools each. |
+| Same `CBM_CACHE_DIR` | Both start. 17 tools each.[^tools] |
 | Different `CBM_CACHE_DIR` | **One fails to start**, exit 1 |
 
 The failure is explicit:
@@ -68,3 +68,7 @@ is now the mitigation, not cache separation. Tracked as Q10.
 - **Bundling a private copy of the engine under a different name.** Same
   outcome: the conflict is keyed on the account-wide daemon, not the path of the
   executable.
+
+[^tools]: 17 because that experiment used an engine built from upstream `main`.
+    The release we bundle has 15. What the experiment established — that two
+    differing builds refuse to share an OS account — is unaffected by the count.

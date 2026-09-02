@@ -206,7 +206,8 @@ for p in darwin-arm64 darwin-amd64 linux-amd64 linux-arm64 windows-amd64; do
   url=$(python3 scripts/engine_manifest.py url "$goos" "$goarch")
   sha=$(python3 scripts/engine_manifest.py sha256 "$goos" "$goarch")
   member=$(python3 scripts/engine_manifest.py archive_member "$goos" "$goarch")
-  if [ -n "$url" ] && [ ${#sha} -eq 64 ] && [ -n "$member" ]; then
+  count=$(python3 scripts/engine_manifest.py tool_count "$goos" "$goarch")
+  if [ -n "$url" ] && [ ${#sha} -eq 64 ] && [ -n "$member" ] && [ -n "$count" ]; then
     ok "$p is pinned"
   else
     bad "$p is pinned"
