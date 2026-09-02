@@ -154,6 +154,17 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      # Packaging is what turns a build into the file customers download, and
+      # it has four ways to go wrong quietly: the engine arrives as an archive,
+      # the member has to be lifted out of it, the checksum covers the archive
+      # rather than the binary, and the engine's own notices have to come along.
+      # This drives all of it against a synthetic release, so it needs no
+      # network and no 300 MB download.
+      - name: packaging
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: bash scripts/package_test.sh
+
       # A stub stands in for the engine. What is under test is the installer —
       # download, checksum, extract, layout, and whether the installed binary
       # can find the engine beside it. The real engine is 285 MB and adds

@@ -2,25 +2,49 @@
   "_comment": [
     "The indexing engine release Shimmr bundles.",
     "",
-    "These must point at the ENGINE PROJECT'S OWN published release artifacts,",
-    "not at a binary we built ourselves. A build we produce has a different",
-    "build fingerprint, and the engine refuses to run two differing builds for",
-    "one OS account (ADR 0007) — so a self-built bundle would fail to start for",
-    "any customer who already runs the engine directly.",
+    "These point at the ENGINE PROJECT'S OWN published release artifacts, never",
+    "at a binary we built. A build we produce has a different build fingerprint,",
+    "and the engine refuses to run two differing builds for one OS account",
+    "(ADR 0007) — a self-built bundle would fail to start for any customer who",
+    "already runs the engine directly.",
     "",
-    "Bumping the engine is therefore a deliberate act: update version, update",
-    "every sha256, and note the change in docs/internal/ATTRIBUTION.md.",
+    "Linux uses the -portable asset: the engine's own build script documents",
+    "STATIC=1 as a 'fully static portable build (Alpine/musl leg)', and its own",
+    "installer resolves the portable asset on Linux. A static binary is what",
+    "survives being installed across arbitrary distributions.",
     "",
-    "Empty values are intentional and make the release job fail loudly rather",
-    "than ship something unverified."
+    "macOS and Windows publish no portable variant, so the plain asset is the",
+    "only one. The '-ui-' assets are byte-identical aliases of these, not",
+    "separate builds — same checksums.",
+    "",
+    "Checksums are as published by GitHub on the release assets.",
+    "",
+    "Bumping the engine is deliberate: update version, update every sha256, and",
+    "note it in docs/internal/ATTRIBUTION.md."
   ],
-  "version": "",
+  "version": "v0.10.8",
   "source_commit": "5fbab7bb7332bd06aaa880653ddfb2696e648f90",
+  "archive_member": "codebase-memory-mcp",
   "platforms": {
-    "darwin-arm64":  { "url": "", "sha256": "" },
-    "darwin-amd64":  { "url": "", "sha256": "" },
-    "linux-amd64":   { "url": "", "sha256": "" },
-    "linux-arm64":   { "url": "", "sha256": "" },
-    "windows-amd64": { "url": "", "sha256": "" }
+    "darwin-arm64": {
+      "url": "https://github.com/DeusData/codebase-memory-mcp/releases/download/v0.10.8/codebase-memory-mcp-darwin-arm64.tar.gz",
+      "sha256": "9bd840dfb3ec7eaef4f310382057adaa5b0e904df883104d03ffcf39836afd07"
+    },
+    "darwin-amd64": {
+      "url": "https://github.com/DeusData/codebase-memory-mcp/releases/download/v0.10.8/codebase-memory-mcp-darwin-amd64.tar.gz",
+      "sha256": "2b193085410af3801634a522f4b17dcd6699695e015a068393c87817c1d260d4"
+    },
+    "linux-amd64": {
+      "url": "https://github.com/DeusData/codebase-memory-mcp/releases/download/v0.10.8/codebase-memory-mcp-linux-amd64-portable.tar.gz",
+      "sha256": "6eef49652bc0c7820f43114125044d40bf7f4d97c11b2592f6b0f6a307702325"
+    },
+    "linux-arm64": {
+      "url": "https://github.com/DeusData/codebase-memory-mcp/releases/download/v0.10.8/codebase-memory-mcp-linux-arm64-portable.tar.gz",
+      "sha256": "5697d986d9716c913163b4bff7b3a294287f3b843e993bc1ff71e78dcdc21781"
+    },
+    "windows-amd64": {
+      "url": "https://github.com/DeusData/codebase-memory-mcp/releases/download/v0.10.8/codebase-memory-mcp-windows-amd64.zip",
+      "sha256": "b43ad982994c4d829670749e08d3b622a74bb20041fc0a7d02bef6113f81c34d"
+    }
   }
 }

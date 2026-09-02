@@ -37,6 +37,21 @@ EXE=""
 rm -rf "$STAGE"
 mkdir -p "$STAGE/LICENSES"
 
+# A failed package must not leave a half-built stage or a 40 MB engine download
+# behind. Only the finished archive survives this script.
+trap 'rm -rf "$STAGE" "$OUT/.engine-$GOOS-$GOARCH"' EXIT INT TERM
+
+# macOS ships shasum, Linux ships sha256sum, and `make package` has to work on
+# a maintainer's laptop as well as on the release runner.
+if command -v sha256sum >/dev/null 2>&1; then
+  sum256() { sha256sum "$@"; }
+elif command -v shasum >/dev/null 2>&1; then
+  sum256() { shasum -a 256 "$@"; }
+else
+  echo "neither sha256sum nor shasum is available — cannot verify anything" >&2
+  exit 1
+fi
+
 echo "==> $NAME"
 
 # ---------------------------------------------------------------- shimmr
@@ -47,11 +62,15 @@ echo "    shimmr        $(du -h "$STAGE/shimmr$EXE" | cut -f1)"
 
 # ---------------------------------------------------------------- licences
 # Release-blocking: shipping the engine without its copyright notice is a
-# licence violation, not a missing nicety.
+# licence violation, not a missing nicety. The engine's own notices are added
+# below, out of its archive, once that has been verified.
 cp LICENSES/shimmr.txt LICENSES/engine-MIT.txt "$STAGE/LICENSES/"
 grep -q "Copyright (c)" "$STAGE/LICENSES/engine-MIT.txt" \
   || { echo "engine notice has no copyright line — refusing to package" >&2; exit 1; }
-echo "    LICENSES      $(ls "$STAGE/LICENSES" | wc -l | tr -d ' ') notices"
+
+# Whitespace differs between the engine's LICENSE and our copy of it; the terms
+# and the copyright holder are what must not.
+notice_text() { tr -s '[:space:]' ' ' < "$1" | sed 's/^ //; s/ $//'; }
 
 # ---------------------------------------------------------------- engine
 engine_dest="$STAGE/shimmr-engine$EXE"
@@ -70,19 +89,86 @@ else
     echo "Fill in the url and sha256 for the pinned engine release first." >&2
     exit 1
   fi
+  # The engine is published as an archive, so what gets checksummed is the
+  # archive exactly as downloaded — verify first, unpack second. Unpacking
+  # before verifying would mean writing out files nobody has vouched for.
+  member="$(python3 scripts/engine_manifest.py archive_member "$GOOS" "$GOARCH")$EXE"
+  work="$OUT/.engine-$GOOS-$GOARCH"
+  rm -rf "$work"
+  mkdir -p "$work/unpacked"
+
+  case "$url" in
+    *.zip)            engine_archive="$work/engine.zip" ;;
+    *.tar.gz | *.tgz) engine_archive="$work/engine.tar.gz" ;;
+    *)
+      echo "don't know how to unpack $url" >&2
+      echo "packaging/engine.json must point at a .tar.gz or a .zip" >&2
+      exit 1
+      ;;
+  esac
+
   echo "    engine        downloading"
-  curl -fsSL --retry 3 -o "$engine_dest.dl" "$url"
-  got=$(sha256sum "$engine_dest.dl" | cut -d' ' -f1)
+  curl -fsSL --retry 3 -o "$engine_archive" "$url"
+
+  got=$(sum256 "$engine_archive" | cut -d' ' -f1)
   if [ "$got" != "$want" ]; then
     echo "engine checksum mismatch for $GOOS/$GOARCH" >&2
     echo "  expected $want" >&2
     echo "  got      $got" >&2
     exit 1
   fi
-  mv "$engine_dest.dl" "$engine_dest"
+
+  case "$engine_archive" in
+    *.zip)
+      command -v unzip >/dev/null 2>&1 \
+        || { echo "unzip is required to unpack the Windows engine" >&2; exit 1; }
+      unzip -qo "$engine_archive" -d "$work/unpacked"
+      ;;
+    *)
+      tar -xzf "$engine_archive" -C "$work/unpacked"
+      ;;
+  esac
+
+  # The published archives are flat, but searching rather than assuming means a
+  # future release that adds a directory level does not silently ship an
+  # archive with no engine in it.
+  found=$(find "$work/unpacked" -type f -name "$member" | head -1)
+  if [ -z "$found" ]; then
+    echo "no $member inside the engine archive for $GOOS/$GOARCH" >&2
+    echo "contents:" >&2
+    find "$work/unpacked" -maxdepth 2 >&2
+    exit 1
+  fi
+  mv "$found" "$engine_dest"
+
+  # The engine archive ships its own LICENSE and a THIRD_PARTY_NOTICES.md for
+  # the libraries it bundles. Redistributing the binary without those notices
+  # is a licence breach, so they travel in our archive too.
+  upstream_license=$(find "$work/unpacked" -type f -name LICENSE | head -1)
+  if [ -n "$upstream_license" ]; then
+    if [ "$(notice_text "$upstream_license")" != "$(notice_text LICENSES/engine-MIT.txt)" ]; then
+      echo "the engine's LICENSE no longer matches LICENSES/engine-MIT.txt." >&2
+      echo "Update our copy from the pinned release before packaging — shipping" >&2
+      echo "a stale notice is a licence breach, not a formatting difference." >&2
+      exit 1
+    fi
+  else
+    echo "the engine archive carries no LICENSE — refusing to package" >&2
+    exit 1
+  fi
+
+  notices=$(find "$work/unpacked" -type f -name 'THIRD_PARTY_NOTICES.md' | head -1)
+  if [ -n "$notices" ]; then
+    cp "$notices" "$STAGE/LICENSES/engine-third-party.md"
+  else
+    echo "the engine archive carries no THIRD_PARTY_NOTICES.md — refusing to package" >&2
+    exit 1
+  fi
+
 fi
 chmod +x "$engine_dest"
 echo "    engine        $(du -h "$engine_dest" | cut -f1)"
+echo "    LICENSES      $(ls "$STAGE/LICENSES" | wc -l | tr -d ' ') notices"
 
 # ---------------------------------------------------------------- readme
 cat > "$STAGE/README.txt" <<EOF
@@ -119,5 +205,5 @@ else
 fi
 rm -rf "$STAGE"
 
-( cd "$OUT" && sha256sum "$(basename "$archive")" > "$(basename "$archive").sha256" )
+( cd "$OUT" && sum256 "$(basename "$archive")" > "$(basename "$archive").sha256" )
 echo "    archive       $(du -h "$archive" | cut -f1)  $(basename "$archive")"
