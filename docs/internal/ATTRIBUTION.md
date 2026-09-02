@@ -12,10 +12,10 @@
 | Project | `codebase-memory-mcp` |
 | Author / copyright holder | DeusData |
 | Repository | `https://github.com/DeusData/codebase-memory-mcp` |
-| Licence | MIT |
+| Licence | MIT — re-confirmed on the pinned commit, not just on `main` |
 | Copyright line | `Copyright (c) 2025 DeusData` |
-| Pinned commit | **[VERIFY-AT-FORK]** — record the SHA here in Phase 0 |
-| Artifact SHA-256 | **[VERIFY-AT-FORK]** — record per platform in Phase 0 |
+| Pinned commit | `5fbab7bb7332bd06aaa880653ddfb2696e648f90` (2026-09-01) |
+| Artifact SHA-256 | **[OPEN]** — release assets are not reachable from the dev sandbox; record per platform when the installer is built |
 
 ## What MIT actually requires of us
 

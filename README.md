@@ -38,6 +38,7 @@ Then, as a user would:
 shimmr signup --email you@company.com --org "Your Co" --team Platform
 shimmr init --dry-run     # see exactly which agent config files would change
 shimmr init               # apply, after confirming
+shimmr doctor             # check the whole setup actually works here
 shimmr stats              # what your agents used, and how much code we covered
 shimmr sync --show        # print the exact payload that would ever be sent
 ```

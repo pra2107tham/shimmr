@@ -36,32 +36,84 @@ own documentation or marketing. ADR 0006 says we don't.
 
 ## 2. The real tool surface
 
-The PRD says "14 MCP tools" and names 11. The README's tables list **14**, the
-README's prose claims **15**, and two further tool names appear elsewhere in the
-document. The actual set:
+**Verified from source at the pinned commit**, not from README prose: the table
+`static const tool_def_t TOOLS[]` in `src/mcp/mcp.c` is the registry that
+`tools/list` is built from.
 
-**Indexing** — `index_repository`, `index_status`, `list_projects`, `delete_project`
+**17 tools:**
 
-**Querying** — `search_graph`, `trace_path` (alias `trace_call_path`),
-`get_code_snippet`, `get_architecture`, `search_code`, `detect_changes`,
-`query_graph` (read-only openCypher subset), `get_graph_schema`, `manage_adr`,
-`ingest_traces`
+| | | |
+|---|---|---|
+| `index_repository` | `search_graph` | `query_graph` |
+| `trace_path` | `get_code_snippet` | `get_file_outline` |
+| `get_graph_schema` | `compare_graphs` | `get_architecture` |
+| `search_code` | `list_projects` | `delete_project` |
+| `index_status` | `check_index_coverage` | `detect_changes` |
+| `manage_adr` | `ingest_traces` | |
 
-**Named outside the tables** — `semantic_query`, `check_index_coverage`
+Every earlier count was wrong, including the vendor's own README, which says 15.
 
-That is 16 candidate names against a vendor claim of 15, so at least one is an
-alias or not a distinct MCP tool. **[VERIFY-AT-FORK]** Do not guess: run the
-binary and enumerate `tools/list` over stdio. The allow-list in
-`docs/03-tiers-and-gating.md` is exactly as correct as that enumeration.
+### Three things this corrects
+
+**`semantic_query` is not a tool.** It is a *property of `search_graph`'s input
+schema* — an array of keywords that triggers vector cosine search alongside the
+BM25 and regex modes. Our tier map listed it as a separately gateable tool; it
+cannot be gated, because gating it would mean rewriting `search_graph`'s
+arguments. Semantic search is reached through `search_graph`, full stop.
+
+**`get_file_outline` and `compare_graphs` exist** and had never appeared in any
+of our documents.
+
+**`trace_call_path` is not a callable alias.** It is the internal C handler name
+(`handle_trace_call_path`) behind the `trace_path` tool. Nothing needs to gate
+it, and nothing should expect it to appear in `tools/list`.
+
+### The engine already filters its own tools
+
+`tools/list` is rendered by `cbm_mcp_tools_list_page(srv->tool_profile, …)`, and
+the profile comes from a process-level flag:
+
+```
+--tool-profile=analysis     # allowlisted inspection tools only
+--tool-profile=scout        # a further-restricted surface
+```
+
+`cbm_mcp_tool_profile_t` is `ALL | ANALYSIS | SCOUT`, and a restricted profile
+also refuses the hidden tools at call time, not just in the listing. Unknown
+values fail closed.
+
+This matters for us: **the seam our harness occupies already exists inside the
+engine.** Under ADR 0004 we do not gate anything, so there is no conflict today.
+But if tool restriction is ever wanted, passing a profile flag is cheaper and
+more honest than filtering the listing in the proxy — and if we ever do both,
+the two must not disagree about what is available.
+
+### The MCP surface is wider than tools
+
+The server implements `initialize`, `ping`, `tools/list`, `tools/call`,
+`prompts/list`, `prompts/get`, `resources/list`, `resources/templates/list`,
+and `notifications/cancelled`.
+
+Two **prompts** are published — `explore_codebase` and `review_change_impact` —
+which are MCP prompts, not tools. Our proxy relays all of these untouched, which
+is correct, but note that prompt invocations are not metered: `shimmr stats`
+counts tool calls, and a user who works entirely through prompts would appear
+less active than they are.
+
+### Confirmed correct in our implementation
+
+`index_repository` declares `"required":["repo_path"]`, which is the first key
+`extractRepoPath` looks for. **The coverage measurement works against the real
+engine** — this was the guess most likely to have silently recorded nothing.
 
 ### Corrections to PRD §8
 
 - PRD omits `delete_project`, `get_graph_schema`, `ingest_traces`,
-  `check_index_coverage` entirely.
-- PRD lists "semantic search" as an unnamed Team feature. It is a real tool,
-  `semantic_query`, and the PRD's §7 "local vector index" is **correct** —
-  bundled Nomic `nomic-embed-code` embeddings (768d int8) are compiled into the
-  binary. No API key, no Ollama. This is a genuine asset for the local-only pitch.
+  `check_index_coverage`, `get_file_outline` and `compare_graphs` entirely.
+- PRD lists "semantic search" as an unnamed Team feature. The capability is
+  real and the PRD's §7 "local vector index" is **correct** — bundled Nomic
+  `nomic-embed-code` embeddings are compiled into the binary, no API key. But it
+  is not a separate tool, so it was never separately gateable. See §2.
 - `get_graph_schema` is documented as **"Run this first."** Gating it, as the PRD's
   tier split implicitly does, breaks the vendor's own recommended agent workflow
   for every free user. See §3 of the tiers doc.
@@ -98,12 +150,17 @@ developer already runs the engine directly — plausible for exactly our early-a
 audience — one of the two breaks. This is a direct threat to the PRD §12 metric
 "under 10 minutes to first index, zero support ticket."
 
-Mitigations, in preference order: wrap the **unmodified upstream binary** (PRD §13
-already leans this way, and this finding is a strong second argument for it); set a
-distinct cache root; detect an existing engine install during onboarding and say
-something honest about it. **[VERIFY-AT-FORK]** — confirm whether a distinct cache
-root alone is sufficient to avoid the barrier, or whether the build identity check
-is independent of it.
+**Phase 0 tested this and half of it was wrong.** Two instances of the *same*
+build, run concurrently: sharing a cache root, both start; with different cache
+roots, one fails outright with `reason: "cache_root"`. So a distinct cache root
+does not avoid the barrier — it *is* a barrier, on its own, even when the builds
+match. See [ADR 0007](decisions/0007-do-not-override-the-cache-root.md); Shimmr
+never sets `CBM_CACHE_DIR`.
+
+What remains true: wrap the **unmodified upstream binary** (PRD §13 leans this
+way already), and detect an existing engine install during onboarding so a
+version mismatch is explained rather than experienced. That detection is now the
+whole mitigation, tracked as Q10.
 
 ### 3.3 The "only network call" claim in PRD §9 is not yet true
 

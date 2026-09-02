@@ -38,6 +38,12 @@ type Event struct {
 	Files int    `json:"files,omitempty"`
 	Lines int    `json:"lines,omitempty"`
 	Bytes int64  `json:"bytes,omitempty"`
+
+	// Graph size as the engine itself reported it. Files and lines are what we
+	// measured on disk; these are what the engine actually mapped, and the two
+	// legitimately differ because the engine applies its own ignore rules.
+	Nodes int `json:"nodes,omitempty"`
+	Edges int `json:"edges,omitempty"`
 }
 
 type Logger struct {
@@ -138,6 +144,8 @@ type Summary struct {
 	Files      int
 	Lines      int
 	Bytes      int64
+	Nodes      int
+	Edges      int
 	First      time.Time
 	Last       time.Time
 	TokensSave int64
@@ -218,6 +226,8 @@ func Summarise(events []Event, since time.Time) Summary {
 		s.Files += e.Files
 		s.Lines += e.Lines
 		s.Bytes += e.Bytes
+		s.Nodes += e.Nodes
+		s.Edges += e.Edges
 	}
 	for t, n := range byTool {
 		s.ByTool = append(s.ByTool, ToolCount{Tool: t, Calls: n})

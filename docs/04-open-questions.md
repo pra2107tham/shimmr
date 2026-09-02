@@ -91,11 +91,17 @@ original artifact through untouched.
 published SHA-256 at install time, and keep upstream's LICENSE and checksums
 visible in our install tree. See `decisions/0001`.
 
-## Q7 — Coexistence with an existing upstream install 🟠
+## Q7 — Coexistence with an existing upstream install ✅ ANSWERED
 
 Per `01-engine-findings.md` §3.2, an already-installed copy of the engine may
 conflict. Needs an empirical test: install both, see what actually breaks, and whether a
 distinct cache root is enough.
+
+> **Answered in Phase 0, and the assumed fix was backwards.** Concurrency inside
+> one cache root works; *differing* cache roots fail, even for identical builds.
+> Shimmr therefore never sets `CBM_CACHE_DIR` — [ADR 0007](decisions/0007-do-not-override-the-cache-root.md).
+> What is still untested is a genuine *version* mismatch between two builds
+> sharing a root; that is Q10.
 
 **Recommendation:** test this early — it is a direct threat to the "10 minutes,
 zero support ticket" metric, and it is much cheaper to find now than in a design
@@ -111,10 +117,34 @@ Not naming it in prose while its name sits in `~/.cache/` is not a coherent post
 and owning our own cache root and config surface is worth doing on product grounds
 regardless.
 
-**Recommendation:** have Shimmr set the engine's cache root to a Shimmr-owned path
-and wrap its environment variables behind `SHIMMR_*` equivalents. **[VERIFY]** — this
-interacts with the coexistence problem in Q7, where the engine rejects a differing
-cache root while another of its processes is active. Test both together in Phase 0.
+> **The cache-root half of this is now refused.** Phase 0 proved a differing cache
+> root breaks startup (ADR 0007), so the fix cannot be to relocate it. Wrapping the
+> environment variables behind `SHIMMR_*` equivalents is still open and harmless;
+> the path stays where the engine puts it.
+
+## Q10 — What happens when the customer's engine version differs from ours? ✅ ANSWERED
+
+Phase 0 disproved the cache-root theory but only tested *identical* builds. The
+engine treats version, build, ABI and cache root as four separate conditions, so
+a customer running a different engine version than the one Shimmr bundles may
+still hit a startup conflict — now unavoidable, since ADR 0007 rules out
+separating the cache.
+
+> **Built.** `shimmr init` now probes the engine after configuring the agents, and
+> `shimmr doctor` does the same on demand. Rather than hunting the filesystem for
+> other copies, both simply start the engine and speak MCP to it — the only
+> honest test of "will this work here" is to try.
+>
+> The engine's two refusals are told apart, because they need different advice: a
+> cache-root conflict is fixed by closing other sessions and leaving
+> `CBM_CACHE_DIR` alone, while a version conflict cannot be fixed that way at all.
+> Anything else — a missing binary, a full disk — is reported as itself rather
+> than mislabelled as a conflict.
+>
+> Verified against the real engine: a second copy holding a different cache root
+> produces `blocked by another copy using different storage`, a plain-language
+> remedy, and exit 1. The engine's own words are kept behind
+> `shimmr doctor --verbose`.
 
 ## Q8 — What does "estimated tokens saved" actually mean? 🟡
 
