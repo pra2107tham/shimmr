@@ -28,7 +28,7 @@ Deno.serve(handler(async (req) => {
   // write usage under someone else's org.
   const { data: install, error: lookupErr } = await db
     .from("installs")
-    .select("id, user_id, revoked_at, users(org_id)")
+    .select("id, user_id, revoked_at")
     .eq("token_hash", await sha256(token))
     .maybeSingle();
 
@@ -39,8 +39,22 @@ Deno.serve(handler(async (req) => {
   if (!install) throw new HttpError(401, "unknown token");
   if (install.revoked_at) throw new HttpError(403, "this install has been revoked");
 
-  const orgID = (install.users as { org_id: string } | null)?.org_id;
-  if (!orgID) throw new HttpError(500, "install is not attached to an organisation");
+  // Deliberately a second query rather than an embedded `users(org_id)` select:
+  // PostgREST types an embedded relation as an array even when the foreign key
+  // makes it one-to-one, so the embedded form only type-checks behind a cast
+  // that would hide real mistakes. One extra round trip, once per sync.
+  const { data: owner, error: ownerErr } = await db
+    .from("users")
+    .select("org_id")
+    .eq("id", install.user_id)
+    .maybeSingle();
+
+  if (ownerErr) {
+    console.error("owner lookup:", ownerErr);
+    throw new HttpError(500, "could not verify the token");
+  }
+  if (!owner) throw new HttpError(500, "install is not attached to an organisation");
+  const orgID = owner.org_id;
 
   const sentAt = typeof body.sent_at === "string" ? new Date(body.sent_at) : new Date();
   if (Number.isNaN(sentAt.getTime())) {
