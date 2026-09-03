@@ -70,7 +70,9 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           supabase functions deploy signup --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+          supabase functions deploy login  --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
           supabase functions deploy usage  --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+          supabase functions deploy events --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
 
       - name: smoke the deployed endpoints
         run: |
@@ -78,14 +80,25 @@ jobs:
 
           # A GET must be refused with 405 — proves the function is live and
           # that the JWT gateway is not intercepting our own auth.
-          for fn in signup usage; do
+          for fn in signup login usage events; do
             code=$(curl -s -o /dev/null -w '%{http_code}' "$BASE/$fn")
             echo "GET /$fn -> $code"
             [ "$code" = "405" ] || { echo "expected 405 from $fn" >&2; exit 1; }
           done
 
-          # usage without a token must be 401, never 200.
+          # The authenticated endpoints must refuse an anonymous caller. events
+          # is the one that now runs continuously, so an open one would be a
+          # standing invitation to write into anybody's usage.
+          for fn in usage events; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
+              -H 'content-type: application/json' -d '{}' "$BASE/$fn")
+            echo "POST /$fn with no token -> $code"
+            [ "$code" = "401" ] || { echo "expected 401 from $fn, got $code" >&2; exit 1; }
+          done
+
+          # A bad token must be refused too, not just a missing one.
           code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
-            -H 'content-type: application/json' -d '{}' "$BASE/usage")
-          echo "POST /usage with no token -> $code"
-          [ "$code" = "401" ] || { echo "expected 401, got $code" >&2; exit 1; }
+            -H 'content-type: application/json' -H 'authorization: Bearer shm_not_a_real_token' \
+            -d '{"events":[]}' "$BASE/events")
+          echo "POST /events with a bogus token -> $code"
+          [ "$code" = "401" ] || { echo "expected 401 for a bogus token, got $code" >&2; exit 1; }

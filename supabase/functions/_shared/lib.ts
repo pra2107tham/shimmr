@@ -144,6 +144,135 @@ export function cleanByTool(value: unknown): Array<{ tool: string; calls: number
   return out;
 }
 
+/** Largest batch of events one request may carry. */
+export const MAX_EVENTS = 200;
+
+/**
+ * Resolves an install token to the machine, the person, and their org.
+ *
+ * Every authenticated endpoint needs exactly this, and it matters that they all
+ * do it the same way: identity comes from the database keyed by the token, never
+ * from the request body. Otherwise any caller could write under someone else's
+ * organisation.
+ */
+export async function requireInstall(db: SupabaseClient, token: string): Promise<{
+  installID: string;
+  userID: string;
+  orgID: string | null;
+}> {
+  const { data: install, error: lookupErr } = await db
+    .from("installs")
+    .select("id, user_id, revoked_at")
+    .eq("token_hash", await sha256(token))
+    .maybeSingle();
+
+  if (lookupErr) {
+    console.error("install lookup:", lookupErr);
+    throw new HttpError(500, "could not verify the token");
+  }
+  if (!install) throw new HttpError(401, "unknown token");
+  if (install.revoked_at) throw new HttpError(403, "this install has been revoked");
+
+  // Deliberately a second query rather than an embedded `users(org_id)` select:
+  // PostgREST types an embedded relation as an array even when the foreign key
+  // makes it one-to-one, so the embedded form only type-checks behind a cast
+  // that would hide real mistakes. One extra round trip, once per request.
+  const { data: owner, error: ownerErr } = await db
+    .from("users")
+    .select("org_id")
+    .eq("id", install.user_id)
+    .maybeSingle();
+
+  if (ownerErr) {
+    console.error("owner lookup:", ownerErr);
+    throw new HttpError(500, "could not verify the token");
+  }
+  if (!owner) throw new HttpError(500, "install is not attached to a person");
+
+  // org_id is legitimately null: an individual need not name a company.
+  return { installID: install.id, userID: install.user_id, orgID: owner.org_id ?? null };
+}
+
+/** One event as the client sends it, already validated. */
+export interface CleanEvent {
+  event_id: string;
+  kind: "tool_call" | "index";
+  tool: string | null;
+  ok: boolean;
+  dur_ms: number | null;
+  repo: string | null;
+  files: number | null;
+  lines: number | null;
+  bytes: number | null;
+  nodes: number | null;
+  edges: number | null;
+  occurred_at: string;
+}
+
+function optionalCount(value: unknown): number | null {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "number" || !Number.isFinite(value)) return null;
+  const n = Math.floor(value);
+  return n < 0 ? null : n;
+}
+
+/**
+ * Normalises a batch of events, dropping anything malformed rather than
+ * storing it. A client bug must not be able to put arbitrary JSON in our
+ * database, and must not be able to put a path in it either:
+ *
+ *   - `repo` is required to look like the salted hash it is meant to be. A
+ *     path, a repository name, or anything else with a slash or a dot in it
+ *     is discarded. This is the one field a client mistake could turn into a
+ *     privacy incident, so it is checked here as well as at the source.
+ *   - There is no field for code, arguments, or symbol names, here or in the
+ *     table, so there is nothing to filter.
+ */
+export function cleanEvents(value: unknown): CleanEvent[] {
+  if (!Array.isArray(value)) throw new HttpError(400, "events must be an array");
+  if (value.length > MAX_EVENTS) {
+    throw new HttpError(413, `too many events (max ${MAX_EVENTS})`);
+  }
+
+  const out: CleanEvent[] = [];
+  for (const entry of value) {
+    if (entry === null || typeof entry !== "object" || Array.isArray(entry)) continue;
+    const row = entry as Record<string, unknown>;
+
+    const eventID = typeof row.id === "string" ? row.id.trim().slice(0, 64) : "";
+    if (!eventID) continue;
+
+    const kind = row.kind === "tool_call" || row.kind === "index" ? row.kind : null;
+    if (!kind) continue;
+
+    const at = typeof row.ts === "string" ? new Date(row.ts) : null;
+    if (!at || Number.isNaN(at.getTime())) continue;
+
+    const tool = typeof row.tool === "string" ? row.tool.trim().slice(0, 100) : "";
+
+    // A repo id is a hex hash and nothing else. Anything that is not one is
+    // dropped, not stored and not corrected.
+    const rawRepo = typeof row.repo === "string" ? row.repo.trim() : "";
+    const repo = /^[0-9a-f]{8,64}$/.test(rawRepo) ? rawRepo : null;
+
+    out.push({
+      event_id: eventID,
+      kind,
+      tool: tool || null,
+      ok: row.ok !== false,
+      dur_ms: optionalCount(row.dur_ms),
+      repo,
+      files: optionalCount(row.files),
+      lines: optionalCount(row.lines),
+      bytes: optionalCount(row.bytes),
+      nodes: optionalCount(row.nodes),
+      edges: optionalCount(row.edges),
+      occurred_at: at.toISOString(),
+    });
+  }
+  return out;
+}
+
 /** A request handler that turns HttpError into a response and logs the rest. */
 export function handler(
   fn: (req: Request) => Promise<Response>,

@@ -14,6 +14,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -25,6 +26,7 @@ import (
 	"github.com/pra2107tham/shimmr/internal/engine"
 	"github.com/pra2107tham/shimmr/internal/licenses"
 	"github.com/pra2107tham/shimmr/internal/proxy"
+	"github.com/pra2107tham/shimmr/internal/report"
 	"github.com/pra2107tham/shimmr/internal/usage"
 )
 
@@ -37,8 +39,10 @@ func main() {
 	}
 	var err error
 	switch os.Args[1] {
-	case "signup", "login":
+	case "signup":
 		err = cmdSignup(os.Args[2:])
+	case "login":
+		err = cmdLogin(os.Args[2:])
 	case "init":
 		err = cmdInit(os.Args[2:])
 	case "serve":
@@ -71,12 +75,13 @@ func main() {
 func usageText() {
 	fmt.Fprint(os.Stderr, `shimmr — codebase context for your AI coding agent
 
-  shimmr signup    create your account and pick your org
+  shimmr signup    create your account (an organisation is optional)
+  shimmr login     add this machine to an account you already have
   shimmr init      connect shimmr to the agents on this machine
   shimmr doctor    check that everything actually works on this machine
   shimmr stats     what your agents used, and how much code we covered
   shimmr whoami    show the account on this machine
-  shimmr sync      send usage counts to your org (only if configured)
+  shimmr sync      send usage totals now (usage also reports as you work)
   shimmr serve     run the MCP server (your agent runs this, not you)
   shimmr licenses  licences of everything shipped with Shimmr
 
@@ -89,7 +94,7 @@ Start with: shimmr signup
 func cmdSignup(args []string) error {
 	fs := flag.NewFlagSet("signup", flag.ExitOnError)
 	email := fs.String("email", "", "your work email")
-	org := fs.String("org", "", "your company or organisation")
+	org := fs.String("org", "", "your company or organisation (optional)")
 	team := fs.String("team", "", "your team within the org (optional)")
 	endpoint := fs.String("endpoint", "", "Shimmr backend base URL (optional)")
 	engine := fs.String("engine", "", "path to the engine binary (optional)")
@@ -105,16 +110,22 @@ func cmdSignup(args []string) error {
 
 	// Only prompt when a person is actually there. Piped or scripted input
 	// must fail with a message rather than block forever on a read.
-	if (*email == "" || *org == "") && interactive() {
+	//
+	// Email is the only thing required. An organisation is asked for but may be
+	// skipped: somebody trying this on a personal project should not have to
+	// invent a company, and making them type one produces junk rows rather than
+	// information.
+	if *email == "" && interactive() {
 		in := bufio.NewReader(os.Stdin)
 		// && short-circuits, so end-of-input on any answer stops the rest
 		// rather than printing labels nobody is there to read.
 		_ = ask(in, "Work email", email) &&
-			ask(in, "Organisation", org) &&
+			ask(in, "Organisation (optional, press enter to skip)", org) &&
 			ask(in, "Team (optional, press enter to skip)", team)
 	}
-	if *email == "" || *org == "" {
-		return errors.New("email and organisation are both required\n" +
+	if *email == "" {
+		return errors.New("an email address is required\n" +
+			"  shimmr signup --email you@company.com\n" +
 			"  shimmr signup --email you@company.com --org \"Your Co\"")
 	}
 	if !strings.Contains(*email, "@") {
@@ -154,11 +165,99 @@ func cmdSignup(args []string) error {
 
 	dir, _ := config.Dir()
 	fmt.Printf("\nWelcome, %s.\n\n", *email)
-	fmt.Printf("  Organisation   %s\n", *org)
+	if *org != "" {
+		fmt.Printf("  Organisation   %s\n", *org)
+	} else {
+		fmt.Printf("  Organisation   none — add one later with `shimmr signup --force --org \"Your Co\"`\n")
+	}
 	if *team != "" {
 		fmt.Printf("  Team           %s\n", *team)
 	}
 	fmt.Printf("  Account        %s\n", filepath.Join(dir, "config.json"))
+	fmt.Printf("  Usage sharing  %s\n", reportingState(c))
+	fmt.Printf("\nNext: shimmr init\n")
+	return nil
+}
+
+// ---- login ----
+
+// cmdLogin attaches this machine to an account that already exists. Signup
+// creates the person; this is how their second laptop joins without becoming a
+// second identity.
+//
+// It is not verified authentication — anyone who knows an address can attach a
+// machine to it. That is exactly the trust model signup already had, since
+// signup upserts on email, so this adds no new exposure. It does not fix it
+// either, which is why the message below says so out loud and why email
+// verification is Q11 in docs/04-open-questions.md.
+func cmdLogin(args []string) error {
+	fs := flag.NewFlagSet("login", flag.ExitOnError)
+	email := fs.String("email", "", "the email you signed up with")
+	endpoint := fs.String("endpoint", "", "Shimmr backend base URL (optional)")
+	engine := fs.String("engine", "", "path to the engine binary (optional)")
+	force := fs.Bool("force", false, "replace the account already on this machine")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	if existing, err := config.Load(); err == nil && !*force {
+		return fmt.Errorf("this machine is already signed in as %s.\n"+
+			"  Use --force to replace it", existing.Email)
+	}
+	if *email == "" && interactive() {
+		_ = ask(bufio.NewReader(os.Stdin), "Work email", email)
+	}
+	if *email == "" {
+		return errors.New("an email address is required\n" +
+			"  shimmr login --email you@company.com")
+	}
+
+	c := &config.Config{Email: strings.TrimSpace(*email), Endpoint: *endpoint, EnginePath: *engine}
+	target := c.ResolveEndpoint()
+	if target == "" {
+		return errors.New("this build has no backend configured, so there is no " +
+			"account to log in to.\n  Run `shimmr signup` to set this machine up locally")
+	}
+
+	// A new machine means a new token: signing in somewhere else must never
+	// need the first machine's credential, and revoking one must not touch the
+	// other.
+	token, err := config.NewToken()
+	if err != nil {
+		return err
+	}
+	userID, err := config.NewUserID()
+	if err != nil {
+		return err
+	}
+	c.Token, c.UserID, c.CreatedAt = token, userID, time.Now().UTC()
+
+	var reply struct {
+		Org  string `json:"org"`
+		Team string `json:"team"`
+	}
+	if err := postJSON(c, target+"/v1/login", map[string]any{
+		"user_id": c.UserID,
+		"email":   c.Email,
+		"token":   c.Token,
+	}, &reply); err != nil {
+		return err
+	}
+	c.Org, c.Team, c.Synced = reply.Org, reply.Team, true
+
+	if err := c.Save(); err != nil {
+		return err
+	}
+	dir, _ := config.Dir()
+	fmt.Printf("\nSigned in as %s.\n\n", c.Email)
+	if c.Org != "" {
+		fmt.Printf("  Organisation   %s\n", c.Org)
+	}
+	if c.Team != "" {
+		fmt.Printf("  Team           %s\n", c.Team)
+	}
+	fmt.Printf("  Account        %s\n", filepath.Join(dir, "config.json"))
+	fmt.Printf("  Usage sharing  %s\n", reportingState(c))
 	fmt.Printf("\nNext: shimmr init\n")
 	return nil
 }
@@ -389,17 +488,66 @@ func cmdServe(args []string) error {
 	}
 	defer log.Close()
 
-	fmt.Fprintf(os.Stderr, "shimmr %s — %s / %s\n", version, c.Org, c.Email)
+	// Live reporting, when this build has somewhere to report to and the
+	// machine has not opted out. Nil when it does not, and every call on a nil
+	// reporter is a no-op, so there is no branch below.
+	var reporter *report.Reporter
+	if c.Reports() {
+		reporter = report.New(report.Options{
+			Endpoint: c.ResolveEndpoint(),
+			Token:    c.Token,
+		})
+	}
+
+	fmt.Fprintf(os.Stderr, "shimmr %s — %s\n", version, describe(c))
+	fmt.Fprintf(os.Stderr, "shimmr: usage reporting %s\n", reportingState(c))
 
 	p := proxy.New(proxy.Options{
 		EnginePath: enginePath,
 		Args:       args,
 		Log:        log,
+		Report:     reporter,
 		UserID:     c.UserID,
 		Org:        c.Org,
 		Team:       c.Team,
 	})
-	return p.Run()
+	err = p.Run()
+
+	// Give the last events a moment to land, then stop waiting. Anything
+	// undelivered is still in the local log and goes with the next session.
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	reporter.Close(ctx)
+	if sent, dropped, _ := reporter.Stats(); dropped > 0 {
+		fmt.Fprintf(os.Stderr, "shimmr: reported %d event(s), dropped %d\n", sent, dropped)
+	}
+	return err
+}
+
+// describe names the account in one line: an org when there is one, the email
+// alone when there is not. Somebody using Shimmr on their own should not see a
+// blank where a company would be.
+func describe(c *config.Config) string {
+	if c.Org == "" {
+		return c.Email
+	}
+	return c.Org + " / " + c.Email
+}
+
+// reportingState says, in one line on stderr, what this server will send. It
+// prints every time `serve` starts because a thing that reports usage should
+// say so where the person running it can see it.
+func reportingState(c *config.Config) string {
+	switch {
+	case c.ResolveEndpoint() == "":
+		return "off (this build has no endpoint — it talks to nobody)"
+	case c.DisableReport:
+		return "off (disable_report is set in your config)"
+	case !c.Reports():
+		return "off (SHIMMR_NO_REPORT is set)"
+	default:
+		return "on — tool names and counts only, to " + c.ResolveEndpoint()
+	}
 }
 
 // ---- stats ----
@@ -510,7 +658,11 @@ func cmdWhoami() error {
 		return err
 	}
 	fmt.Printf("  Email          %s\n", c.Email)
-	fmt.Printf("  Organisation   %s\n", c.Org)
+	if c.Org != "" {
+		fmt.Printf("  Organisation   %s\n", c.Org)
+	} else {
+		fmt.Printf("  Organisation   none\n")
+	}
 	if c.Team != "" {
 		fmt.Printf("  Team           %s\n", c.Team)
 	}
@@ -521,11 +673,12 @@ func cmdWhoami() error {
 	} else {
 		fmt.Printf("  Connected to   nothing yet — run `shimmr init`\n")
 	}
-	if endpoint := c.ResolveEndpoint(); endpoint == "" {
-		fmt.Printf("  Usage sharing  off (no endpoint configured)\n")
-	} else {
-		fmt.Printf("  Usage sharing  %s\n", endpoint)
+	fmt.Printf("  Usage sharing  %s\n", reportingState(c))
+	if c.Reports() {
+		fmt.Printf("                 turn it off with SHIMMR_NO_REPORT=1, or\n")
+		fmt.Printf("                 \"disable_report\": true in config.json\n")
 	}
+	fmt.Printf("\n  See exactly what would be sent:  shimmr sync --show\n")
 	return nil
 }
 
@@ -557,7 +710,7 @@ func cmdSync(args []string) error {
 	payload := map[string]any{
 		"user_id": c.UserID,
 		"email":   c.Email,
-		"org":     c.Org,
+		"org":     c.Org, // may be empty: an organisation is optional
 		"team":    c.Team,
 		"calls":   s.Calls,
 		"repos":   s.Repos,
@@ -598,6 +751,13 @@ func register(c *config.Config, endpoint string) error {
 }
 
 func post(c *config.Config, url string, payload any) error {
+	return postJSON(c, url, payload, nil)
+}
+
+// postJSON sends payload and, when out is non-nil, decodes the reply into it.
+// The server's message is included in an error rather than only its status
+// code: "no account for that email" is the thing the person needs to read.
+func postJSON(c *config.Config, url string, payload, out any) error {
 	b, err := json.Marshal(payload)
 	if err != nil {
 		return err
@@ -609,14 +769,27 @@ func post(c *config.Config, url string, payload any) error {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.Token)
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 15 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, 64*1024))
 	if resp.StatusCode >= 300 {
+		var e struct {
+			Error string `json:"error"`
+		}
+		if json.Unmarshal(body, &e) == nil && e.Error != "" {
+			return fmt.Errorf("%s", e.Error)
+		}
 		return fmt.Errorf("%s returned %s", url, resp.Status)
+	}
+	if out != nil && len(body) > 0 {
+		if err := json.Unmarshal(body, out); err != nil {
+			return fmt.Errorf("could not read the reply from %s: %w", url, err)
+		}
 	}
 	return nil
 }

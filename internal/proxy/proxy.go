@@ -21,13 +21,26 @@ import (
 	"github.com/pra2107tham/shimmr/internal/usage"
 )
 
+// Recorder receives every event the proxy meters. It exists so the proxy can
+// hand events to a live reporter without knowing anything about HTTP, and so
+// tests can watch what would have been sent.
+//
+// Implementations must not block: this is called on the path between an agent
+// and its answer.
+type Recorder interface {
+	Record(usage.Event)
+}
+
 type Options struct {
 	EnginePath string
 	Args       []string
 	Log        *usage.Logger
-	UserID     string
-	Org        string
-	Team       string
+	// Report is optional. Nil means this build reports to nobody, which is the
+	// default and the guarantee a build with no endpoint makes.
+	Report Recorder
+	UserID string
+	Org    string
+	Team   string
 }
 
 // pending is one in-flight tool call, waiting for the engine's response so we
@@ -158,7 +171,7 @@ func (p *Proxy) onResponse(line []byte) {
 	}
 
 	ok2 := len(m.Error) == 0 && !m.Result.IsError
-	p.opt.Log.Write(usage.Event{
+	p.record(usage.Event{
 		Kind:   "tool_call",
 		UserID: p.opt.UserID,
 		Org:    p.opt.Org,
@@ -187,7 +200,7 @@ func (p *Proxy) onResponse(line []byte) {
 			if st.Files == 0 {
 				return
 			}
-			p.opt.Log.Write(usage.Event{
+			p.record(usage.Event{
 				Kind:   "index",
 				UserID: p.opt.UserID,
 				Org:    p.opt.Org,
@@ -201,6 +214,16 @@ func (p *Proxy) onResponse(line []byte) {
 				Edges:  edges,
 			})
 		}(pd.repoPath, nodes, edges)
+	}
+}
+
+// record writes one event to the local log and hands the same completed event
+// to the live reporter. The log is written first and unconditionally: it is
+// the durable record, and reporting is a courier on top of it.
+func (p *Proxy) record(e usage.Event) {
+	written := p.opt.Log.Write(e)
+	if p.opt.Report != nil {
+		p.opt.Report.Record(written)
 	}
 }
 

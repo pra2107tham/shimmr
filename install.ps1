@@ -20,9 +20,11 @@ function Fail {
     exit 1
 }
 
-$repo    = if ($env:SHIMMR_REPO)     { $env:SHIMMR_REPO }     else { 'pra2107tham/shimmr' }
 $version = if ($env:SHIMMR_VERSION)  { $env:SHIMMR_VERSION }  else { 'latest' }
-$baseUrl = if ($env:SHIMMR_BASE_URL) { $env:SHIMMR_BASE_URL } else { "https://github.com/$repo/releases" }
+# Releases are served from object storage rather than from the repository,
+# which is private: GitHub release assets 404 for anyone who is not us. This
+# script is published beside the archives it fetches.
+$baseUrl = if ($env:SHIMMR_BASE_URL) { $env:SHIMMR_BASE_URL } else { 'https://fpxntzwkiepnwsazmaxf.supabase.co/storage/v1/object/public/releases' }
 $prefix  = if ($env:SHIMMR_PREFIX)   { $env:SHIMMR_PREFIX }   else { Join-Path $env:LOCALAPPDATA 'Programs\Shimmr' }
 
 # ------------------------------------------------------------------ platform

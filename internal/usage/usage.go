@@ -23,6 +23,11 @@ import (
 )
 
 type Event struct {
+	// ID is unique per event. It exists so the server can accept the same
+	// event twice without counting it twice: a live report that half-delivered
+	// can simply be sent again, and no client-side ledger of what was
+	// acknowledged is needed.
+	ID     string    `json:"id"`
 	TS     time.Time `json:"ts"`
 	Kind   string    `json:"kind"` // "tool_call" or "index"
 	UserID string    `json:"user_id"`
@@ -98,23 +103,46 @@ func (l *Logger) RepoID(path string) string {
 	return hex.EncodeToString(m.Sum(nil))[:16]
 }
 
-func (l *Logger) Write(e Event) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	if l.broken || l.f == nil {
-		return
+// NewEventID returns a random identifier for one event. It is derived from
+// nothing about the event, so it leaks nothing about it either.
+func NewEventID() string {
+	b := make([]byte, 12)
+	if _, err := rand.Read(b); err != nil {
+		// A duplicate id costs one dropped event at the server, which is a
+		// far better failure than refusing to record anything.
+		return hex.EncodeToString([]byte(time.Now().UTC().Format(time.RFC3339Nano)))
 	}
+	return hex.EncodeToString(b)
+}
+
+// Write appends one event and returns it with its id and timestamp filled in,
+// so the caller can hand the same completed event to a live reporter without
+// the two disagreeing about what happened when.
+//
+// A logger that cannot write still stamps and returns the event: losing the
+// local record must not also cost the live report.
+func (l *Logger) Write(e Event) Event {
 	if e.TS.IsZero() {
 		e.TS = time.Now().UTC()
 	}
+	if e.ID == "" {
+		e.ID = NewEventID()
+	}
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if l.broken || l.f == nil {
+		return e
+	}
 	b, err := json.Marshal(e)
 	if err != nil {
-		return
+		return e
 	}
 	if _, err := l.f.Write(append(b, '\n')); err != nil {
 		fmt.Fprintf(os.Stderr, "shimmr: usage log stopped (%v) — still proxying\n", err)
 		l.broken = true
 	}
+	return e
 }
 
 func (l *Logger) Close() error {

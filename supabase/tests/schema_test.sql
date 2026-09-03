@@ -136,21 +136,161 @@ select assert(
   (select installs from org_totals where slug = 'acme-inc') = 3,
   'org_totals counts installs separately from people');
 
--- Ann's laptop 40 + Ann's desktop 5 + Bob's laptop 91.
+-- Nobody here has reported live yet, so every install falls back to its latest
+-- snapshot: Ann's laptop 40 + Ann's desktop 5 + Bob's laptop 91.
 select assert(
   (select calls from org_totals where slug = 'acme-inc') = 136,
-  'org_totals sums the current snapshot of every install');
+  'org_totals falls back to the latest snapshot when nothing reported live');
 
 -- 5000 + 500 + 300, again from the current snapshot of each install.
 select assert(
   (select lines from org_totals where slug = 'acme-inc') = 5800,
   'org_totals sums lines the same way');
 
+select assert(
+  (select bool_and(source = 'sync') from install_rollup
+   where install_id in ('ann-laptop', 'ann-desktop', 'bob-laptop')),
+  'an install with no events is reported from its sync');
+
 -- An org with nobody in it must appear with zeros, not vanish.
 insert into orgs (name, slug) values ('Empty Co', 'empty-co');
 select assert(
   (select calls from org_totals where slug = 'empty-co') = 0,
   'an org with no usage still shows up, with zeros');
+
+-- ------------------------------------------------------- live events
+
+-- Ann's laptop starts reporting live. The moment it does, the rollup must
+-- prefer those events over her older snapshot — otherwise a machine that
+-- upgraded would keep showing stale numbers forever.
+insert into usage_events
+  (event_id, install_id, user_id, org_id, kind, tool, ok, dur_ms, occurred_at)
+values
+  ('e1', 'ann-laptop', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+   '11111111-1111-1111-1111-111111111111', 'tool_call', 'search_graph', true, 120, now()),
+  ('e2', 'ann-laptop', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+   '11111111-1111-1111-1111-111111111111', 'tool_call', 'search_graph', true, 95, now()),
+  ('e3', 'ann-laptop', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+   '11111111-1111-1111-1111-111111111111', 'tool_call', 'trace_path', false, 4000, now());
+
+select assert(
+  (select calls from install_live where install_id = 'ann-laptop') = 3,
+  'install_live counts tool calls');
+select assert(
+  (select failed from install_live where install_id = 'ann-laptop') = 1,
+  'install_live counts failures separately');
+select assert(
+  (select source from install_rollup where install_id = 'ann-laptop') = 'live',
+  'an install that reports live is read from its events, not its snapshot');
+select assert(
+  (select calls from install_rollup where install_id = 'ann-laptop') = 3,
+  'the live count replaces the snapshot count rather than adding to it');
+
+-- The whole point of event_id: a client that retries a half-delivered flush
+-- must not double count. Same install, same event_id, ignored.
+insert into usage_events
+  (event_id, install_id, user_id, org_id, kind, tool, ok, occurred_at)
+values
+  ('e1', 'ann-laptop', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+   '11111111-1111-1111-1111-111111111111', 'tool_call', 'search_graph', true, now())
+on conflict (install_id, event_id) do nothing;
+
+select assert(
+  (select calls from install_live where install_id = 'ann-laptop') = 3,
+  'a replayed event is ignored, so retries cannot inflate the count');
+
+-- The same event_id from a different machine is a different event.
+insert into usage_events
+  (event_id, install_id, user_id, org_id, kind, tool, ok, occurred_at)
+values
+  ('e1', 'ann-desktop', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+   '11111111-1111-1111-1111-111111111111', 'tool_call', 'search_code', true, now())
+on conflict (install_id, event_id) do nothing;
+
+select assert(
+  (select calls from install_live where install_id = 'ann-desktop') = 1,
+  'dedupe is per install, so two machines may use the same event id');
+
+-- Coverage counts the latest index of each repo, so re-indexing the same
+-- repository does not inflate the figure — the rule `shimmr stats` applies
+-- locally has to hold on the server too.
+insert into usage_events
+  (event_id, install_id, user_id, org_id, kind, repo, files, lines, bytes, nodes, edges, occurred_at)
+values
+  ('i1', 'ann-laptop', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+   '11111111-1111-1111-1111-111111111111', 'index', 'hash-repo-a',
+   100, 1000, 10000, 500, 900, '2030-01-01T00:00:00Z'),
+  ('i2', 'ann-laptop', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+   '11111111-1111-1111-1111-111111111111', 'index', 'hash-repo-a',
+   120, 1200, 12000, 600, 1100, '2030-01-02T00:00:00Z'),
+  ('i3', 'ann-laptop', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+   '11111111-1111-1111-1111-111111111111', 'index', 'hash-repo-b',
+   50, 500, 5000, 200, 300, '2030-01-02T00:00:00Z');
+
+select assert(
+  (select repos from install_live where install_id = 'ann-laptop') = 2,
+  'two indexes of one repo are still one repo');
+select assert(
+  (select lines from install_live where install_id = 'ann-laptop') = 1700,
+  're-indexing replaces the earlier measurement rather than adding to it');
+
+-- tool_usage is the view a product decision rests on, so it gets a test.
+select assert(
+  (select calls from tool_usage
+   where org_id = '11111111-1111-1111-1111-111111111111' and tool = 'search_graph') = 2,
+  'tool_usage counts calls per tool');
+select assert(
+  (select failed from tool_usage
+   where org_id = '11111111-1111-1111-1111-111111111111' and tool = 'trace_path') = 1,
+  'tool_usage counts failures per tool');
+
+-- Only two kinds exist. A typo in the client must be rejected, not stored.
+do $$
+begin
+  begin
+    insert into usage_events (event_id, install_id, user_id, kind, occurred_at)
+    values ('bad', 'ann-laptop', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'nonsense', now());
+    raise exception 'FAILED: an unknown event kind was accepted';
+  exception when check_violation then
+    raise notice '   ok — an unknown event kind is rejected';
+  end;
+end $$;
+
+-- ------------------------------------------------------- orgs are optional
+
+-- An individual with no company. This must be an ordinary, supported state.
+insert into users (id, email, org_id)
+values ('dddddddd-dddd-dddd-dddd-dddddddddddd', 'solo@example.com', null);
+insert into installs (id, user_id, token_hash)
+values ('solo-laptop', 'dddddddd-dddd-dddd-dddd-dddddddddddd', 'hash-solo');
+insert into usage_events
+  (event_id, install_id, user_id, org_id, kind, tool, ok, occurred_at)
+values
+  ('s1', 'solo-laptop', 'dddddddd-dddd-dddd-dddd-dddddddddddd', null,
+   'tool_call', 'search_graph', true, now());
+
+select assert(
+  (select count(*) from users where org_id is null) = 1,
+  'a person may exist without an organisation');
+select assert(
+  (select calls from install_live where install_id = 'solo-laptop') = 1,
+  'usage is recorded for someone with no organisation');
+select assert(
+  (select org_id from install_live where install_id = 'solo-laptop') is null,
+  'their usage is attached to no org, rather than to a placeholder one');
+select assert(
+  not exists (select 1 from org_totals o
+              join install_rollup r on r.org_id = o.org_id
+              where r.install_id = 'solo-laptop'),
+  'an org-less install is in no org total');
+
+-- Joining an org later must work, and must move their usage with them.
+update users set org_id = '11111111-1111-1111-1111-111111111111'
+where email = 'solo@example.com';
+
+select assert(
+  (select people from org_totals where slug = 'acme-inc') = 3,
+  'someone who joins an org later is counted in it');
 
 -- ---------------------------------------------------------------- cascades
 

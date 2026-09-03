@@ -172,5 +172,87 @@ for needle in "$REPO" "UniqueSecretQueryString"; do
 done
 ok "stats reports coverage; sync payload is printable and clean"
 
+echo "9. usage reports live, and reports nothing sensitive"
+
+# A stand-in backend. `serve` posts batches here while the agent works, which
+# is the whole point of live reporting — nobody types `shimmr sync`.
+cat > "$WORK/backend.py" <<'PY'
+import http.server, os, sys
+
+LOG = os.environ["BACKEND_LOG"]
+
+class Handler(http.server.BaseHTTPRequestHandler):
+    def do_POST(self):
+        body = self.rfile.read(int(self.headers.get("content-length") or 0))
+        with open(LOG, "ab") as f:
+            f.write(self.path.encode() + b"\n")
+            f.write(self.headers.get("authorization", "none").encode() + b"\n")
+            f.write(body + b"\n")
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b'{"ok":true}')
+
+    def log_message(self, *_):
+        pass
+
+http.server.HTTPServer(("127.0.0.1", int(sys.argv[1])), Handler).serve_forever()
+PY
+
+BACKEND_PORT=8123
+: > "$WORK/backend.log"
+BACKEND_LOG="$WORK/backend.log" python3 "$WORK/backend.py" "$BACKEND_PORT" &
+BACKEND_PID=$!
+trap 'kill "$BACKEND_PID" 2>/dev/null || true; rm -rf "$WORK"' EXIT
+for _ in $(seq 1 40); do
+  curl -sf -o /dev/null -X POST "http://127.0.0.1:$BACKEND_PORT/ping" 2>/dev/null && break
+  sleep 0.2
+done
+: > "$WORK/backend.log"
+
+python3 - "$SHIMMR_HOME/config.json" "http://127.0.0.1:$BACKEND_PORT" <<'PY'
+import json, sys
+p, endpoint = sys.argv[1], sys.argv[2]
+c = json.load(open(p))
+c["endpoint"] = endpoint
+json.dump(c, open(p, "w"), indent=2)
+PY
+
+"$BIN" serve < "$WORK/in.jsonl" > "$WORK/out2.jsonl" 2>"$WORK/err2.txt"
+
+grep -q "usage reporting on" "$WORK/err2.txt" \
+  || fail "serve did not say on stderr that it reports usage"
+grep -qF "/v1/events" "$WORK/backend.log" \
+  || fail "no events reached the backend: $(cat "$WORK/backend.log")"
+grep -q "^Bearer shm_" "$WORK/backend.log" \
+  || fail "events were sent without the install token"
+grep -qF '"tool":"search_graph"' "$WORK/backend.log" \
+  || fail "the tool call was not reported"
+ok "tool calls reach the backend as they happen, authenticated"
+
+# The same rule as the log, on the wire this time. This is the claim the whole
+# pitch rests on, so it is checked against the bytes actually sent.
+for needle in "$REPO" "UniqueSecretQueryString" "repo_path" "arguments" "main.go" "tool.py"; do
+  if grep -qF "$needle" "$WORK/backend.log"; then
+    fail "live report leaked: $needle"
+  fi
+done
+ok "no path, query, filename or argument left the machine"
+
+# Turning it off must actually turn it off. Three switches, and the one a
+# person reaches for first is the environment variable.
+: > "$WORK/backend.log"
+SHIMMR_NO_REPORT=1 "$BIN" serve < "$WORK/in.jsonl" > /dev/null 2>"$WORK/err3.txt"
+[ -s "$WORK/backend.log" ] && fail "SHIMMR_NO_REPORT=1 still sent usage"
+grep -q "usage reporting off" "$WORK/err3.txt" \
+  || fail "serve did not report that sharing was off"
+ok "SHIMMR_NO_REPORT=1 sends nothing, and says so"
+
+echo "10. an account without an organisation works"
+"$BIN" signup --force --email solo@example.com >/dev/null
+"$BIN" whoami | grep -q "Organisation   none" \
+  || fail "whoami did not handle an account with no org"
+"$BIN" whoami | grep -q "solo@example.com" || fail "whoami lost the email"
+ok "signing up with no organisation is a supported state"
+
 echo
 echo "All $pass checks passed."
