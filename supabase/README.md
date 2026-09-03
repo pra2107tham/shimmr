@@ -156,12 +156,15 @@ the Edge Functions, running with the service role key, touch these tables. When
 a dashboard arrives it gets explicit read policies; until then, no policy means
 no access.
 
-**`verify_jwt` is off** for both functions — see `config.toml`. The CLI carries
+**`verify_jwt` is off** for every function — see `config.toml`. The CLI carries
 its own install token, not a Supabase JWT, so the gateway's check would reject
 every legitimate request. Each function does its own authentication instead:
-`usage` hashes the bearer token and looks it up, and takes the org from that row
-rather than from the payload, so no caller can write usage under someone else's
-org.
+`usage` and `events` hash the bearer token and look it up, and take the org
+from that row rather than from the payload, so no caller can write usage under
+someone else's org. A function added without a matching entry in `config.toml`
+is rejected at the gateway before it runs at all, which is exactly what
+happened to `login` and `events` on their first deploy — caught by the smoke
+test's GET-must-405 check, not by inspection.
 
 **Payloads are normalised on the way in.** Counts must be non-negative numbers,
 `by_tool` entries that are not `{tool, calls}` pairs are dropped, and bodies over
