@@ -161,6 +161,41 @@ for.
 
 ---
 
+## Q11 — Nothing verifies an email address
+
+**Status:** Open. **This is the one with teeth.**
+
+`shimmr signup` upserts on email, so signing up with somebody else's address has
+always attached your machine to their account. `shimmr login` makes that
+explicit rather than incidental: give an address, get a token for a machine
+attached to it. No verification anywhere.
+
+For a design-partner phase where we know everyone by name, this is survivable.
+It stops being survivable the moment any of these is true:
+
+- anything is charged for, or counted per seat
+- an org's usage is shown to that org, because then one person's numbers are
+  visible to whoever claims their address
+- a customer asks how we know who is who, and the honest answer is "we don't"
+
+**Options, cheapest first:**
+
+1. **Emailed one-time code.** `login` returns nothing until a six-digit code
+   from the address is posted back. Supabase Auth already does this, so it is
+   mostly wiring rather than building.
+2. **Magic link.** Better experience, needs somewhere to land the click, which
+   means a website we do not have yet.
+3. **Domain verification for orgs.** Only somebody with an `@acme.com` address
+   joins Acme. Solves org-squatting as well as identity, and matters more once
+   org totals are shown to customers.
+
+**Recommendation:** option 1, before anything is gated or shown back to a
+customer. Not before that — an unverified account costs nothing today, and a
+verification step before there is anything to protect is friction for its own
+sake at exactly the moment adoption matters most.
+
+---
+
 ## Settled, recorded elsewhere
 
 | Question | Answer | Where |
@@ -172,3 +207,6 @@ for.
 | Q1 — what does the paywall cover? | Local free, connected paid | `decisions/0004` |
 | Q2 — what is v1? | The harness, gate open; sell at Phase 5 | `decisions/0004` |
 | Q3 — language? | Go | `decisions/0005` |
+| Does usage reach us at all? | Yes — reported live by `serve`, not only on `sync` | `decisions/0008` |
+| Where do releases live, given a private repo? | Object storage; Supabase now, R2 later | `decisions/0009` |
+| Must everyone belong to an organisation? | No — an org is optional, and joinable later | `decisions/0008` context, schema |

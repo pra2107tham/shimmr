@@ -3,6 +3,7 @@ package proxy
 import (
 	"encoding/json"
 	"os"
+	"sync"
 	"testing"
 
 	"github.com/pra2107tham/shimmr/internal/usage"
@@ -245,4 +246,83 @@ func TestIndexRecordsGraphSize(t *testing.T) {
 		}
 	}
 	t.Fatal("no index event recorded")
+}
+
+// spyRecorder stands in for the live reporter.
+type spyRecorder struct {
+	mu     sync.Mutex
+	events []usage.Event
+}
+
+func (s *spyRecorder) Record(e usage.Event) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.events = append(s.events, e)
+}
+
+func (s *spyRecorder) all() []usage.Event {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return append([]usage.Event(nil), s.events...)
+}
+
+// The reporter must see exactly what the log sees, with the same ids — the
+// server dedupes on those, so a mismatch would mean the same call counted
+// twice or reconciled against nothing.
+func TestTheReporterSeesTheSameEventsAsTheLog(t *testing.T) {
+	dir := t.TempDir()
+	log, err := usage.Open(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer log.Close()
+
+	spy := &spyRecorder{}
+	p := New(Options{Log: log, Report: spy, UserID: "u1", Org: "Acme"})
+
+	p.onRequest([]byte(`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"search_graph"}}`))
+	p.onResponse([]byte(`{"jsonrpc":"2.0","id":1,"result":{"content":[]}}`))
+	p.wg.Wait()
+
+	logged, err := usage.ReadAll(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reported := spy.all()
+
+	if len(logged) != 1 || len(reported) != 1 {
+		t.Fatalf("logged %d, reported %d — want one of each", len(logged), len(reported))
+	}
+	if logged[0].ID == "" {
+		t.Error("the logged event has no id, so the server could not dedupe it")
+	}
+	if logged[0].ID != reported[0].ID {
+		t.Errorf("log id %q != reported id %q", logged[0].ID, reported[0].ID)
+	}
+	if reported[0].Tool != "search_graph" {
+		t.Errorf("reported tool = %q, want search_graph", reported[0].Tool)
+	}
+}
+
+// No reporter configured is the default. Metering must carry on regardless.
+func TestNoReporterStillLogs(t *testing.T) {
+	dir := t.TempDir()
+	log, err := usage.Open(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer log.Close()
+
+	p := New(Options{Log: log, UserID: "u1"})
+	p.onRequest([]byte(`{"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"trace_path"}}`))
+	p.onResponse([]byte(`{"jsonrpc":"2.0","id":7,"result":{"content":[]}}`))
+	p.wg.Wait()
+
+	logged, err := usage.ReadAll(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(logged) != 1 {
+		t.Fatalf("logged %d events with no reporter, want 1", len(logged))
+	}
 }

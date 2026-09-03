@@ -119,6 +119,17 @@ jobs:
           echo "--- SHA256SUMS ---"
           cat SHA256SUMS
 
+      # The GitHub release is the record; object storage is what people can
+      # actually reach, because this repository is private. Publishing happens
+      # before the release is cut so a failure here does not leave a published
+      # release pointing at files nobody can download.
+      - name: publish where people can download it
+        env:
+          ARTIFACT_HOST: ${{ vars.ARTIFACT_HOST || 'supabase' }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: bash scripts/publish_artifacts.sh staging "${{ github.ref_name }}"
+
       - uses: softprops/action-gh-release@v2
         with:
           files: |
@@ -131,8 +142,12 @@ jobs:
             Install:
 
             ```sh
-            curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install.sh | sh
+            curl -fsSL https://fpxntzwkiepnwsazmaxf.supabase.co/storage/v1/object/public/releases/install.sh | sh
             ```
+
+            The assets attached here are the same files, but this repository is
+            private, so they 404 for anyone but us. The link above is the one to
+            share.
 
             Then `shimmr signup`, `shimmr init`, `shimmr doctor`.
 

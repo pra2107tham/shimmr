@@ -23,7 +23,11 @@ claims.
 
 The product decisions are settled and recorded: everything local is free, the
 paywall sits at connected features (ADR 0004); the harness is Go (ADR 0005).
-`docs/04-open-questions.md` holds what is still open — Q4, Q5, Q6, Q8 and Q9.
+`docs/04-open-questions.md` holds what is still open — Q4, Q5, Q6, Q8, Q9 and
+Q11. Q11 is the one with teeth: nothing verifies an email address, so anyone
+can attach a machine to anyone's account. That was always true of `signup`, and
+`login` inherits it. It has to close before anything is charged for or counted
+per seat.
 
 ## Ground rules
 
@@ -66,10 +70,16 @@ tested, to cause the failure it was meant to prevent.
    the engine's MIT text and copyright line, embedded in the binary rather than
    read from disk. This is the one legal obligation the MIT licence places on
    us, and the release workflow fails without it.
-7. **No network call happens unless an endpoint is configured.** `shimmr sync`
-   is the only thing that talks to a server, it sends aggregate counts only,
-   and `--show` prints the exact payload first. A build with no endpoint baked
-   in talks to nobody at all.
+7. **No network call happens unless an endpoint is configured.** A build with
+   no endpoint baked in talks to nobody at all, and that is what makes every
+   other claim here checkable.
+
+   Two things talk to a server when one *is* configured: `shimmr sync`, which
+   sends cumulative totals and whose `--show` prints the exact payload first,
+   and `shimmr serve`, which reports each tool call as it happens (ADR 0008).
+   `serve` says so on stderr every time it starts, and three independent
+   switches turn it off. Both send the same `Event` the local log holds, which
+   by construction cannot carry code, paths, names or arguments.
 
 ## On the pitch
 

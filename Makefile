@@ -11,7 +11,7 @@ PLATFORMS := darwin/arm64 darwin/amd64 linux/amd64 linux/arm64 windows/amd64
 
 .PHONY: build test race fmt vet check smoke install dist clean \
         db-start db-stop db-reset db-push db-test db-query functions-serve deploy backend-check \
-        package package-all package-test licenses
+        package package-all package-test publish publish-test licenses
 
 build:
 	CGO_ENABLED=0 go build -ldflags="$(LDFLAGS)" -o bin/$(BINARY) ./cmd/shimmr
@@ -59,6 +59,16 @@ package-all:
 # and it fails if the archive we would ship is missing the engine or a notice.
 package-test:
 	bash scripts/package_test.sh
+
+# Put a release where people can download it. ARTIFACT_HOST picks the host:
+# supabase is live, r2 is a stub that refuses. Unset publishes nothing.
+#   make publish ARTIFACT_HOST=supabase
+publish:
+	ARTIFACT_HOST=$(or $(ARTIFACT_HOST),none) bash scripts/publish_artifacts.sh dist $(VERSION)
+
+# The object layout the installers depend on, against a stand-in Storage API.
+publish-test:
+	bash scripts/publish_test.sh
 
 # Print everything we ship licences for. This is the obligation, so it is a
 # first-class target rather than a buried flag.

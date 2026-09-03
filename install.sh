@@ -10,10 +10,13 @@
 # that, after showing you what it intends to change.
 set -eu
 
-REPO="${SHIMMR_REPO:-pra2107tham/shimmr}"
 VERSION="${SHIMMR_VERSION:-latest}"
 PREFIX="${SHIMMR_PREFIX:-/usr/local}"
-BASE_URL="${SHIMMR_BASE_URL:-https://github.com/$REPO/releases}"
+# Releases are served from object storage rather than from the repository,
+# which is private: GitHub release assets and raw.githubusercontent both 404
+# for anyone who is not us. This script is published to the same place as the
+# archives it fetches, so the two cannot drift apart.
+BASE_URL="${SHIMMR_BASE_URL:-https://fpxntzwkiepnwsazmaxf.supabase.co/storage/v1/object/public/releases}"
 
 say()  { printf '%s\n' "$*"; }
 warn() { printf '%s\n' "$*" >&2; }

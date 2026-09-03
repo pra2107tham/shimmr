@@ -13,6 +13,8 @@ supersedes the old one, not an edit.
 | [0005](0005-harness-in-go.md) | The harness is written in Go | Accepted |
 | [0006](0006-engine-naming-and-attribution.md) | Do not name the engine in product or spec docs | Accepted |
 | [0007](0007-do-not-override-the-cache-root.md) | Never override the engine's cache root | Accepted |
+| [0008](0008-report-usage-as-it-happens.md) | Usage reports as it happens, not on `sync` | Accepted |
+| [0009](0009-serve-releases-from-object-storage.md) | Serve releases from object storage; Supabase now, R2 later | Accepted |
 
 ## Template
 

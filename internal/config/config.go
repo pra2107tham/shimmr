@@ -26,6 +26,12 @@ type Config struct {
 	Endpoint   string    `json:"endpoint,omitempty"`
 	Synced     bool      `json:"synced"`
 	CreatedAt  time.Time `json:"created_at"`
+
+	// DisableReport turns off live usage reporting for this machine. It is
+	// stated the negative way round so that a config written before reporting
+	// existed keeps working and reports, rather than silently opting an
+	// upgraded install out of the thing it just gained.
+	DisableReport bool `json:"disable_report,omitempty"`
 }
 
 // ErrNoAccount means nobody has signed up on this machine yet. Every command
@@ -78,7 +84,10 @@ func Load() (*Config, error) {
 	if err := json.Unmarshal(b, &c); err != nil {
 		return nil, fmt.Errorf("%s is not valid JSON: %w", p, err)
 	}
-	if c.Token == "" || c.Org == "" {
+	// The token is what makes this an account. An organisation is optional —
+	// requiring one here would treat everybody who signed up without a company
+	// as having no account at all, and lock them out of their own tool.
+	if c.Token == "" {
 		return nil, ErrNoAccount
 	}
 	return &c, nil
@@ -132,6 +141,23 @@ func (c *Config) ResolveEndpoint() string {
 		return c.Endpoint
 	}
 	return DefaultEndpoint
+}
+
+// Reports says whether this machine should send usage as it happens.
+//
+// Three ways to say no, any one of which is enough: no endpoint (so the build
+// talks to nobody at all), the config flag, or SHIMMR_NO_REPORT in the
+// environment. The environment variable is there because the person who wants
+// this off in one session should not have to edit a file to get it.
+func (c *Config) Reports() bool {
+	if c.ResolveEndpoint() == "" || c.DisableReport {
+		return false
+	}
+	switch os.Getenv("SHIMMR_NO_REPORT") {
+	case "", "0", "false", "no":
+		return true
+	}
+	return false
 }
 
 // ResolveEngine finds the engine binary: explicit config, then the env var,

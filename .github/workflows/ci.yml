@@ -165,6 +165,15 @@ jobs:
         shell: bash
         run: bash scripts/package_test.sh
 
+      # Where a release is published is a contract with the installers: get an
+      # object path wrong and the release is silently unreachable, which is
+      # exactly how the first one shipped uninstallable. Driven against a
+      # stand-in Storage API, so it needs no project and no network.
+      - name: publishing
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: bash scripts/publish_test.sh
+
       # A stand-in engine that answers doctor's handshake, so the job can check
       # the whole path: download, checksum, extract, install, find the engine
       # in the packaged layout, and start it. The real engine is 285 MB and
