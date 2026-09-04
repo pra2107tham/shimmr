@@ -67,6 +67,35 @@ begin
   end;
 end $$;
 
+-- ---------------------------------------------------- the web-auth link
+
+-- The column itself, and its uniqueness, are testable on plain Postgres —
+-- only the trigger that keeps it correct needs a real auth.users to fire
+-- against, which this file does not have. See the RLS section below for what
+-- that half of the migration was tested against instead.
+update users set auth_user_id = '99999999-9999-9999-9999-999999999999'
+where email = 'ann@acme.dev';
+
+select assert(
+  (select auth_user_id from users where email = 'ann@acme.dev')
+    = '99999999-9999-9999-9999-999999999999',
+  'a person can be linked to a Supabase Auth identity');
+
+do $$
+begin
+  begin
+    update users set auth_user_id = '99999999-9999-9999-9999-999999999999'
+    where email = 'bob@acme.dev';
+    raise exception 'FAILED: two people were linked to the same auth identity';
+  exception when unique_violation then
+    raise notice '  ok — one auth identity means one person';
+  end;
+end $$;
+
+select assert(
+  (select count(*) from users where auth_user_id is null) = 2,
+  'everyone else is still CLI-only, and that is a normal, unlinked state');
+
 -- ------------------------------------------------------- count constraints
 
 do $$
@@ -318,7 +347,7 @@ begin
   join pg_namespace n on n.oid = c.relnamespace
   where n.nspname = 'public'
     and c.relkind = 'r'
-    and c.relname in ('orgs', 'users', 'installs', 'usage_snapshots')
+    and c.relname in ('orgs', 'users', 'installs', 'usage_snapshots', 'usage_events')
     and c.relrowsecurity is false;
 
   if unprotected is not null then
@@ -327,22 +356,48 @@ begin
   raise notice '  ok — row level security is on for every table';
 end $$;
 
+-- The dashboard migration (20260905000000) adds real read policies, but only
+-- when auth.uid() exists — guarded that way because this file runs against a
+-- plain Postgres with no Supabase Auth schema at all, same as every migration
+-- before it. So the honest assertion here is conditional on the same thing
+-- the migration itself is conditional on, not a fixed expected count.
+--
+-- This means CI, running on plain Postgres, can confirm the guard suppresses
+-- every policy — it cannot confirm the policies themselves are correct, since
+-- they never get created here. That was verified by hand against a Postgres
+-- with a stand-in auth schema (auth.users + auth.uid() reading the JWT sub
+-- claim, matching Supabase's own shape) before this migration was written;
+-- see the commit message and ADR 0011 for the exact commands and results —
+-- two people each seeing only their own row and their own usage_events, and
+-- an anonymous role seeing nothing at all.
 do $$
 declare
   policy_count int;
+  auth_available boolean;
 begin
+  select exists (
+    select 1 from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'auth' and p.proname = 'uid'
+  ) into auth_available;
+
   select count(*) into policy_count
   from pg_policies
   where schemaname = 'public'
-    and tablename in ('orgs', 'users', 'installs', 'usage_snapshots');
+    and tablename in ('orgs', 'users', 'installs', 'usage_snapshots', 'usage_events');
 
-  -- No policies is the intended state: only the service role gets through.
-  -- When a dashboard adds policies, this check should be updated deliberately
-  -- rather than silently.
-  if policy_count <> 0 then
-    raise exception 'FAILED: % unexpected RLS policies exist — was that deliberate?', policy_count;
+  if auth_available then
+    if policy_count = 0 then
+      raise exception 'FAILED: auth.uid() exists but no dashboard RLS policies were created';
+    end if;
+    raise notice '  ok — % RLS policies exist now that auth.uid() is available', policy_count;
+  else
+    if policy_count <> 0 then
+      raise exception
+        'FAILED: % RLS policies exist without auth.uid() — the guard in the web-auth migration did not hold', policy_count;
+    end if;
+    raise notice '  ok — no RLS policies here (auth.uid() is unavailable on plain Postgres, as expected — see ADR 0011)';
   end if;
-  raise notice '  ok — no RLS policies, so only the service role reaches the data';
 end $$;
 
 rollback;

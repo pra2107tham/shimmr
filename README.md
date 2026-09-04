@@ -7,12 +7,15 @@ with no code, file content, or query text ever leaving the machine.
 A local indexing engine, a licensing harness, an account layer, and a usage
 dashboard — packaged as one product that installs in a single command.
 
-> **Status: v0.1.0 harness is built and tested.** `shimmr signup` → `shimmr init`
-> → your agent talks to the engine through us, and every call is metered.
-> Still to do: pin and bundle the engine binary, and stand up the backend that
-> `--endpoint` points at. See [ADR 0004](docs/decisions/0004-local-free-connected-paid.md)
-> and [ADR 0005](docs/decisions/0005-harness-in-go.md) for the product decisions
-> behind it.
+> **Status: v0.2.0 is released, and the backend is live.** `shimmr signup` →
+> `shimmr init` → your agent talks to the engine through us, every call is
+> metered, and usage reports live rather than only on `sync` ([ADR
+> 0008](docs/decisions/0008-report-usage-as-it-happens.md)). A website now
+> exists too — sign up, sign in, and watch your own usage stream in over
+> Realtime at `site/` ([ADR 0011](docs/decisions/0011-web-auth-and-dashboard.md)).
+> See [ADR 0004](docs/decisions/0004-local-free-connected-paid.md) and [ADR
+> 0005](docs/decisions/0005-harness-in-go.md) for the product decisions
+> behind the harness itself.
 
 **The model in one line:** everything that runs on your machine is free, permanently.
 Connecting it to the outside world — GitHub, OpenHands, automations, team sync — is
@@ -24,11 +27,15 @@ See [`docs/product-overview.html`](docs/product-overview.html) for the visual ve
 ## Installing
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/pra2107tham/shimmr/main/install.sh | sh
+curl -fsSL https://fpxntzwkiepnwsazmaxf.supabase.co/storage/v1/object/public/releases/install.sh | sh
 shimmr signup --email you@company.com --org "Your Co"
 shimmr init
 shimmr doctor
 ```
+
+This repository is private, so a `raw.githubusercontent.com` link 404s for
+anyone who isn't a collaborator — the URL above is object storage, and it's
+the one to actually share. See [ADR 0009](docs/decisions/0009-serve-releases-from-object-storage.md).
 
 On Windows:
 
@@ -86,6 +93,10 @@ Usage stays on the machine unless an `endpoint` is configured, and
 
 The backend is driven from this repo too — `make db-reset`, `make db-test`,
 `make db-query`, `make deploy`. See [`supabase/README.md`](supabase/README.md).
+
+The website — marketing page, sign up/sign in, and the usage dashboard — is
+`site/`, a Next.js app deployed separately on Vercel. See
+[`site/README.md`](site/README.md).
 
 CI runs all of it on every push and pull request — unit tests with `-race` on
 Linux, macOS and Windows, a cross-compile of all five targets with a check that

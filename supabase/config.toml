@@ -6,6 +6,20 @@
 
 project_id = "shimmr"
 
+# The website's sign-in, not the CLI's. Supabase Auth issues a magic link
+# for a browser session; the CLI still carries its own install token and
+# never touches this. See ADR 0011.
+#
+# This section documents local-dev intent (`supabase start`). The *deployed*
+# project's Site URL and additional redirect URLs are a setting in the
+# Supabase dashboard (Authentication -> URL Configuration) this file cannot
+# reach — add the Vercel deployment's URL(s) there by hand once it exists,
+# the same manual-step shape as the GitHub Pages source setting was.
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/auth/callback"]
+
 [functions.signup]
 verify_jwt = false
 

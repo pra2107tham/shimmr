@@ -165,6 +165,37 @@
   color: var(--ink);
 }
 
+.navSignIn {
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  font-size: 13px;
+  color: rgba(33, 29, 23, 0.936);
+  transition: color 200ms;
+}
+
+.navSignIn:hover {
+  color: var(--ink);
+}
+
+.navCta {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--ground);
+  font-size: 13px;
+  font-weight: 500;
+  transition: opacity 200ms;
+}
+
+.navCta:hover {
+  opacity: 0.88;
+  color: var(--ground);
+}
+
 /* ---- hero ---- */
 
 .hero {
@@ -224,6 +255,49 @@
   font-weight: 300;
   color: var(--ink-72);
   text-wrap: pretty;
+}
+
+.heroCtaRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 34px;
+}
+
+.heroCta {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 24px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--ground);
+  font-size: 14px;
+  font-weight: 500;
+  transition: opacity 200ms;
+}
+
+.heroCta:hover {
+  opacity: 0.88;
+  color: var(--ground);
+}
+
+.heroCtaGhost {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 22px;
+  border-radius: 999px;
+  background: var(--glass);
+  border: 1px solid var(--ink-15);
+  color: var(--ink);
+  font-size: 14px;
+  transition: background 200ms;
+}
+
+.heroCtaGhost:hover {
+  background: var(--ink-11);
 }
 
 /* ---- "the layer, shown" ---- */
