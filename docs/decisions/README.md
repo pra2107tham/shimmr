@@ -15,6 +15,7 @@ supersedes the old one, not an edit.
 | [0007](0007-do-not-override-the-cache-root.md) | Never override the engine's cache root | Accepted |
 | [0008](0008-report-usage-as-it-happens.md) | Usage reports as it happens, not on `sync` | Accepted |
 | [0009](0009-serve-releases-from-object-storage.md) | Serve releases from object storage; Supabase now, R2 later | Accepted |
+| [0010](0010-release-from-the-actions-ui.md) | Cut a release from the Actions UI; keep it a deliberate, one-at-a-time step | Accepted |
 
 ## Template
 

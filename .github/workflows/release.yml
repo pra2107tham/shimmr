@@ -3,13 +3,25 @@ name: Release
 # Cutting a release is pushing a tag. Everything else happens here, so the
 # artifacts a customer downloads are built by a recorded, repeatable job rather
 # than on somebody's laptop.
+#
+# Nobody needs a local git client with push access to do that: pick "Run
+# workflow" above, type a version, leave dry_run unchecked. The tag job below
+# creates and pushes the real tag itself before anything is built, so the
+# result is indistinguishable from someone having run `git tag && git push`
+# — it's just done from a browser instead. Cutting a release stays a
+# deliberate, one-at-a-time action; nothing here fires on its own. See ADR
+# 0010.
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
     inputs:
+      version:
+        description: "Version to release, e.g. 0.2.0 — no leading v. Required unless dry_run is checked."
+        type: string
+        default: ""
       dry_run:
-        description: "Build and check the artifacts, but publish nothing"
+        description: "Build and check the artifacts, but create no tag and publish nothing"
         type: boolean
         default: true
 
@@ -17,7 +29,50 @@ permissions:
   contents: write
 
 jobs:
+  # Only for a real (non-dry-run) manual release: create and push the version
+  # tag so the rest of this run has one to build from, and so the repository
+  # ends up with the exact same tag history a local `git tag && git push`
+  # would have left. A plain tag push skips this — the tag already exists.
+  tag:
+    if: github.event_name == 'workflow_dispatch' && !inputs.dry_run
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.tag.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: create and push the tag
+        id: tag
+        run: |
+          version="${{ inputs.version }}"
+          if [ -z "$version" ]; then
+            echo "::error::version is required for a real release (or check dry_run to just build)."
+            exit 1
+          fi
+          if ! echo "$version" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error::version must be semver without a leading v, e.g. 0.2.0 — got '$version'."
+            exit 1
+          fi
+          tag="v$version"
+          if git rev-parse "$tag" >/dev/null 2>&1; then
+            echo "::error::$tag already exists."
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" -m "Release $tag"
+          git push origin "$tag"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
   package:
+    needs: [tag]
+    # Runs for a plain tag push (tag job skipped, not applicable), a dry run
+    # (tag job skipped, nothing to build from but VERSION falls back to
+    # 0.0.0-dev), or after the tag job above actually created a tag. Only
+    # skips if that job ran and failed.
+    if: always() && needs.tag.result != 'failure'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
@@ -51,7 +106,7 @@ jobs:
 
       - name: package
         env:
-          VERSION: ${{ github.ref_type == 'tag' && github.ref_name || '0.0.0-dev' }}
+          VERSION: ${{ github.ref_type == 'tag' && github.ref_name || (needs.tag.outputs.version && format('v{0}', needs.tag.outputs.version)) || '0.0.0-dev' }}
           ENDPOINT: ${{ vars.SHIMMR_ENDPOINT }}
         run: |
           # Tags are v-prefixed; the version stamped into artifacts is not.
@@ -100,9 +155,9 @@ jobs:
           retention-days: 7
 
   publish:
-    needs: package
+    needs: [package, tag]
     runs-on: ubuntu-latest
-    if: github.ref_type == 'tag' && !inputs.dry_run
+    if: always() && needs.package.result == 'success' && !inputs.dry_run
     steps:
       - uses: actions/checkout@v4
 
@@ -128,10 +183,17 @@ jobs:
           ARTIFACT_HOST: ${{ vars.ARTIFACT_HOST || 'supabase' }}
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: bash scripts/publish_artifacts.sh staging "${{ github.ref_name }}"
+        # See the tag_name comment below: github.ref_name is the dispatched
+        # branch, not the tag, on a manual run.
+        run: bash scripts/publish_artifacts.sh staging "${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', needs.tag.outputs.version) }}"
 
       - uses: softprops/action-gh-release@v2
         with:
+          # A tag-push run's own ref is already the tag. A workflow_dispatch
+          # run's ref stays the branch it was dispatched on even after the
+          # tag job above pushed a real tag as a side effect, so this action
+          # needs to be told explicitly which one it's releasing.
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', needs.tag.outputs.version) }}
           files: |
             staging/*.tar.gz
             staging/*.zip
