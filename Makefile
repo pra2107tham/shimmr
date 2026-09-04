@@ -134,13 +134,15 @@ functions-serve:
 deploy:
 	supabase db push
 	supabase functions deploy signup
+	supabase functions deploy login
 	supabase functions deploy usage
+	supabase functions deploy events
 
 # What CI checks for the backend, minus the database service.
 backend-check:
 	deno fmt --check supabase/functions
 	deno lint supabase/functions
-	deno check supabase/functions/signup/index.ts supabase/functions/usage/index.ts
+	deno check supabase/functions/signup/index.ts supabase/functions/login/index.ts supabase/functions/usage/index.ts supabase/functions/events/index.ts
 
 clean:
 	rm -rf bin dist

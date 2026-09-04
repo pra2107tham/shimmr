@@ -1,6 +1,6 @@
 # Shimmr backend.
 #
-# Both functions authenticate the Shimmr CLI's own install token rather than a
+# Every function authenticates the Shimmr CLI's own install token rather than a
 # Supabase JWT, so the gateway's JWT check is turned off and each function does
 # its own check instead. See supabase/README.md.
 
@@ -9,5 +9,11 @@ project_id = "shimmr"
 [functions.signup]
 verify_jwt = false
 
+[functions.login]
+verify_jwt = false
+
 [functions.usage]
+verify_jwt = false
+
+[functions.events]
 verify_jwt = false

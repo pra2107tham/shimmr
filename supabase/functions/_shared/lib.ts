@@ -1,8 +1,10 @@
 // Shared helpers for the Shimmr Edge Functions.
 //
-// Both functions run with verify_jwt disabled, because the Shimmr CLI carries
+// Every function runs with verify_jwt disabled, because the Shimmr CLI carries
 // its own install token rather than a Supabase JWT. Authentication therefore
-// happens here, explicitly, on every request.
+// happens here, explicitly, on every request. A function added without a
+// matching `verify_jwt = false` entry in config.toml is rejected by the
+// gateway before this code ever runs — see supabase/README.md.
 
 import { createClient, SupabaseClient } from "jsr:@supabase/supabase-js@2";
 
