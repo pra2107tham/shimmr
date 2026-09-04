@@ -7,6 +7,16 @@ import styles from "./dashboard.module.css";
 
 export const metadata: Metadata = { title: "Dashboard — Shimmr" };
 
+// Force dynamic: without this, `next build` still tries to prerender this
+// page once to see whether it *can* be static, which means running the
+// function body — including supabaseServer(), which throws when the env
+// vars aren't set. On a fresh Vercel project (before the two manual steps
+// in site/README.md are done), that turned a missing env var into a build
+// that never ships at all, marketing page included. This page needs a
+// per-request session no matter what, so tell Next.js that up front instead
+// of letting it find out by running the page.
+export const dynamic = "force-dynamic";
+
 // A rollup row per install, source is 'live' (from usage_events) or 'sync'
 // (from the older usage_snapshots path) — see install_rollup in
 // supabase/migrations/20260903000000_live_events_and_optional_org.sql.
