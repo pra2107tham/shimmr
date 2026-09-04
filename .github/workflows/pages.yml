@@ -1,0 +1,45 @@
+name: Deploy site
+
+# The public "coming soon" page under site/. This repository is private, so
+# GitHub Pages is what makes it reachable by anyone who isn't a collaborator
+# — the same problem ADR 0009 solved for release downloads, for the marketing
+# page instead of the binary.
+#
+# One-time setup this workflow cannot do for itself: Settings -> Pages ->
+# Build and deployment -> Source: "GitHub Actions". Until that's set, this
+# runs and uploads the artifact but there's nowhere for deploy-pages to
+# publish it.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
