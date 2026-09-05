@@ -1,0 +1,21 @@
+.footer {
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 30px 34px;
+}
+
+.footerRule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--ink-24) 50%, transparent 100%);
+}
+
+.footerText {
+  margin: 18px 0 0;
+  text-align: center;
+  font-family: var(--font-mono-family);
+  font-size: 10.5px;
+  letter-spacing: 0.8px;
+  color: var(--ink-60);
+}

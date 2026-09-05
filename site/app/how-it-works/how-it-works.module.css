@@ -1,0 +1,131 @@
+/* ---- step flow ---- */
+
+.stepRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+@media (max-width: 720px) {
+  .stepRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+}
+
+.stepTop {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.stepNum {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--ground);
+  font-family: var(--font-mono-family);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.stepLine {
+  flex: 1;
+  height: 1px;
+  margin-left: 10px;
+  background: linear-gradient(90deg, var(--ink-24) 0%, transparent 100%);
+}
+
+@media (max-width: 720px) {
+  .stepLine {
+    display: none;
+  }
+}
+
+.stepTitle {
+  margin: 0 0 8px;
+  font-family: var(--font-sans-family);
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: -0.2px;
+  color: var(--ink);
+}
+
+.stepCopy {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink-72);
+}
+
+/* ---- local vs connected columns ---- */
+
+.column {
+  border-radius: 16px;
+  padding: 22px;
+  border: 1px solid var(--ink-15);
+}
+
+.columnLocal {
+  background: var(--accent-18);
+  border-color: var(--accent-25);
+}
+
+.columnConnected {
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+}
+
+.columnLabel {
+  display: block;
+  margin-bottom: 14px;
+  font-family: var(--font-mono-family);
+  font-size: 10px;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  color: var(--ink-72);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.listItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.listItem svg {
+  flex: none;
+  margin-top: 3px;
+  color: var(--accent);
+}
+
+.ctaSection {
+  text-align: center;
+}
+
+.inlineLink {
+  color: var(--ink);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

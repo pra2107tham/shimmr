@@ -1,6 +1,8 @@
 import styles from "./page.module.css";
 import { MailIcon, PhoneIcon, LinkedInIcon } from "./icons";
 import { contacts, targets } from "./content";
+import SiteNav from "./SiteNav";
+import SiteFooter from "./SiteFooter";
 
 const icons = {
   mail: MailIcon,
@@ -20,42 +22,9 @@ export default function Home() {
       <div aria-hidden className={styles.wash} />
       <div aria-hidden className={styles.vignette} />
 
-      <div className={styles.wrap}>
-        <nav className={styles.nav}>
-          <div className={styles.navLeft}>
-            <span className={styles.wordmark}>Shimmr</span>
-            <span className={styles.statusPill}>
-              <span className={styles.liveDot}>
-                <span className={styles.liveDotCore} />
-                <span className={styles.liveDotRing} />
-              </span>
-              <span className={styles.statusLabel}>Building</span>
-            </span>
-          </div>
-          <div className={styles.navLinks}>
-            <a href="/login" className={styles.navSignIn}>
-              Sign in
-            </a>
-            {contacts.map(({ key, href, value, icon, external }) => {
-              const Icon = icons[icon];
-              return (
-                <a
-                  key={key}
-                  href={href}
-                  title={value}
-                  className={styles.iconButton}
-                  {...(external ? { target: "_blank", rel: "noopener" } : {})}
-                >
-                  <Icon />
-                </a>
-              );
-            })}
-            <a href="/signup" className={styles.navCta}>
-              Get started
-            </a>
-          </div>
-        </nav>
+      <SiteNav active="/" />
 
+      <div className={styles.wrap}>
         <header className={styles.hero}>
           <span className={styles.badge}>
             <span className={styles.badgeDot} />
@@ -163,11 +132,8 @@ export default function Home() {
           </div>
         </section>
 
-        <footer className={styles.footer}>
-          <div className={styles.footerRule} />
-          <p className={styles.footerText}>Shimmr — built by Pratham Shirbhate. © 2026</p>
-        </footer>
       </div>
+      <SiteFooter />
     </div>
   );
 }

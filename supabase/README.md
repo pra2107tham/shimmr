@@ -146,7 +146,9 @@ select * from install_current;
 Views worth knowing: `install_current`/`install_live`/`install_rollup` (a
 machine's current picture, from a sync or the live stream, whichever is
 newer) and `org_totals`/`tool_usage` (rolled up per company) — the pair a
-sales conversation actually needs.
+sales conversation actually needs. Two functions built on those views —
+`my_org_totals()`/`my_org_tool_usage()` — let a signed-in member of an org
+read that org's own aggregate through the website; see ADR 0013 below.
 
 ### Snapshots, not deltas
 
@@ -163,10 +165,19 @@ working credential.
 Functions still do everything they always did with the service role key, which
 bypasses RLS entirely — nothing about how `signup`, `login`, `usage` or
 `events` work has changed. What changed is `authenticated`: a person signed in
-on the website (Supabase Auth, magic link) can now `select` their own row in
-`users`, their own `installs`, and their own `usage_snapshots`/`usage_events`
-— never anyone else's, and never an org-wide view. `anon` still reaches
-nothing at all. See [ADR 0011](../docs/decisions/0011-web-auth-and-dashboard.md).
+on the website (Supabase Auth — magic link, Google, or GitHub) can now
+`select` their own row in `users`, their own `installs`, and their own
+`usage_snapshots`/`usage_events` — never anyone else's, and never a direct
+read of an org-wide view. `anon` still reaches nothing at all. See [ADR
+0011](../docs/decisions/0011-web-auth-and-dashboard.md).
+
+**A member of an org can read that org's aggregate, never a teammate's row.**
+`my_org_totals()`/`my_org_tool_usage()` are `SECURITY DEFINER` functions, not
+a grant on `org_totals`/`tool_usage` themselves — they resolve the caller's
+own `org_id` from `auth.uid()` and hand back only that org's pre-aggregated
+rows. `EXECUTE` is revoked from `PUBLIC` (a fresh function grants it by
+default, unlike a table) and granted only to `authenticated`. See [ADR
+0013](../docs/decisions/0013-org-dashboard-is-aggregate-only.md).
 
 **`verify_jwt` is off** for every function — see `config.toml`. The CLI carries
 its own install token, not a Supabase JWT, so the gateway's check would reject

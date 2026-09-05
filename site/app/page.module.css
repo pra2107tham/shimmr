@@ -81,123 +81,8 @@
   padding: 0 30px;
 }
 
-/* ---- nav ---- */
-
-.nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 0 0;
-}
-
-.navLeft {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.wordmark {
-  font-family: var(--font-sans-family);
-  font-weight: 600;
-  font-size: 22px;
-  letter-spacing: -0.3px;
-  color: var(--ink);
-}
-
-.statusPill {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 5px 10px 5px 8px;
-  border-radius: 999px;
-  background: var(--glass);
-  border: 1px solid var(--ink-15);
-}
-
-.liveDot {
-  position: relative;
-  display: inline-flex;
-  width: 6px;
-  height: 6px;
-}
-
-.liveDotCore {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: var(--accent);
-  animation: livePulse 2.8s ease-in-out infinite;
-}
-
-.liveDotRing {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 1px solid var(--accent);
-  animation: liveRing 2.8s ease-out infinite;
-}
-
-.statusLabel {
-  font-family: var(--font-mono-family);
-  font-size: 9.5px;
-  letter-spacing: 1.1px;
-  text-transform: uppercase;
-  color: rgba(var(--ink-rgb), 0.806);
-}
-
-.navLinks {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.iconButton {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: var(--glass);
-  border: 1px solid var(--ink-12);
-  color: rgba(var(--ink-rgb), 0.936);
-  transition: background 200ms, color 200ms;
-}
-
-.iconButton:hover {
-  background: var(--ink-12);
-  color: var(--ink);
-}
-
-.navSignIn {
-  display: flex;
-  align-items: center;
-  padding: 0 6px;
-  font-size: 13px;
-  color: rgba(var(--ink-rgb), 0.936);
-  transition: color 200ms;
-}
-
-.navSignIn:hover {
-  color: var(--ink);
-}
-
-.navCta {
-  display: flex;
-  align-items: center;
-  height: 36px;
-  padding: 0 16px;
-  border-radius: 999px;
-  background: var(--ink);
-  color: var(--ground);
-  font-size: 13px;
-  font-weight: 500;
-  transition: opacity 200ms;
-}
-
-.navCta:hover {
-  opacity: 0.88;
-  color: var(--ground);
-}
+/* Nav is SiteNav.tsx/sitenav.module.css now — shared across every page on
+   the site rather than copied inline here. */
 
 /* ---- hero ---- */
 
@@ -620,25 +505,8 @@
   color: var(--ink);
 }
 
-/* ---- footer ---- */
-
-.footer {
-  padding: 0 0 34px;
-}
-
-.footerRule {
-  height: 1px;
-  background: linear-gradient(90deg, rgba(var(--ink-rgb), 0) 0%, rgba(var(--ink-rgb), 0.162) 50%, rgba(var(--ink-rgb), 0) 100%);
-}
-
-.footerText {
-  margin: 18px 0 0;
-  text-align: center;
-  font-family: var(--font-mono-family);
-  font-size: 10.5px;
-  letter-spacing: 0.8px;
-  color: var(--ink-60);
-}
+/* Footer is SiteFooter.tsx/sitefooter.module.css now, shared with every
+   other page. */
 
 @media (max-width: 520px) {
   .seamContent {
