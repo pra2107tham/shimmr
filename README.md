@@ -53,7 +53,7 @@ the one to actually share. See [ADR 0009](docs/decisions/0009-serve-releases-fro
 On Windows:
 
 ```powershell
-irm https://raw.githubusercontent.com/pra2107tham/shimmr/main/install.ps1 | iex
+irm https://fpxntzwkiepnwsazmaxf.supabase.co/storage/v1/object/public/releases/install.ps1 | iex
 ```
 
 One archive, checksum-verified, containing the binary, the engine and the

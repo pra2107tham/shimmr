@@ -78,7 +78,7 @@ after showing what it intends to change.
 ### Windows
 
 ```powershell
-irm https://raw.githubusercontent.com/pra2107tham/shimmr/main/install.ps1 | iex
+irm https://fpxntzwkiepnwsazmaxf.supabase.co/storage/v1/object/public/releases/install.ps1 | iex
 ```
 
 Installs per-user to `%LOCALAPPDATA%\Programs\Shimmr`, so no administrator

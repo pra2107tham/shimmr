@@ -119,6 +119,10 @@
   font-size: 10.5px;
   letter-spacing: 0.12em;
   color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .terminalBody {
@@ -131,6 +135,7 @@
   line-height: 1.5;
   color: var(--muted-2);
   background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.012) 0 13px, transparent 13px 14px);
+  overflow-x: auto;
 }
 
 .prompt {
@@ -145,6 +150,41 @@
 .terminalOk {
   color: var(--accent);
   padding-left: 14px;
+}
+
+/* ---- download ---- */
+
+.downloadSection {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 46px 22px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.downloadGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 22px;
+  margin-top: 6px;
+}
+
+.downloadNote {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.downloadNote code {
+  font-family: var(--font-mono-family);
+  color: var(--accent);
+}
+
+.downloadLink {
+  color: var(--accent);
 }
 
 /* ---- free/connected split ---- */
