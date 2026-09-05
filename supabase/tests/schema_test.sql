@@ -400,6 +400,57 @@ begin
   end if;
 end $$;
 
+-- --------------------------------------------------------- org dashboard
+
+-- Same shape of guard, same reason: my_org_totals()/my_org_tool_usage()
+-- (20260905020000) only get created once auth.uid() exists, because their
+-- entire job is resolving "which org does this session belong to" from it.
+-- CI confirms the guard suppresses them on plain Postgres; the actual
+-- per-org scoping was verified by hand against the same stand-in auth
+-- schema as the RLS policies above, using this file's own fixtures — Ann
+-- and Bob both in Acme Inc, Cat alone in Beta Labs:
+--
+--   set role authenticated;
+--   set request.jwt.claim.sub = '<ann''s auth_user_id>';
+--   select * from my_org_totals();       -- Acme: people=2, calls=3 (hers + Bob's)
+--   select * from my_org_tool_usage();   -- search_code, get_graph_schema — no
+--                                         -- column says which of them ran either
+--
+-- Repeated as Cat: Beta Labs only, never Acme's row. As a person with no
+-- org at all: zero rows, not an error. As anon: permission denied outright
+-- (EXECUTE is revoked from PUBLIC and never granted back to anon — see the
+-- migration; a fresh function grants EXECUTE to PUBLIC by default, which
+-- would otherwise hand anon this for free).
+do $$
+declare
+  auth_available boolean;
+  fn_count int;
+begin
+  select exists (
+    select 1 from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'auth' and p.proname = 'uid'
+  ) into auth_available;
+
+  select count(*) into fn_count
+  from pg_proc p
+  join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public' and p.proname in ('my_org_totals', 'my_org_tool_usage');
+
+  if auth_available then
+    if fn_count <> 2 then
+      raise exception 'FAILED: auth.uid() exists but the org dashboard functions were not created';
+    end if;
+    raise notice '  ok — my_org_totals()/my_org_tool_usage() exist now that auth.uid() is available';
+  else
+    if fn_count <> 0 then
+      raise exception
+        'FAILED: % org dashboard function(s) exist without auth.uid() — the guard did not hold', fn_count;
+    end if;
+    raise notice '  ok — no org dashboard functions here (auth.uid() is unavailable on plain Postgres, as expected)';
+  end if;
+end $$;
+
 -- ------------------------------------------------------------ cli_pairings
 
 -- Unlike the tables above, cli_pairings never gets a policy at all, with or
