@@ -1,13 +1,15 @@
 import type { NextConfig } from "next";
 
-// Static export: this ships as plain files, not a Node process. Everything
-// on the page has to work with no server behind it. Vercel serves a
-// statically-exported Next.js app directly, so this needs nothing beyond
-// what `next build` already produces in out/.
+// A real Next.js server now, not a static export: the dashboard needs
+// per-request cookies (a signed-in session is different for every visitor)
+// and proxy.ts needs to run on every request to refresh that session and
+// gate /dashboard. Vercel runs this natively — nothing else to configure.
+//
+// The marketing homepage and the auth pages stay statically optimized on
+// their own; only routes that actually read the session pay for being
+// dynamic.
 const nextConfig: NextConfig = {
-  output: "export",
   images: { unoptimized: true },
-  trailingSlash: true,
 };
 
 export default nextConfig;

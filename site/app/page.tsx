@@ -33,6 +33,9 @@ export default function Home() {
             </span>
           </div>
           <div className={styles.navLinks}>
+            <a href="/login" className={styles.navSignIn}>
+              Sign in
+            </a>
             {contacts.map(({ key, href, value, icon, external }) => {
               const Icon = icons[icon];
               return (
@@ -47,6 +50,9 @@ export default function Home() {
                 </a>
               );
             })}
+            <a href="/signup" className={styles.navCta}>
+              Get started
+            </a>
           </div>
         </nav>
 
@@ -64,6 +70,14 @@ export default function Home() {
             one layer that keeps them all speaking the same language — so context doesn&apos;t
             die at the boundary between them.
           </p>
+          <div className={styles.heroCtaRow}>
+            <a href="/signup" className={styles.heroCta}>
+              Get started
+            </a>
+            <a href="/login" className={styles.heroCtaGhost}>
+              Sign in
+            </a>
+          </div>
         </header>
 
         <section className={styles.layerSection}>

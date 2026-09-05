@@ -163,35 +163,56 @@ for.
 
 ## Q11 — Nothing verifies an email address
 
-**Status:** Open. **This is the one with teeth.**
+**Status:** Answered for the website; still open for the CLI.
+
+The dashboard now sits behind Supabase Auth (magic link) — option 1 below,
+via option 2's mechanism, now that there is a website for the link to land
+on. See [ADR 0011](decisions/0011-web-auth-and-dashboard.md). A person's
+usage is only ever shown to that person, verified by an email round-trip
+they completed, not by a claim anyone could type.
+
+What that does **not** change: `shimmr signup` and `shimmr login` still
+attach a machine to an account on nothing but a stated email address. That
+was always true and remains true. It is lower-stakes than it was — the thing
+this question originally warned about, usage shown back to whoever claims an
+address, now requires the website's verified path regardless of what the CLI
+will accept — but the CLI's own request is still unverified, and closing that
+too is future work, not done here.
 
 `shimmr signup` upserts on email, so signing up with somebody else's address has
 always attached your machine to their account. `shimmr login` makes that
 explicit rather than incidental: give an address, get a token for a machine
-attached to it. No verification anywhere.
+attached to it. No verification anywhere. **Both of these remain true —**
+this paragraph describes the CLI, which this question's web-side fix did not
+touch.
 
-For a design-partner phase where we know everyone by name, this is survivable.
-It stops being survivable the moment any of these is true:
+For a design-partner phase where we know everyone by name, this was
+survivable. It stops being survivable the moment any of these is true:
 
 - anything is charged for, or counted per seat
 - an org's usage is shown to that org, because then one person's numbers are
   visible to whoever claims their address
 - a customer asks how we know who is who, and the honest answer is "we don't"
 
-**Options, cheapest first:**
+The second bullet is now handled — the dashboard sits behind the website's
+verified login, not the CLI's unverified one. The first and third still bear
+on the CLI directly: a seat that is counted (or charged) because someone
+typed an email at a terminal is still exactly the gap this question named.
+
+**Remaining options for the CLI, cheapest first:**
 
 1. **Emailed one-time code.** `login` returns nothing until a six-digit code
-   from the address is posted back. Supabase Auth already does this, so it is
-   mostly wiring rather than building.
-2. **Magic link.** Better experience, needs somewhere to land the click, which
-   means a website we do not have yet.
+   from the address is posted back. Supabase Auth already does this.
+2. ~~Magic link.~~ Done — for the website. Doesn't apply to a terminal the
+   way it does a browser.
 3. **Domain verification for orgs.** Only somebody with an `@acme.com` address
    joins Acme. Solves org-squatting as well as identity, and matters more once
    org totals are shown to customers.
 
-**Recommendation:** option 1, before anything is gated or shown back to a
-customer. Not before that — an unverified account costs nothing today, and a
-verification step before there is anything to protect is friction for its own
+**Recommendation:** option 1 for the CLI, before anything is gated or charged
+on the strength of a `shimmr login` alone. Not before that — an unverified
+account costs nothing today, and a verification step before there is
+anything left to protect on that path is friction for its own
 sake at exactly the moment adoption matters most.
 
 ---
@@ -209,4 +230,5 @@ sake at exactly the moment adoption matters most.
 | Q3 — language? | Go | `decisions/0005` |
 | Does usage reach us at all? | Yes — reported live by `serve`, not only on `sync` | `decisions/0008` |
 | Where do releases live, given a private repo? | Object storage; Supabase now, R2 later | `decisions/0009` |
+| Q11, web half — is a dashboard user's identity verified? | Yes — Supabase Auth magic link, linked to the existing account by email | `decisions/0011` |
 | Must everyone belong to an organisation? | No — an org is optional, and joinable later | `decisions/0008` context, schema |

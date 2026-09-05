@@ -151,10 +151,14 @@ read the `usage_snapshots` history.
 **Tokens are stored as SHA-256, never raw.** A dump of `installs` hands nobody a
 working credential.
 
-**RLS is on with no policies**, so `anon` and `authenticated` reach nothing. Only
-the Edge Functions, running with the service role key, touch these tables. When
-a dashboard arrives it gets explicit read policies; until then, no policy means
-no access.
+**RLS is on, and the dashboard now has explicit read policies.** The Edge
+Functions still do everything they always did with the service role key, which
+bypasses RLS entirely — nothing about how `signup`, `login`, `usage` or
+`events` work has changed. What changed is `authenticated`: a person signed in
+on the website (Supabase Auth, magic link) can now `select` their own row in
+`users`, their own `installs`, and their own `usage_snapshots`/`usage_events`
+— never anyone else's, and never an org-wide view. `anon` still reaches
+nothing at all. See [ADR 0011](../docs/decisions/0011-web-auth-and-dashboard.md).
 
 **`verify_jwt` is off** for every function — see `config.toml`. The CLI carries
 its own install token, not a Supabase JWT, so the gateway's check would reject
