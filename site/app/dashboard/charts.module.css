@@ -1,38 +1,50 @@
-.card {
-  border-radius: 14px;
-  padding: 18px 20px 16px;
-  background: var(--glass);
-  border: 1px solid var(--ink-11);
-  backdrop-filter: blur(20px);
-}
-
-.cardHead {
+.panel {
+  padding: 26px;
   display: flex;
-  align-items: baseline;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.panelHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  gap: 12px;
 }
 
-.cardTitle {
+.panelLabel {
   font-family: var(--font-mono-family);
-  font-size: 10px;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  color: var(--ink-60);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--muted);
 }
 
-.cardTotal {
+.rangeRow {
+  display: flex;
+  gap: 6px;
+}
+
+.rangeBtn {
+  border: 1px solid var(--line-md);
+  background: transparent;
+  color: var(--muted);
+  padding: 5px 10px;
   font-family: var(--font-mono-family);
-  font-variant-numeric: tabular-nums;
-  font-size: 15px;
-  color: var(--ink);
+  font-size: 11px;
+  cursor: pointer;
 }
 
-.chartEmpty {
-  padding: 22px 0;
-  text-align: center;
+.rangeBtnActive {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.empty {
+  padding: 12px 0;
   font-size: 12.5px;
-  color: var(--ink-60);
+  color: var(--muted);
 }
 
 /* ---- calls-per-day bars ---- */
@@ -40,35 +52,34 @@
 .bars {
   display: flex;
   align-items: flex-end;
-  gap: 6px;
-  height: 96px;
+  gap: 3px;
+  height: 150px;
 }
 
 .barCol {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
   height: 100%;
+  display: flex;
+  align-items: flex-end;
 }
 
 .barTrack {
-  position: relative;
   width: 100%;
-  flex: 1;
+  height: 100%;
   display: flex;
   flex-direction: column-reverse;
-  border-radius: 4px 4px 2px 2px;
-  background: var(--ink-07);
-  overflow: hidden;
 }
 
 .barOk {
   width: 100%;
   background: var(--accent);
+  opacity: 0.72;
   min-height: 0;
   transition: height 300ms ease-out;
+}
+
+.barCol:hover .barOk {
+  opacity: 1;
 }
 
 .barFail {
@@ -78,61 +89,65 @@
   transition: height 300ms ease-out;
 }
 
-.barLabel {
+.panelFoot {
+  display: flex;
+  justify-content: space-between;
   font-family: var(--font-mono-family);
-  font-size: 9.5px;
-  color: var(--ink-60);
+  font-size: 11px;
+  color: var(--muted);
 }
 
-/* ---- horizontal tool bars ---- */
+.panelTotal {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
 
-.hbars {
+/* ---- tool breakdown ---- */
+
+.toolList {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
 }
 
-.hbarRow {
-  display: grid;
-  grid-template-columns: 108px 1fr auto;
-  align-items: center;
-  gap: 10px;
+.toolRow {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
 }
 
-.hbarLabel {
+.toolLine {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
   font-family: var(--font-mono-family);
-  font-size: 11.5px;
-  color: var(--ink-72);
+  font-size: 12.5px;
+}
+
+.toolName {
+  color: var(--ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.hbarTrack {
-  height: 8px;
-  border-radius: 4px;
-  background: var(--ink-07);
-  overflow: hidden;
-}
-
-.hbarFill {
-  height: 100%;
-  border-radius: 4px;
-  background: var(--accent);
-  transition: width 300ms ease-out;
-}
-
-.hbarCount {
-  font-family: var(--font-mono-family);
+.toolCount {
+  color: var(--muted);
   font-variant-numeric: tabular-nums;
-  font-size: 11.5px;
-  color: var(--ink-60);
-  min-width: 2.5ch;
-  text-align: right;
+  flex: none;
 }
 
-@media (max-width: 480px) {
-  .hbarRow {
-    grid-template-columns: 84px 1fr auto;
-  }
+.toolTrack {
+  height: 4px;
+  background: var(--line);
+}
+
+.toolFill {
+  height: 4px;
+  background: var(--accent);
+  transition: width 500ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.toolFillAmber {
+  background: var(--amber);
 }

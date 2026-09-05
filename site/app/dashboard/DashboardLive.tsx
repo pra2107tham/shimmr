@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
-import { CallsChart, ToolsChart, type DailyCalls, type ToolCount } from "./charts";
+import { CallsChart, ToolsChart, bucketDaily, topTools, type UsageLogEntry } from "./charts";
 import styles from "./dashboard.module.css";
 
 type Totals = { calls: number; repos: number; files: number; lines: number };
@@ -35,6 +35,7 @@ type OrgTotals = {
   files: number;
   lines: number;
 };
+type OrgTool = { tool: string; calls: number };
 
 // The shape of a row as Realtime delivers it — snake_case, straight off the
 // usage_events table, not the narrower RecentEvent the initial server fetch
@@ -48,13 +49,21 @@ type UsageEventRow = {
   occurred_at: string;
 };
 
+const MAX_LOG = 2000;
+const RANGES = [
+  { key: "7d", label: "7d", days: 7 },
+  { key: "30d", label: "30d", days: 30 },
+  { key: "90d", label: "90d", days: 90 },
+] as const;
+type RangeKey = (typeof RANGES)[number]["key"];
+
 function relativeTime(iso: string): string {
   const seconds = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
   if (seconds < 5) return "just now";
-  if (seconds < 60) return `${Math.floor(seconds)}s ago`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  return `${Math.floor(seconds / 86400)}d ago`;
+  if (seconds < 60) return `${Math.floor(seconds)}s`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
+  return `${Math.floor(seconds / 86400)}d`;
 }
 
 function todayKey(): string {
@@ -63,31 +72,33 @@ function todayKey(): string {
 
 export default function DashboardLive({
   userId,
+  email,
+  orgName,
   initialTotals,
-  initialReportingLive,
+  initialReportingCount,
   initialEvents,
-  initialDaily,
-  initialTools,
+  initialUsageLog,
   installs,
   org,
   orgTools,
 }: {
   userId: string;
+  email: string;
+  orgName: string | null;
   initialTotals: Totals;
-  initialReportingLive: boolean;
+  initialReportingCount: number;
   initialEvents: RecentEvent[];
-  initialDaily: DailyCalls[];
-  initialTools: ToolCount[];
+  initialUsageLog: UsageLogEntry[];
   installs: Install[];
   org: OrgTotals | null;
-  orgTools: ToolCount[];
+  orgTools: OrgTool[];
 }) {
   const [events, setEvents] = useState(initialEvents);
-  const [daily, setDaily] = useState(initialDaily);
-  const [tools, setTools] = useState(initialTools);
-  const [live, setLive] = useState(initialReportingLive);
+  const [usageLog, setUsageLog] = useState(initialUsageLog);
+  const [reportingCount, setReportingCount] = useState(initialReportingCount);
+  const [range, setRange] = useState<RangeKey>("30d");
   const [sinceOpened, setSinceOpened] = useState(0);
-  // Re-render periodically so "3s ago" keeps advancing without a refresh.
+  // Re-render periodically so relative timestamps keep advancing without a refresh.
   const [, forceTick] = useState(0);
 
   useEffect(() => {
@@ -107,34 +118,13 @@ export default function DashboardLive({
         (payload) => {
           const row = payload.new as UsageEventRow;
           if (row.kind !== "tool_call") return;
-          setLive(true);
+          setReportingCount((n) => Math.max(n, 1));
           setSinceOpened((n) => n + 1);
           setEvents((prev) => [
             { id: row.id, tool: row.tool, kind: row.kind, ok: row.ok, occurred_at: row.occurred_at },
             ...prev,
           ].slice(0, 20));
-
-          // Fold the same event into today's chart bucket and the tool
-          // breakdown, rather than waiting on a refresh to see it reflected —
-          // the feed above already updates live, so a chart that only moves
-          // on reload would look like the two disagreed about what "live"
-          // means on the same page.
-          const key = todayKey();
-          setDaily((prev) => {
-            const last = prev[prev.length - 1];
-            if (!last || last.date !== key) return prev; // window rolled past midnight — next load re-buckets
-            const updated = { ...last, ok: last.ok + (row.ok ? 1 : 0), failed: last.failed + (row.ok ? 0 : 1) };
-            return [...prev.slice(0, -1), updated];
-          });
-          if (row.tool) {
-            setTools((prev) => {
-              const idx = prev.findIndex((t) => t.tool === row.tool);
-              if (idx === -1) return [...prev, { tool: row.tool as string, calls: 1 }];
-              const next = [...prev];
-              next[idx] = { ...next[idx], calls: next[idx].calls + 1 };
-              return next;
-            });
-          }
+          setUsageLog((prev) => [{ occurred_at: row.occurred_at, tool: row.tool, ok: row.ok }, ...prev].slice(0, MAX_LOG));
         },
       )
       .subscribe();
@@ -149,105 +139,150 @@ export default function DashboardLive({
     return () => clearInterval(id);
   }, []);
 
+  const rangeDef = RANGES.find((r) => r.key === range) ?? RANGES[1];
+  const daily = useMemo(() => bucketDaily(usageLog, rangeDef.days), [usageLog, rangeDef.days]);
+  const tools = useMemo(() => topTools(usageLog, 6), [usageLog]);
+  const callsToday = daily.find((d) => d.date === todayKey());
+  const callsTodayCount = callsToday ? callsToday.ok + callsToday.failed : 0;
+
+  const liveLabel =
+    reportingCount === 0 ? "no machine reporting" : reportingCount === 1 ? "1 machine reporting now" : `${reportingCount} machines reporting now`;
+
   return (
     <>
-      <div className={styles.statusRow}>
-        <span className={`${styles.statusDot} ${live ? styles.live : ""}`} />
-        {live ? "Reporting live" : "Not connected yet — run a tool call to see it here"}
-      </div>
-
-      <div className={styles.stats}>
-        <div className={styles.stat}>
-          <div className={styles.statVal}>{initialTotals.calls.toLocaleString()}</div>
-          <div className={styles.statLabel}>Calls</div>
+      <header className={styles.header}>
+        <div className={styles.headerLeft}>
+          <span className={styles.eyebrow}>DASHBOARD</span>
+          <span className={styles.title}>{email}</span>
+          {orgName && <span className={styles.orgLine}>org · {orgName}</span>}
         </div>
-        <div className={styles.stat}>
-          <div className={styles.statVal}>{initialTotals.repos.toLocaleString()}</div>
-          <div className={styles.statLabel}>Repos</div>
+        <div className={styles.headerRight}>
+          <span className={`${styles.livePill} ${reportingCount > 0 ? styles.livePillOn : ""}`}>
+            <span className={`${styles.pulseDot} ${reportingCount > 0 ? styles.pulseDotOn : ""}`} />
+            {liveLabel}
+          </span>
+          <form action="/auth/signout" method="post">
+            <button className={styles.signout} type="submit">sign out</button>
+          </form>
         </div>
-        <div className={styles.stat}>
-          <div className={styles.statVal}>{initialTotals.files.toLocaleString()}</div>
-          <div className={styles.statLabel}>Files</div>
+      </header>
+
+      {installs.length === 0 ? (
+        <div className={styles.empty}>
+          <span className={styles.emptyEyebrow}>NOTHING CONNECTED YET</span>
+          <div className={styles.emptyTitle}>No machine is reporting. Run this where your agent runs.</div>
+          <code className={styles.emptyCmd}>$ shimmr init</code>
+          <p className={styles.emptyNote}>
+            Don&apos;t have the binary?{" "}
+            <a href="https://fpxntzwkiepnwsazmaxf.supabase.co/storage/v1/object/public/releases/install.sh">get the installer</a> —
+            then <code>shimmr doctor</code> to verify.
+          </p>
         </div>
-        <div className={styles.stat}>
-          <div className={styles.statVal}>{initialTotals.lines.toLocaleString()}</div>
-          <div className={styles.statLabel}>Lines</div>
-        </div>
-      </div>
-
-      <p className={styles.sinceOpened}>
-        Since you opened this page: <strong>{sinceOpened}</strong> call
-        {sinceOpened === 1 ? "" : "s"}. The tiles above are as of your last
-        page load — refresh to fold live activity into them. The charts
-        below update live, same as the feed.
-      </p>
-
-      <div className={styles.chartGrid}>
-        <CallsChart data={daily} />
-        <ToolsChart data={tools} />
-      </div>
-
-      {org && (
+      ) : (
         <>
-          <p className={styles.sectionLabel}>
-            {org.org_name} · {org.people} {org.people === 1 ? "person" : "people"}
-          </p>
-          <div className={styles.orgStats}>
-            <div className={styles.orgStat}>
-              <div className={styles.orgStatVal}>{org.calls.toLocaleString()}</div>
-              <div className={styles.statLabel}>Org calls</div>
+          <div className={styles.stats}>
+            <div className={styles.stat}>
+              <span className={styles.statLabel}>TOOL CALLS</span>
+              <span className={styles.statVal}>{initialTotals.calls.toLocaleString()}</span>
+              <span className={styles.statDelta}>+{callsTodayCount} today</span>
             </div>
-            <div className={styles.orgStat}>
-              <div className={styles.orgStatVal}>{org.installs.toLocaleString()}</div>
-              <div className={styles.statLabel}>Org machines</div>
+            <div className={styles.stat}>
+              <span className={styles.statLabel}>REPOS</span>
+              <span className={styles.statVal}>{initialTotals.repos.toLocaleString()}</span>
+              <span className={styles.statDeltaMuted}>as of last sync</span>
             </div>
-            <div className={styles.orgStat}>
-              <div className={styles.orgStatVal}>{org.files.toLocaleString()}</div>
-              <div className={styles.statLabel}>Org files</div>
+            <div className={styles.stat}>
+              <span className={styles.statLabel}>FILES</span>
+              <span className={styles.statVal}>{initialTotals.files.toLocaleString()}</span>
+              <span className={styles.statDeltaMuted}>as of last sync</span>
+            </div>
+            <div className={styles.stat}>
+              <span className={styles.statLabel}>LINES COVERED</span>
+              <span className={styles.statVal}>{initialTotals.lines.toLocaleString()}</span>
+              <span className={styles.statDeltaMuted}>method on request</span>
             </div>
           </div>
+
+          <p className={styles.sinceOpened}>
+            Since you opened this page: <strong>{sinceOpened}</strong> call{sinceOpened === 1 ? "" : "s"}.
+          </p>
+
           <div className={styles.chartGrid}>
-            <ToolsChart data={orgTools} title={`Top tools across ${org.org_name}`} />
+            <CallsChart
+              data={daily}
+              ranges={RANGES.map((r) => ({ label: r.label, active: r.key === range, onSelect: () => setRange(r.key) }))}
+              className={styles.gridCell}
+            />
+            <ToolsChart data={tools} className={styles.gridCell} />
           </div>
-          <p className={styles.orgNote}>
-            Aggregate only — nothing here shows which teammate made which call.
-          </p>
+
+          <div className={styles.listGrid}>
+            <div className={styles.listPanel}>
+              <span className={styles.panelLabel}>MOST RECENT CALLS</span>
+              {events.length === 0 ? (
+                <div className={styles.feedEmpty}>Nothing yet. This updates the moment your agent makes its first call.</div>
+              ) : (
+                events.map((e) => (
+                  <div className={styles.feedRow} key={e.id}>
+                    <span className={`${styles.feedDot} ${e.ok ? "" : styles.feedDotFail}`} />
+                    <span className={styles.feedTool}>{e.tool ?? "—"}</span>
+                    <span className={e.ok ? styles.feedOk : styles.feedFail}>{e.ok ? "ok" : "failed"}</span>
+                    <span className={styles.feedTime}>{relativeTime(e.occurred_at)}</span>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className={styles.listPanel}>
+              <span className={styles.panelLabel}>CONNECTED MACHINES</span>
+              {installs.map((i) => (
+                <div className={styles.machineRow} key={i.id}>
+                  <span className={styles.machineName}>{i.id}</span>
+                  <span className={styles.machineMeta}>added {relativeTime(i.created_at)}</span>
+                  <span className={styles.machineMeta}>
+                    {i.last_seen_at ? `last seen ${relativeTime(i.last_seen_at)}` : "never synced"}
+                  </span>
+                  <span className={`${styles.machineTag} ${i.revoked_at ? styles.machineTagOff : styles.machineTagOn}`}>
+                    {i.revoked_at ? "REVOKED" : "ACTIVE"}
+                  </span>
+                </div>
+              ))}
+              <p className={styles.machineNote}>
+                revoking a machine stops its reporting immediately; local tools keep working on the free tier.
+              </p>
+            </div>
+          </div>
+
+          {org && (
+            <div className={styles.orgPanel}>
+              <div className={styles.orgBox}>
+                <div className={styles.orgHead}>
+                  <span className={styles.orgHeadLabel}>{org.org_name.toUpperCase()} — ORG AGGREGATE</span>
+                  <span className={styles.orgHeadNote}>NEVER BROKEN DOWN BY TEAMMATE</span>
+                </div>
+                <div className={styles.orgBody}>
+                  <div className={styles.orgTotals}>
+                    <span className={styles.orgTotal}>
+                      calls
+                      <strong>{org.calls.toLocaleString()}</strong>
+                    </span>
+                    <span className={styles.orgTotal}>
+                      people
+                      <strong>{org.people.toLocaleString()}</strong>
+                    </span>
+                    <span className={styles.orgTotal}>
+                      repos
+                      <strong>{org.repos.toLocaleString()}</strong>
+                    </span>
+                  </div>
+                  <div className={styles.orgTools}>
+                    <ToolsChart data={orgTools} title={`${org.org_name} — top tools`} color="amber" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
-
-      <p className={styles.sectionLabel}>Recent activity</p>
-      <div className={styles.feed}>
-        {events.length === 0 ? (
-          <div className={styles.feedEmpty}>
-            Nothing yet. This updates the moment your agent makes its first
-            call — no refresh needed.
-          </div>
-        ) : (
-          events.map((e) => (
-            <div className={styles.feedRow} key={e.id}>
-              <span className={`${styles.feedDot} ${e.ok ? "" : styles.fail}`} />
-              <span className={styles.feedTool}>{e.tool ?? "—"}</span>
-              <span className={styles.feedTime}>{relativeTime(e.occurred_at)}</span>
-            </div>
-          ))
-        )}
-      </div>
-
-      <p className={styles.sectionLabel}>Machines</p>
-      <div className={styles.machines}>
-        {installs.map((i) => (
-          <div className={styles.machine} key={i.id}>
-            <span className={styles.machineId}>{i.id}</span>
-            <span className={styles.machineSeen}>
-              {i.revoked_at
-                ? "revoked"
-                : i.last_seen_at
-                  ? `last seen ${relativeTime(i.last_seen_at)}`
-                  : "never synced"}
-            </span>
-          </div>
-        ))}
-      </div>
     </>
   );
 }

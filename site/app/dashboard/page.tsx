@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
-import Bloom from "../Bloom";
+import SiteFooter from "../SiteFooter";
 import DashboardLive from "./DashboardLive";
 import styles from "./dashboard.module.css";
 
@@ -47,7 +47,8 @@ type RecentEvent = {
 
 // What my_org_totals()/my_org_tool_usage() return — see
 // supabase/migrations/20260905020000_org_dashboard.sql. Aggregate only:
-// nothing here says which teammate made which call, by design (ADR 0011).
+// nothing here says which teammate made which call, by design (ADR 0011,
+// ADR 0013).
 type OrgTotals = {
   org_id: string;
   org_name: string;
@@ -62,25 +63,7 @@ type OrgTotals = {
 
 type OrgTool = { tool: string; calls: number };
 
-const DAYS_OF_HISTORY = 14;
 const CHART_EVENT_LIMIT = 1000;
-
-function dayKey(iso: string): string {
-  return iso.slice(0, 10);
-}
-
-// Every day in the window, oldest first, zero-filled — a day with no calls
-// is a real, visible zero bar, not a gap in the array that shifts every
-// other bar sideways.
-function emptyDailyBuckets(days: number): Map<string, { ok: number; failed: number }> {
-  const buckets = new Map<string, { ok: number; failed: number }>();
-  const now = new Date();
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - i));
-    buckets.set(d.toISOString().slice(0, 10), { ok: 0, failed: 0 });
-  }
-  return buckets;
-}
 
 export default async function DashboardPage() {
   const supabase = await supabaseServer();
@@ -100,9 +83,10 @@ export default async function DashboardPage() {
   // *). What comes back is what this person is allowed to see, full stop —
   // the query doesn't have to repeat that logic to be safe if it's wrong.
   //
-  // One usage_events query serves both the recent-activity feed and the
-  // two personal charts below — fetched once at CHART_EVENT_LIMIT rows and
-  // sliced/aggregated in memory, rather than querying twice.
+  // One usage_events query serves the recent-activity feed and both charts
+  // — fetched once at CHART_EVENT_LIMIT rows, sent to the client as-is, and
+  // sliced/bucketed there (by range, and as new realtime events arrive)
+  // instead of the server precomputing one fixed window.
   const [{ data: profile }, { data: installs }, { data: rollups }, { data: events }] =
     await Promise.all([
       supabase.from("users").select("id, email, team, org_id").maybeSingle(),
@@ -129,25 +113,11 @@ export default async function DashboardPage() {
     }),
     { calls: 0, repos: 0, files: 0, lines: 0 },
   );
-  const reportingLive = rollupRows.some((r) => r.source === "live");
+  const reportingCount = rollupRows.filter((r) => r.source === "live").length;
   const installList = (installs ?? []) as Install[];
   const eventRows = (events ?? []) as RecentEvent[];
   const recentEvents = eventRows.slice(0, 20);
-
-  const cutoff = new Date().getTime() - DAYS_OF_HISTORY * 24 * 60 * 60 * 1000;
-  const dailyBuckets = emptyDailyBuckets(DAYS_OF_HISTORY);
-  const toolCounts = new Map<string, number>();
-  for (const e of eventRows) {
-    if (!e.tool) continue;
-    toolCounts.set(e.tool, (toolCounts.get(e.tool) ?? 0) + 1);
-    if (new Date(e.occurred_at).getTime() < cutoff) continue;
-    const bucket = dailyBuckets.get(dayKey(e.occurred_at));
-    if (!bucket) continue; // outside the window even after the cutoff check (clock skew) — skip rather than guess
-    if (e.ok) bucket.ok += 1;
-    else bucket.failed += 1;
-  }
-  const dailyCalls = Array.from(dailyBuckets, ([date, v]) => ({ date, ...v }));
-  const toolBreakdown = Array.from(toolCounts, ([tool, calls]) => ({ tool, calls }));
+  const usageLog = eventRows.map((e) => ({ occurred_at: e.occurred_at, tool: e.tool, ok: e.ok }));
 
   // Org-wide numbers only when this person belongs to one — both RPCs
   // return zero rows for an org-less caller rather than erroring, but
@@ -166,58 +136,19 @@ export default async function DashboardPage() {
 
   return (
     <div className={styles.page}>
-      <Bloom />
-      <div className={styles.wrap}>
-        <nav className={styles.nav}>
-          <span className={styles.wordmark}>Shimmr</span>
-          <form action="/auth/signout" method="post">
-            <button className={styles.signout} type="submit">
-              Sign out
-            </button>
-          </form>
-        </nav>
-
-        <header className={styles.header}>
-          <p className={styles.eyebrow}>
-            Signed in as{org ? ` · ${org.org_name}` : ""}
-          </p>
-          <h1 className={styles.title}>{profile?.email ?? user.email}</h1>
-        </header>
-
-        {installList.length === 0 ? (
-          <div className={styles.connectCard}>
-            <h2 className={styles.connectTitle}>Connect the CLI</h2>
-            <p className={styles.connectCopy}>
-              Run this on the machine you want to see here:
-            </p>
-            <code className={styles.connectCmd}>shimmr login</code>
-            <p className={styles.connectCopy}>
-              It opens a browser back to a page like this one to confirm —
-              you&apos;re already signed in, so it&apos;s one click.
-              (Scripted or headless machine? <code>shimmr login --email {profile?.email ?? user.email}</code> skips
-              the browser, unverified.)
-            </p>
-            <p className={styles.connectCopy}>
-              Don&apos;t have it yet:
-            </p>
-            <code className={styles.connectCmd}>
-              curl -fsSL https://fpxntzwkiepnwsazmaxf.supabase.co/storage/v1/object/public/releases/install.sh | sh
-            </code>
-          </div>
-        ) : (
-          <DashboardLive
-            userId={profile?.id ?? ""}
-            initialTotals={totals}
-            initialReportingLive={reportingLive}
-            initialEvents={recentEvents}
-            initialDaily={dailyCalls}
-            initialTools={toolBreakdown}
-            installs={installList}
-            org={org}
-            orgTools={orgTools}
-          />
-        )}
-      </div>
+      <DashboardLive
+        userId={profile?.id ?? ""}
+        email={profile?.email ?? user.email ?? ""}
+        orgName={org?.org_name ?? null}
+        initialTotals={totals}
+        initialReportingCount={reportingCount}
+        initialEvents={recentEvents}
+        initialUsageLog={usageLog}
+        installs={installList}
+        org={org}
+        orgTools={orgTools}
+      />
+      <SiteFooter />
     </div>
   );
 }
