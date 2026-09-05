@@ -45,6 +45,43 @@ type RecentEvent = {
   occurred_at: string;
 };
 
+// What my_org_totals()/my_org_tool_usage() return — see
+// supabase/migrations/20260905020000_org_dashboard.sql. Aggregate only:
+// nothing here says which teammate made which call, by design (ADR 0011).
+type OrgTotals = {
+  org_id: string;
+  org_name: string;
+  slug: string;
+  people: number;
+  installs: number;
+  calls: number;
+  repos: number;
+  files: number;
+  lines: number;
+};
+
+type OrgTool = { tool: string; calls: number };
+
+const DAYS_OF_HISTORY = 14;
+const CHART_EVENT_LIMIT = 1000;
+
+function dayKey(iso: string): string {
+  return iso.slice(0, 10);
+}
+
+// Every day in the window, oldest first, zero-filled — a day with no calls
+// is a real, visible zero bar, not a gap in the array that shifts every
+// other bar sideways.
+function emptyDailyBuckets(days: number): Map<string, { ok: number; failed: number }> {
+  const buckets = new Map<string, { ok: number; failed: number }>();
+  const now = new Date();
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - i));
+    buckets.set(d.toISOString().slice(0, 10), { ok: 0, failed: 0 });
+  }
+  return buckets;
+}
+
 export default async function DashboardPage() {
   const supabase = await supabaseServer();
   const {
@@ -62,7 +99,11 @@ export default async function DashboardPage() {
   // of these to this session's own rows (own_row / own_installs / own usage
   // *). What comes back is what this person is allowed to see, full stop —
   // the query doesn't have to repeat that logic to be safe if it's wrong.
-  const [{ data: profile }, { data: installs }, { data: rollups }, { data: recent }] =
+  //
+  // One usage_events query serves both the recent-activity feed and the
+  // two personal charts below — fetched once at CHART_EVENT_LIMIT rows and
+  // sliced/aggregated in memory, rather than querying twice.
+  const [{ data: profile }, { data: installs }, { data: rollups }, { data: events }] =
     await Promise.all([
       supabase.from("users").select("id, email, team, org_id").maybeSingle(),
       supabase
@@ -75,7 +116,7 @@ export default async function DashboardPage() {
         .select("id, tool, kind, ok, occurred_at")
         .eq("kind", "tool_call")
         .order("occurred_at", { ascending: false })
-        .limit(20),
+        .limit(CHART_EVENT_LIMIT),
     ]);
 
   const rollupRows = (rollups ?? []) as Rollup[];
@@ -90,6 +131,38 @@ export default async function DashboardPage() {
   );
   const reportingLive = rollupRows.some((r) => r.source === "live");
   const installList = (installs ?? []) as Install[];
+  const eventRows = (events ?? []) as RecentEvent[];
+  const recentEvents = eventRows.slice(0, 20);
+
+  const cutoff = new Date().getTime() - DAYS_OF_HISTORY * 24 * 60 * 60 * 1000;
+  const dailyBuckets = emptyDailyBuckets(DAYS_OF_HISTORY);
+  const toolCounts = new Map<string, number>();
+  for (const e of eventRows) {
+    if (!e.tool) continue;
+    toolCounts.set(e.tool, (toolCounts.get(e.tool) ?? 0) + 1);
+    if (new Date(e.occurred_at).getTime() < cutoff) continue;
+    const bucket = dailyBuckets.get(dayKey(e.occurred_at));
+    if (!bucket) continue; // outside the window even after the cutoff check (clock skew) — skip rather than guess
+    if (e.ok) bucket.ok += 1;
+    else bucket.failed += 1;
+  }
+  const dailyCalls = Array.from(dailyBuckets, ([date, v]) => ({ date, ...v }));
+  const toolBreakdown = Array.from(toolCounts, ([tool, calls]) => ({ tool, calls }));
+
+  // Org-wide numbers only when this person belongs to one — both RPCs
+  // return zero rows for an org-less caller rather than erroring, but
+  // skipping the call entirely when we already know there's no org from
+  // `profile` avoids two round trips that can only come back empty.
+  let org: OrgTotals | null = null;
+  let orgTools: OrgTool[] = [];
+  if (profile?.org_id) {
+    const [{ data: orgRow }, { data: orgToolRows }] = await Promise.all([
+      supabase.rpc("my_org_totals").maybeSingle(),
+      supabase.rpc("my_org_tool_usage"),
+    ]);
+    org = (orgRow as OrgTotals | null) ?? null;
+    orgTools = (orgToolRows ?? []) as OrgTool[];
+  }
 
   return (
     <div className={styles.page}>
@@ -105,7 +178,9 @@ export default async function DashboardPage() {
         </nav>
 
         <header className={styles.header}>
-          <p className={styles.eyebrow}>Signed in as</p>
+          <p className={styles.eyebrow}>
+            Signed in as{org ? ` · ${org.org_name}` : ""}
+          </p>
           <h1 className={styles.title}>{profile?.email ?? user.email}</h1>
         </header>
 
@@ -134,8 +209,12 @@ export default async function DashboardPage() {
             userId={profile?.id ?? ""}
             initialTotals={totals}
             initialReportingLive={reportingLive}
-            initialEvents={(recent ?? []) as RecentEvent[]}
+            initialEvents={recentEvents}
+            initialDaily={dailyCalls}
+            initialTools={toolBreakdown}
             installs={installList}
+            org={org}
+            orgTools={orgTools}
           />
         )}
       </div>

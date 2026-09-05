@@ -1,0 +1,138 @@
+.card {
+  border-radius: 14px;
+  padding: 18px 20px 16px;
+  background: var(--glass);
+  border: 1px solid var(--ink-11);
+  backdrop-filter: blur(20px);
+}
+
+.cardHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.cardTitle {
+  font-family: var(--font-mono-family);
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--ink-60);
+}
+
+.cardTotal {
+  font-family: var(--font-mono-family);
+  font-variant-numeric: tabular-nums;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.chartEmpty {
+  padding: 22px 0;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--ink-60);
+}
+
+/* ---- calls-per-day bars ---- */
+
+.bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 96px;
+}
+
+.barCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+}
+
+.barTrack {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column-reverse;
+  border-radius: 4px 4px 2px 2px;
+  background: var(--ink-07);
+  overflow: hidden;
+}
+
+.barOk {
+  width: 100%;
+  background: var(--accent);
+  min-height: 0;
+  transition: height 300ms ease-out;
+}
+
+.barFail {
+  width: 100%;
+  background: var(--danger);
+  min-height: 0;
+  transition: height 300ms ease-out;
+}
+
+.barLabel {
+  font-family: var(--font-mono-family);
+  font-size: 9.5px;
+  color: var(--ink-60);
+}
+
+/* ---- horizontal tool bars ---- */
+
+.hbars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hbarRow {
+  display: grid;
+  grid-template-columns: 108px 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.hbarLabel {
+  font-family: var(--font-mono-family);
+  font-size: 11.5px;
+  color: var(--ink-72);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hbarTrack {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--ink-07);
+  overflow: hidden;
+}
+
+.hbarFill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--accent);
+  transition: width 300ms ease-out;
+}
+
+.hbarCount {
+  font-family: var(--font-mono-family);
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  color: var(--ink-60);
+  min-width: 2.5ch;
+  text-align: right;
+}
+
+@media (max-width: 480px) {
+  .hbarRow {
+    grid-template-columns: 84px 1fr auto;
+  }
+}
