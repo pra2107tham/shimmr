@@ -47,7 +47,11 @@
   position: fixed;
   inset: 0;
   z-index: 0;
-  background: rgba(250, 246, 238, 0.6);
+  /* Tied to --ground itself (not a separate hardcoded colour) so this mutes
+     the blobs toward the page background in both palettes — a wash fixed to
+     the light warm paper tone left dark mode with a pale film sitting over
+     a near-black page. */
+  background: rgba(var(--ground-rgb), 0.6);
   backdrop-filter: blur(20px);
   pointer-events: none;
 }
@@ -56,6 +60,6 @@
   position: fixed;
   inset: 0;
   z-index: 0;
-  background: radial-gradient(120% 80% at 50% -10%, rgba(250, 246, 238, 0) 40%, rgba(250, 246, 238, 0.72) 100%);
+  background: radial-gradient(120% 80% at 50% -10%, rgba(var(--ground-rgb), 0) 40%, rgba(var(--ground-rgb), 0.72) 100%);
   pointer-events: none;
 }

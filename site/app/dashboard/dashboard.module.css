@@ -21,7 +21,8 @@
 }
 
 .wordmark {
-  font-family: var(--font-serif-family);
+  font-family: var(--font-sans-family);
+  font-weight: 600;
   font-size: 20px;
 }
 
@@ -54,11 +55,11 @@
 }
 
 .title {
-  font-family: var(--font-serif-family);
-  font-weight: 400;
+  font-family: var(--font-sans-family);
+  font-weight: 600;
   font-size: clamp(24px, 3.4vw, 34px);
   margin: 0;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.5px;
 }
 
 /* ---- connect card (no installs yet) ---- */
@@ -72,8 +73,8 @@
 }
 
 .connectTitle {
-  font-family: var(--font-serif-family);
-  font-weight: 400;
+  font-family: var(--font-sans-family);
+  font-weight: 600;
   font-size: 22px;
   margin: 0 0 10px;
 }
@@ -88,7 +89,7 @@
   display: block;
   font-family: var(--font-mono-family);
   font-size: 12.5px;
-  background: rgba(33, 29, 23, 0.06);
+  background: var(--code-bg);
   border: 1px solid var(--ink-11);
   border-radius: 8px;
   padding: 12px 14px;
@@ -207,7 +208,7 @@
   align-items: center;
   gap: 12px;
   padding: 11px 18px;
-  border-bottom: 1px solid var(--ink-07, rgba(33, 29, 23, 0.06));
+  border-bottom: 1px solid var(--ink-07);
   font-size: 13px;
 }
 
@@ -224,7 +225,7 @@
 }
 
 .feedDot.fail {
-  background: #b3422a;
+  background: var(--danger);
 }
 
 .feedTool {

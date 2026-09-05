@@ -1,11 +1,16 @@
-/* Shimmr — coming soon. Warm-paper palette, fixed (no dark mode toggle —
-   this is one of three variants designed in Claude Design, and this is the
-   one that shipped). */
+/* Shimmr — design tokens. Light by default, a real dark palette under
+   prefers-color-scheme (no toggle — the system already tells us). Every
+   component reads these variables rather than a hardcoded colour, which is
+   what makes the dark palette below apply everywhere in one place instead
+   of needing a second pass through every stylesheet. */
 
 :root {
+  color-scheme: light dark;
+
   --ground: #f4f0e8;
-  --ground-wash: #faf6ee;
+  --ground-rgb: 244, 240, 232;
   --ink: #211d17;
+  --ink-rgb: 33, 29, 23;
   --ink-72: rgba(33, 29, 23, 0.72);
   --ink-60: rgba(33, 29, 23, 0.6);
   --ink-24: rgba(33, 29, 23, 0.24);
@@ -15,6 +20,10 @@
   --ink-07: rgba(33, 29, 23, 0.068);
 
   --glass: rgba(255, 255, 255, 0.6);
+  --surface-1: rgba(255, 255, 255, 0.5);
+  --code-bg: rgba(33, 29, 23, 0.06);
+  --danger: #b3422a;
+
   --accent: #1f8a7c;
   --accent-95: rgba(25, 120, 108, 0.95);
   --accent-88: rgba(25, 120, 108, 0.875);
@@ -23,6 +32,7 @@
   --accent-22: rgba(25, 120, 108, 0.216);
   --accent-19: rgba(25, 120, 108, 0.189);
   --accent-18: rgba(25, 120, 108, 0.18);
+  --seam-secondary: rgba(108, 96, 190, 0.16);
 
   --bloom-1: #1f8a7c;
   --bloom-2: #e6d3b4;
@@ -30,9 +40,53 @@
   --bloom-4: #e8cfd6;
   --bloom-opacity: 0.62;
 
-  --font-serif-family: var(--font-serif), Georgia, serif;
-  --font-sans-family: var(--font-sans), system-ui, sans-serif;
-  --font-mono-family: var(--font-mono), ui-monospace, monospace;
+  --chart-line: var(--accent);
+  --chart-track: var(--ink-11);
+  --chart-fail: var(--danger);
+
+  --font-serif-family: var(--font-sans-family);
+  --font-sans-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  --font-mono-family: var(--font-mono), ui-monospace, "SFMono-Regular", monospace;
+}
+
+/* System dark mode. Values drawn from the same "layer, shown" design,
+   restated for a near-black ground instead of warm paper — same relative
+   contrast, same accent role, different literal colours. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ground: #0a0b0d;
+    --ground-rgb: 10, 11, 13;
+    --ink: #f2f0ea;
+    --ink-rgb: 242, 240, 234;
+    --ink-72: rgba(242, 240, 234, 0.72);
+    --ink-60: rgba(242, 240, 234, 0.6);
+    --ink-24: rgba(242, 240, 234, 0.24);
+    --ink-15: rgba(242, 240, 234, 0.149);
+    --ink-12: rgba(242, 240, 234, 0.121);
+    --ink-11: rgba(242, 240, 234, 0.115);
+    --ink-07: rgba(242, 240, 234, 0.068);
+
+    --glass: rgba(255, 255, 255, 0.06);
+    --surface-1: rgba(255, 255, 255, 0.05);
+    --code-bg: rgba(255, 255, 255, 0.05);
+    --danger: #e0654a;
+
+    --accent: #8cdccd;
+    --accent-95: rgba(140, 220, 205, 0.95);
+    --accent-88: rgba(140, 220, 205, 0.875);
+    --accent-68: rgba(140, 220, 205, 0.675);
+    --accent-25: rgba(140, 220, 205, 0.25);
+    --accent-22: rgba(140, 220, 205, 0.216);
+    --accent-19: rgba(140, 220, 205, 0.189);
+    --accent-18: rgba(140, 220, 205, 0.18);
+    --seam-secondary: rgba(150, 140, 220, 0.22);
+
+    --bloom-1: #2f6f66;
+    --bloom-2: #6b5636;
+    --bloom-3: #355e56;
+    --bloom-4: #5c3a44;
+    --bloom-opacity: 0.5;
+  }
 }
 
 * {

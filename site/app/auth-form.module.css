@@ -25,18 +25,19 @@
 
 .wordmark {
   display: inline-block;
-  font-family: var(--font-serif-family);
+  font-family: var(--font-sans-family);
+  font-weight: 600;
   font-size: 20px;
   margin-bottom: 22px;
   color: var(--ink);
 }
 
 .title {
-  font-family: var(--font-serif-family);
-  font-weight: 400;
+  font-family: var(--font-sans-family);
+  font-weight: 600;
   font-size: 28px;
   margin: 0 0 8px;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.4px;
 }
 
 .sub {
@@ -67,7 +68,7 @@
   padding: 12px 14px;
   border-radius: 10px;
   border: 1px solid var(--ink-15);
-  background: rgba(255, 255, 255, 0.5);
+  background: var(--surface-1);
   color: var(--ink);
   font-size: 14px;
   font-family: var(--font-sans-family);
@@ -111,7 +112,7 @@
 }
 
 .message.error {
-  color: #b3422a;
+  color: var(--danger);
 }
 
 .switch {
