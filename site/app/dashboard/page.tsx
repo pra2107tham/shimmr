@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
-import Bloom from "../Bloom";
+import SiteFooter from "../SiteFooter";
 import DashboardLive from "./DashboardLive";
 import styles from "./dashboard.module.css";
 
@@ -45,6 +45,26 @@ type RecentEvent = {
   occurred_at: string;
 };
 
+// What my_org_totals()/my_org_tool_usage() return — see
+// supabase/migrations/20260905020000_org_dashboard.sql. Aggregate only:
+// nothing here says which teammate made which call, by design (ADR 0011,
+// ADR 0013).
+type OrgTotals = {
+  org_id: string;
+  org_name: string;
+  slug: string;
+  people: number;
+  installs: number;
+  calls: number;
+  repos: number;
+  files: number;
+  lines: number;
+};
+
+type OrgTool = { tool: string; calls: number };
+
+const CHART_EVENT_LIMIT = 1000;
+
 export default async function DashboardPage() {
   const supabase = await supabaseServer();
   const {
@@ -62,7 +82,12 @@ export default async function DashboardPage() {
   // of these to this session's own rows (own_row / own_installs / own usage
   // *). What comes back is what this person is allowed to see, full stop —
   // the query doesn't have to repeat that logic to be safe if it's wrong.
-  const [{ data: profile }, { data: installs }, { data: rollups }, { data: recent }] =
+  //
+  // One usage_events query serves the recent-activity feed and both charts
+  // — fetched once at CHART_EVENT_LIMIT rows, sent to the client as-is, and
+  // sliced/bucketed there (by range, and as new realtime events arrive)
+  // instead of the server precomputing one fixed window.
+  const [{ data: profile }, { data: installs }, { data: rollups }, { data: events }] =
     await Promise.all([
       supabase.from("users").select("id, email, team, org_id").maybeSingle(),
       supabase
@@ -75,7 +100,7 @@ export default async function DashboardPage() {
         .select("id, tool, kind, ok, occurred_at")
         .eq("kind", "tool_call")
         .order("occurred_at", { ascending: false })
-        .limit(20),
+        .limit(CHART_EVENT_LIMIT),
     ]);
 
   const rollupRows = (rollups ?? []) as Rollup[];
@@ -88,53 +113,42 @@ export default async function DashboardPage() {
     }),
     { calls: 0, repos: 0, files: 0, lines: 0 },
   );
-  const reportingLive = rollupRows.some((r) => r.source === "live");
+  const reportingCount = rollupRows.filter((r) => r.source === "live").length;
   const installList = (installs ?? []) as Install[];
+  const eventRows = (events ?? []) as RecentEvent[];
+  const recentEvents = eventRows.slice(0, 20);
+  const usageLog = eventRows.map((e) => ({ occurred_at: e.occurred_at, tool: e.tool, ok: e.ok }));
+
+  // Org-wide numbers only when this person belongs to one — both RPCs
+  // return zero rows for an org-less caller rather than erroring, but
+  // skipping the call entirely when we already know there's no org from
+  // `profile` avoids two round trips that can only come back empty.
+  let org: OrgTotals | null = null;
+  let orgTools: OrgTool[] = [];
+  if (profile?.org_id) {
+    const [{ data: orgRow }, { data: orgToolRows }] = await Promise.all([
+      supabase.rpc("my_org_totals").maybeSingle(),
+      supabase.rpc("my_org_tool_usage"),
+    ]);
+    org = (orgRow as OrgTotals | null) ?? null;
+    orgTools = (orgToolRows ?? []) as OrgTool[];
+  }
 
   return (
     <div className={styles.page}>
-      <Bloom />
-      <div className={styles.wrap}>
-        <nav className={styles.nav}>
-          <span className={styles.wordmark}>Shimmr</span>
-          <form action="/auth/signout" method="post">
-            <button className={styles.signout} type="submit">
-              Sign out
-            </button>
-          </form>
-        </nav>
-
-        <header className={styles.header}>
-          <p className={styles.eyebrow}>Signed in as</p>
-          <h1 className={styles.title}>{profile?.email ?? user.email}</h1>
-        </header>
-
-        {installList.length === 0 ? (
-          <div className={styles.connectCard}>
-            <h2 className={styles.connectTitle}>Connect the CLI</h2>
-            <p className={styles.connectCopy}>
-              Run this on the machine you want to see here:
-            </p>
-            <code className={styles.connectCmd}>
-              shimmr login --email {profile?.email ?? user.email}
-            </code>
-            <p className={styles.connectCopy}>
-              Don&apos;t have it yet:
-            </p>
-            <code className={styles.connectCmd}>
-              curl -fsSL https://fpxntzwkiepnwsazmaxf.supabase.co/storage/v1/object/public/releases/install.sh | sh
-            </code>
-          </div>
-        ) : (
-          <DashboardLive
-            userId={profile?.id ?? ""}
-            initialTotals={totals}
-            initialReportingLive={reportingLive}
-            initialEvents={(recent ?? []) as RecentEvent[]}
-            installs={installList}
-          />
-        )}
-      </div>
+      <DashboardLive
+        userId={profile?.id ?? ""}
+        email={profile?.email ?? user.email ?? ""}
+        orgName={org?.org_name ?? null}
+        initialTotals={totals}
+        initialReportingCount={reportingCount}
+        initialEvents={recentEvents}
+        initialUsageLog={usageLog}
+        installs={installList}
+        org={org}
+        orgTools={orgTools}
+      />
+      <SiteFooter />
     </div>
   );
 }

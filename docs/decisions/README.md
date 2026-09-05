@@ -17,6 +17,8 @@ supersedes the old one, not an edit.
 | [0009](0009-serve-releases-from-object-storage.md) | Serve releases from object storage; Supabase now, R2 later | Accepted |
 | [0010](0010-release-from-the-actions-ui.md) | Cut a release from the Actions UI; keep it a deliberate, one-at-a-time step | Accepted |
 | [0011](0011-web-auth-and-dashboard.md) | Web auth is Supabase Auth; the dashboard reads through RLS scoped to one person | Accepted |
+| [0012](0012-browser-based-cli-sign-in.md) | `shimmr login`/`shimmr signup` open a browser by default; `--email` becomes the explicit fallback | Accepted |
+| [0013](0013-org-dashboard-is-aggregate-only.md) | The org dashboard shows an aggregate, never a per-member breakdown | Accepted |
 
 ## Template
 

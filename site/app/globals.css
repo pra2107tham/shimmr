@@ -1,38 +1,37 @@
-/* Shimmr — coming soon. Warm-paper palette, fixed (no dark mode toggle —
-   this is one of three variants designed in Claude Design, and this is the
-   one that shipped). */
+/* Shimmr — "Terminal Ledger": one fixed dark theme (design source:
+   Claude Design, "Shimmr - Terminal Ledger"), the same way the previous
+   "Light Warm" bloom-glass design was fixed with no toggle. Flat panels,
+   hairline rules, monospace-forward — no blur, no glass, no rounded
+   corners anywhere except the circular status dots. */
 
 :root {
-  --ground: #f4f0e8;
-  --ground-wash: #faf6ee;
-  --ink: #211d17;
-  --ink-72: rgba(33, 29, 23, 0.72);
-  --ink-60: rgba(33, 29, 23, 0.6);
-  --ink-24: rgba(33, 29, 23, 0.24);
-  --ink-15: rgba(33, 29, 23, 0.149);
-  --ink-12: rgba(33, 29, 23, 0.121);
-  --ink-11: rgba(33, 29, 23, 0.115);
-  --ink-07: rgba(33, 29, 23, 0.068);
+  color-scheme: dark;
 
-  --glass: rgba(255, 255, 255, 0.6);
-  --accent: #1f8a7c;
-  --accent-95: rgba(25, 120, 108, 0.95);
-  --accent-88: rgba(25, 120, 108, 0.875);
-  --accent-68: rgba(25, 120, 108, 0.675);
-  --accent-25: rgba(25, 120, 108, 0.25);
-  --accent-22: rgba(25, 120, 108, 0.216);
-  --accent-19: rgba(25, 120, 108, 0.189);
-  --accent-18: rgba(25, 120, 108, 0.18);
+  --ground: #08090a;
+  --panel: #0d0f10;
+  --panel-2: #131617;
 
-  --bloom-1: #1f8a7c;
-  --bloom-2: #e6d3b4;
-  --bloom-3: #bfe1d9;
-  --bloom-4: #e8cfd6;
-  --bloom-opacity: 0.62;
+  --ink: #e8eaed;
+  --muted: #8b9199;
+  /* A lighter grey than --muted, reserved for body prose (paragraphs) —
+     --muted itself is for labels, nav text, and mono metadata. */
+  --muted-2: #a5abb3;
 
-  --font-serif-family: var(--font-serif), Georgia, serif;
-  --font-sans-family: var(--font-sans), system-ui, sans-serif;
-  --font-mono-family: var(--font-mono), ui-monospace, monospace;
+  --accent: #9fe870;
+  --accent-rgb: 159, 232, 112;
+  --accent-hover: #b6f091;
+  --accent-ink: #08090a;
+
+  --amber: #f0b866;
+  --danger: #f0866b;
+  --danger-rgb: 240, 134, 107;
+
+  --line: rgba(255, 255, 255, 0.09);
+  --line-md: rgba(255, 255, 255, 0.16);
+  --line-strong: rgba(255, 255, 255, 0.4);
+
+  --font-sans-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  --font-mono-family: var(--font-mono), ui-monospace, "SFMono-Regular", monospace;
 }
 
 * {
@@ -53,48 +52,19 @@ body {
 }
 
 a {
-  color: var(--ink);
+  color: inherit;
   text-decoration: none;
+  transition: opacity 0.18s cubic-bezier(0.2, 0.7, 0.3, 1), color 0.18s cubic-bezier(0.2, 0.7, 0.3, 1);
 }
 
-@keyframes driftA {
-  0% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(4%, -3%, 0) scale(1.08); }
-  100% { transform: translate3d(0, 0, 0) scale(1); }
-}
-
-@keyframes driftB {
-  0% { transform: translate3d(0, 0, 0) scale(1.04); }
-  50% { transform: translate3d(-5%, 4%, 0) scale(1); }
-  100% { transform: translate3d(0, 0, 0) scale(1.04); }
-}
-
-@keyframes driftC {
-  0% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(3%, 5%, 0) scale(1.1); }
-  100% { transform: translate3d(0, 0, 0) scale(1); }
-}
-
-@keyframes livePulse {
+@keyframes pulseDot {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.45; transform: scale(0.82); }
+  50% { opacity: 0.3; transform: scale(0.7); }
 }
 
-@keyframes liveRing {
-  0% { opacity: 0.5; transform: scale(0.7); }
-  100% { opacity: 0; transform: scale(2.6); }
-}
-
-@keyframes flowDown {
-  0% { transform: translateY(-8px); opacity: 0; }
-  14% { opacity: 1; }
-  86% { opacity: 1; }
-  100% { transform: translateY(54px); opacity: 0; }
-}
-
-@keyframes seamSweep {
-  0% { transform: translateX(-45%); }
-  100% { transform: translateX(145%); }
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

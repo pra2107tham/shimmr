@@ -6,7 +6,16 @@ VERSION := 0.1.0
 #   make build ENDPOINT=https://<ref>.supabase.co/functions
 ENDPOINT ?=
 ENDPOINT_PKG := github.com/pra2107tham/shimmr/internal/config.DefaultEndpoint
-LDFLAGS := -s -w -X $(ENDPOINT_PKG)=$(ENDPOINT)
+
+# Where `shimmr login`/`shimmr signup` open a browser for verified sign-in —
+# a different host from ENDPOINT (the website, not the backend). Empty means
+# that flow refuses with a clear error instead of opening a dead link;
+# --email still works either way.
+#   make build SITE_URL=https://your-site.example
+SITE_URL ?=
+SITE_URL_PKG := github.com/pra2107tham/shimmr/internal/config.DefaultSiteURL
+
+LDFLAGS := -s -w -X $(ENDPOINT_PKG)=$(ENDPOINT) -X $(SITE_URL_PKG)=$(SITE_URL)
 PLATFORMS := darwin/arm64 darwin/amd64 linux/amd64 linux/arm64 windows/amd64
 
 .PHONY: build test race fmt vet check smoke install dist clean \
@@ -137,12 +146,15 @@ deploy:
 	supabase functions deploy login
 	supabase functions deploy usage
 	supabase functions deploy events
+	supabase functions deploy cli_start
+	supabase functions deploy cli_poll
+	supabase functions deploy cli_claim
 
 # What CI checks for the backend, minus the database service.
 backend-check:
 	deno fmt --check supabase/functions
 	deno lint supabase/functions
-	deno check supabase/functions/signup/index.ts supabase/functions/login/index.ts supabase/functions/usage/index.ts supabase/functions/events/index.ts
+	deno check supabase/functions/signup/index.ts supabase/functions/login/index.ts supabase/functions/usage/index.ts supabase/functions/events/index.ts supabase/functions/cli_start/index.ts supabase/functions/cli_poll/index.ts supabase/functions/cli_claim/index.ts
 
 clean:
 	rm -rf bin dist

@@ -1,0 +1,193 @@
+/* Shared layout for the secondary marketing pages (how-it-works, use-it,
+   security) — the hero/section/card language the homepage already
+   establishes, factored out so three pages don't each redefine it
+   slightly differently. Page-specific content still gets its own
+   stylesheet. */
+
+.page {
+  background: var(--ground);
+  color: var(--ink);
+}
+
+.wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 22px;
+}
+
+.hero {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 76px 22px 52px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.eyebrow {
+  font-family: var(--font-mono-family);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+}
+
+.h1 {
+  margin: 0;
+  max-width: 940px;
+  font-family: var(--font-sans-family);
+  font-weight: 500;
+  font-size: clamp(30px, 3.9vw, 48px);
+  line-height: 1.07;
+  letter-spacing: -0.035em;
+  text-wrap: pretty;
+}
+
+.subhead {
+  margin: 0;
+  max-width: 660px;
+  font-size: 16.5px;
+  line-height: 1.62;
+  color: var(--muted-2);
+}
+
+.section {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 44px 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sectionTight {
+  padding: 0 22px;
+}
+
+.sectionLabel {
+  font-family: var(--font-mono-family);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+
+/* ---- hairline-ruled grids: 1px gap filled with --line, cells opaque ----
+   Use where the mockup shows `gap:1px;background:rgba(255,255,255,.09)` —
+   the divider IS the gap, cells carry no border of their own. */
+
+.grid2,
+.grid3,
+.grid4 {
+  display: grid;
+  gap: 1px;
+  background: var(--line);
+}
+
+.grid2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.grid3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.grid4 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+
+.cell {
+  background: var(--ground);
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  min-width: 0;
+}
+
+.cellPanel {
+  background: var(--panel);
+}
+
+/* ---- individually-bordered card grids: a real gap, each cell its own
+   border ---- Use where the mockup shows a real `gap` value (14-22px)
+   with `border:1px solid rgba(255,255,255,.09)` on every child. */
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.cardCell {
+  border: 1px solid var(--line);
+  background: var(--ground);
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  min-width: 0;
+}
+
+.cardCellPanel {
+  background: var(--panel);
+}
+
+/* ---- plain bordered card, no ruled-grid neighbours ---- */
+
+.card {
+  border: 1px solid var(--line);
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  min-width: 0;
+}
+
+.label {
+  font-family: var(--font-mono-family);
+  font-weight: 600;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
+
+.cardTitle {
+  font-family: var(--font-sans-family);
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.cardCopy {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.ctaRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cta {
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: 13px 24px;
+  font-family: var(--font-mono-family);
+  font-weight: 600;
+  font-size: 13.5px;
+}
+
+.cta:hover {
+  background: var(--accent-hover);
+  color: var(--accent-ink);
+}
+
+.ctaGhost {
+  border: 1px solid var(--line-md);
+  color: var(--ink);
+  padding: 13px 24px;
+  font-family: var(--font-mono-family);
+  font-weight: 500;
+  font-size: 13.5px;
+}
+
+.ctaGhost:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}

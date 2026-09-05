@@ -1,0 +1,166 @@
+.accent { color: var(--accent); }
+.amber { color: var(--amber); }
+
+.card {
+  width: 100%;
+  max-width: 560px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.head {
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-mono-family);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+
+.waiting {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--amber);
+}
+
+.pulseDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--amber);
+  animation: pulseDot 1.4s infinite;
+}
+
+.body {
+  padding: 32px 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.title {
+  font-family: var(--font-sans-family);
+  font-weight: 500;
+  font-size: 25px;
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+  text-wrap: pretty;
+}
+
+.copy {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.codeRow {
+  display: flex;
+  gap: 8px;
+}
+
+.codeChar {
+  flex: 1;
+  text-align: center;
+  background: var(--ground);
+  border: 1px solid rgba(var(--accent-rgb), 0.4);
+  padding: 16px 0;
+  font-family: var(--font-mono-family);
+  font-weight: 600;
+  font-size: clamp(18px, 4vw, 28px);
+  color: var(--accent);
+  letter-spacing: 0.04em;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+
+.infoRow {
+  background: var(--ground);
+  padding: 13px 15px;
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  font-family: var(--font-mono-family);
+  font-size: 12.5px;
+}
+
+.infoKey {
+  color: var(--muted);
+}
+
+.infoVal {
+  color: var(--ink);
+}
+
+.infoExpiry {
+  color: var(--amber);
+}
+
+.error {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--danger);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.confirm {
+  flex: 1;
+  min-width: 200px;
+  text-align: center;
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: 14px;
+  font-family: var(--font-mono-family);
+  font-weight: 600;
+  font-size: 13px;
+  border: none;
+  cursor: pointer;
+}
+
+.confirm:hover {
+  background: var(--accent-hover);
+}
+
+.cancel {
+  border: 1px solid var(--line-md);
+  padding: 14px 22px;
+  font-family: var(--font-mono-family);
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+}
+
+.cancel:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+.footnote {
+  margin: 0;
+  font-family: var(--font-mono-family);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.footnote a {
+  color: var(--accent);
+}

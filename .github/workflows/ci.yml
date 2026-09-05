@@ -91,7 +91,7 @@ jobs:
       # Type-checks against the real supabase-js types, so a wrong column name
       # or a bad client call fails here rather than in production.
       - name: type check
-        run: deno check supabase/functions/signup/index.ts supabase/functions/login/index.ts supabase/functions/usage/index.ts supabase/functions/events/index.ts
+        run: deno check supabase/functions/signup/index.ts supabase/functions/login/index.ts supabase/functions/usage/index.ts supabase/functions/events/index.ts supabase/functions/cli_start/index.ts supabase/functions/cli_poll/index.ts supabase/functions/cli_claim/index.ts
 
   database:
     name: schema

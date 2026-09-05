@@ -347,7 +347,7 @@ begin
   join pg_namespace n on n.oid = c.relnamespace
   where n.nspname = 'public'
     and c.relkind = 'r'
-    and c.relname in ('orgs', 'users', 'installs', 'usage_snapshots', 'usage_events')
+    and c.relname in ('orgs', 'users', 'installs', 'usage_snapshots', 'usage_events', 'cli_pairings')
     and c.relrowsecurity is false;
 
   if unprotected is not null then
@@ -399,5 +399,103 @@ begin
     raise notice '  ok — no RLS policies here (auth.uid() is unavailable on plain Postgres, as expected — see ADR 0011)';
   end if;
 end $$;
+
+-- --------------------------------------------------------- org dashboard
+
+-- Same shape of guard, same reason: my_org_totals()/my_org_tool_usage()
+-- (20260905020000) only get created once auth.uid() exists, because their
+-- entire job is resolving "which org does this session belong to" from it.
+-- CI confirms the guard suppresses them on plain Postgres; the actual
+-- per-org scoping was verified by hand against the same stand-in auth
+-- schema as the RLS policies above, using this file's own fixtures — Ann
+-- and Bob both in Acme Inc, Cat alone in Beta Labs:
+--
+--   set role authenticated;
+--   set request.jwt.claim.sub = '<ann''s auth_user_id>';
+--   select * from my_org_totals();       -- Acme: people=2, calls=3 (hers + Bob's)
+--   select * from my_org_tool_usage();   -- search_code, get_graph_schema — no
+--                                         -- column says which of them ran either
+--
+-- Repeated as Cat: Beta Labs only, never Acme's row. As a person with no
+-- org at all: zero rows, not an error. As anon: permission denied outright
+-- (EXECUTE is revoked from PUBLIC and never granted back to anon — see the
+-- migration; a fresh function grants EXECUTE to PUBLIC by default, which
+-- would otherwise hand anon this for free).
+do $$
+declare
+  auth_available boolean;
+  fn_count int;
+begin
+  select exists (
+    select 1 from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'auth' and p.proname = 'uid'
+  ) into auth_available;
+
+  select count(*) into fn_count
+  from pg_proc p
+  join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public' and p.proname in ('my_org_totals', 'my_org_tool_usage');
+
+  if auth_available then
+    if fn_count <> 2 then
+      raise exception 'FAILED: auth.uid() exists but the org dashboard functions were not created';
+    end if;
+    raise notice '  ok — my_org_totals()/my_org_tool_usage() exist now that auth.uid() is available';
+  else
+    if fn_count <> 0 then
+      raise exception
+        'FAILED: % org dashboard function(s) exist without auth.uid() — the guard did not hold', fn_count;
+    end if;
+    raise notice '  ok — no org dashboard functions here (auth.uid() is unavailable on plain Postgres, as expected)';
+  end if;
+end $$;
+
+-- ------------------------------------------------------------ cli_pairings
+
+-- Unlike the tables above, cli_pairings never gets a policy at all, with or
+-- without auth.uid() — only cli_claim writes here, and it verifies the
+-- caller's session itself rather than relying on a Postgres policy for a row
+-- that, before claiming, belongs to no one yet. See ADR 0012.
+select assert(
+  (select count(*) from pg_policies where schemaname = 'public' and tablename = 'cli_pairings') = 0,
+  'cli_pairings has no RLS policies under any condition — only the service role reaches it');
+
+insert into cli_pairings (code, install_id, token_hash)
+values ('TEST-0001', 'pair-laptop', 'hash-pair');
+
+do $$
+begin
+  begin
+    insert into cli_pairings (code, install_id, token_hash) values ('TEST-0001', 'someone-else', 'hash-x');
+    raise exception 'FAILED: a pairing code was reused';
+  exception when unique_violation then
+    raise notice '  ok — a pairing code is claimed by at most one install';
+  end;
+
+  begin
+    insert into cli_pairings (code, install_id, token_hash, status)
+    values ('TEST-0002', 'pair-laptop', 'hash-y', 'nonsense');
+    raise exception 'FAILED: an unknown pairing status was accepted';
+  exception when check_violation then
+    raise notice '  ok — a pairing status must be pending or claimed';
+  end;
+
+  begin
+    insert into cli_pairings (code, install_id, token_hash, status)
+    values ('TEST-0003', 'pair-laptop', 'hash-z', 'claimed');
+    raise exception 'FAILED: a claimed pairing with no claimant was accepted';
+  exception when check_violation then
+    raise notice '  ok — a claimed pairing must record who claimed it';
+  end;
+end $$;
+
+update cli_pairings
+set status = 'claimed', claimed_by = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', claimed_at = now()
+where code = 'TEST-0001';
+
+select assert(
+  (select status from cli_pairings where code = 'TEST-0001') = 'claimed',
+  'a pairing can be claimed once its consistency constraint is satisfied');
 
 rollback;

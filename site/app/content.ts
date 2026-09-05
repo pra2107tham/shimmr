@@ -29,20 +29,3 @@ export const contacts = [
   },
 ] as const;
 
-export const targets = [
-  {
-    key: "microservices",
-    title: "Microservices",
-    copy: "Context that survives crossing a service boundary, instead of getting rebuilt from scratch on the other side.",
-  },
-  {
-    key: "infra",
-    title: "Infra",
-    copy: "The layer sits close to what's already running — no fork, no rebuild, no new system to operate alongside it.",
-  },
-  {
-    key: "databases",
-    title: "Databases",
-    copy: "Where state actually lives, made legible to the things that need to reason about it — without shipping it elsewhere.",
-  },
-] as const;

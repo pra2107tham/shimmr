@@ -108,6 +108,7 @@ jobs:
         env:
           VERSION: ${{ github.ref_type == 'tag' && github.ref_name || (needs.tag.outputs.version && format('v{0}', needs.tag.outputs.version)) || '0.0.0-dev' }}
           ENDPOINT: ${{ vars.SHIMMR_ENDPOINT }}
+          SITE_URL: ${{ vars.SHIMMR_SITE_URL }}
         run: |
           # Tags are v-prefixed; the version stamped into artifacts is not.
           export VERSION="${VERSION#v}"

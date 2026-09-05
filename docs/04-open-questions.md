@@ -163,57 +163,38 @@ for.
 
 ## Q11 — Nothing verifies an email address
 
-**Status:** Answered for the website; still open for the CLI.
+**Status:** Answered, for both the website and the CLI's default path.
+`--email` remains an unverified, explicit fallback.
 
-The dashboard now sits behind Supabase Auth (magic link) — option 1 below,
-via option 2's mechanism, now that there is a website for the link to land
-on. See [ADR 0011](decisions/0011-web-auth-and-dashboard.md). A person's
-usage is only ever shown to that person, verified by an email round-trip
-they completed, not by a claim anyone could type.
+The dashboard sits behind Supabase Auth (magic link) — see [ADR
+0011](decisions/0011-web-auth-and-dashboard.md). `shimmr login`/`shimmr
+signup`, run with no flags, now open a browser to that same verified sign-in
+and only ever attach a machine after a real session confirms it — see [ADR
+0012](decisions/0012-browser-based-cli-sign-in.md). A person's usage is only
+ever shown to that person, and a machine is only ever attached to an account
+whose owner clicked to confirm it, not to whoever could type an address.
 
-What that does **not** change: `shimmr signup` and `shimmr login` still
-attach a machine to an account on nothing but a stated email address. That
-was always true and remains true. It is lower-stakes than it was — the thing
-this question originally warned about, usage shown back to whoever claims an
-address, now requires the website's verified path regardless of what the CLI
-will accept — but the CLI's own request is still unverified, and closing that
-too is future work, not done here.
-
-`shimmr signup` upserts on email, so signing up with somebody else's address has
-always attached your machine to their account. `shimmr login` makes that
-explicit rather than incidental: give an address, get a token for a machine
-attached to it. No verification anywhere. **Both of these remain true —**
-this paragraph describes the CLI, which this question's web-side fix did not
-touch.
-
-For a design-partner phase where we know everyone by name, this was
-survivable. It stops being survivable the moment any of these is true:
+**What still isn't verified:** `--email` on either command. It is
+unchanged, still upserts by address on nothing but the claim, and is kept
+on purpose as the path for a genuinely headless machine, a script, or CI —
+documented as unverified, not disguised as otherwise. The three conditions
+this question originally named —
 
 - anything is charged for, or counted per seat
-- an org's usage is shown to that org, because then one person's numbers are
-  visible to whoever claims their address
-- a customer asks how we know who is who, and the honest answer is "we don't"
+- an org's usage is shown to that org
+- a customer asks how we know who is who
 
-The second bullet is now handled — the dashboard sits behind the website's
-verified login, not the CLI's unverified one. The first and third still bear
-on the CLI directly: a seat that is counted (or charged) because someone
-typed an email at a terminal is still exactly the gap this question named.
+— are now all handled by the *default* path on both surfaces. `--email`
+recreates the original gap deliberately, for whoever explicitly reaches for
+it, which is a different risk than every account having it by default.
 
-**Remaining options for the CLI, cheapest first:**
-
-1. **Emailed one-time code.** `login` returns nothing until a six-digit code
-   from the address is posted back. Supabase Auth already does this.
-2. ~~Magic link.~~ Done — for the website. Doesn't apply to a terminal the
-   way it does a browser.
-3. **Domain verification for orgs.** Only somebody with an `@acme.com` address
-   joins Acme. Solves org-squatting as well as identity, and matters more once
-   org totals are shown to customers.
-
-**Recommendation:** option 1 for the CLI, before anything is gated or charged
-on the strength of a `shimmr login` alone. Not before that — an unverified
-account costs nothing today, and a verification step before there is
-anything left to protect on that path is friction for its own
-sake at exactly the moment adoption matters most.
+**If `--email` itself needs to close:** the cheapest remaining option is the
+one Q11 always named for a headless case — an emailed one-time code, typed
+back rather than clicked — worth building if a design partner's automation
+actually needs verified *and* headless sign-in. Removing `--email` outright
+is simpler still and worth revisiting once real seats or billing depend on
+the CLI path; not done as a side effect of adding the browser flow beside
+it (ADR 0012, Alternatives).
 
 ---
 
@@ -230,5 +211,6 @@ sake at exactly the moment adoption matters most.
 | Q3 — language? | Go | `decisions/0005` |
 | Does usage reach us at all? | Yes — reported live by `serve`, not only on `sync` | `decisions/0008` |
 | Where do releases live, given a private repo? | Object storage; Supabase now, R2 later | `decisions/0009` |
-| Q11, web half — is a dashboard user's identity verified? | Yes — Supabase Auth magic link, linked to the existing account by email | `decisions/0011` |
+| Q11 — is a dashboard user's identity verified? | Yes — Supabase Auth magic link, linked to the existing account by email | `decisions/0011` |
+| Q11 — is `shimmr login`/`signup`'s default path verified? | Yes — opens a browser to the same verified sign-in; `--email` stays as an explicit, unverified fallback | `decisions/0012` |
 | Must everyone belong to an organisation? | No — an org is optional, and joinable later | `decisions/0008` context, schema |

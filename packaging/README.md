@@ -100,10 +100,17 @@ behind.
 `make build` leaves it empty, so development never reports usage to production.
 Override per build with `ENDPOINT=`.
 
+## The website
+
+`packaging/site_url` is the same idea, a different host: where `shimmr
+login`/`shimmr signup` open a browser for verified sign-in (ADR 0012). Empty
+means that flow refuses with a clear error instead of opening a dead link —
+`--email` still works either way. Override per build with `SITE_URL=`.
+
 ## Not done yet
 
 - **Code signing and notarisation.** macOS Gatekeeper will warn on an unsigned
   binary, and Windows SmartScreen will warn on an unsigned `.exe`. Both need
   paid certificates.
-- **A hosted install URL.** `shimmr.dev/install` in the docs is aspirational;
-  today the raw GitHub URL is the real one.
+- **A hosted install URL under our own domain.** `shimmr.dev/install` in the
+  docs is aspirational; the real one today is the Supabase Storage URL above.

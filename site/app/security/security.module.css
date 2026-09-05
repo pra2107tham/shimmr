@@ -1,0 +1,116 @@
+.pairGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 22px;
+}
+
+.column {
+  border: 1px solid var(--line);
+  min-width: 0;
+}
+
+.columnYes {
+  border-color: rgba(var(--accent-rgb), 0.28);
+}
+
+.columnNo {
+  border-color: rgba(var(--danger-rgb), 0.28);
+}
+
+.columnHead {
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(var(--accent-rgb), 0.22);
+  font-family: var(--font-mono-family);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
+
+.columnHeadNo {
+  border-bottom-color: rgba(var(--danger-rgb), 0.22);
+  color: var(--danger);
+}
+
+.columnBody {
+  padding: 6px 18px 16px;
+}
+
+.row {
+  padding: 13px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+/* ---- record example ---- */
+
+.record {
+  margin-top: 20px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 20px;
+  font-family: var(--font-mono-family);
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--muted-2);
+  overflow-x: auto;
+}
+
+.recIndent {
+  padding-left: 14px;
+}
+
+.recKey {
+  color: var(--muted);
+}
+
+.recVal {
+  color: var(--accent);
+}
+
+.recComment {
+  color: var(--muted);
+}
+
+.recordNote {
+  margin: 16px 0 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* ---- practice cards ---- */
+
+.cardsSection {
+  border-bottom: none;
+  padding-bottom: 70px;
+}
+
+.copy {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--muted-2);
+}
+
+.testLine {
+  font-family: var(--font-mono-family);
+  font-size: 12px;
+  color: var(--accent);
+}
+
+.cmd {
+  font-family: var(--font-mono-family);
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.muted {
+  color: var(--muted) !important;
+}

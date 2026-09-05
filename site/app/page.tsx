@@ -1,173 +1,147 @@
+import Link from "next/link";
 import styles from "./page.module.css";
 import { MailIcon, PhoneIcon, LinkedInIcon } from "./icons";
-import { contacts, targets } from "./content";
+import { contacts } from "./content";
+import SiteNav from "./SiteNav";
+import SiteFooter from "./SiteFooter";
 
-const icons = {
-  mail: MailIcon,
-  phone: PhoneIcon,
-  linkedin: LinkedInIcon,
-};
+const icons = { mail: MailIcon, phone: PhoneIcon, linkedin: LinkedInIcon };
+
+const LOCAL = ["code understanding & indexing", "semantic search", "coverage measurement", "the usage log itself"];
+const CONNECTED = ["team sync — usage in one place", "GitHub issues & PRs as context", "scheduled automations", "multi-seat team visibility"];
+
+const TEASERS = [
+  {
+    href: "/how-it-works",
+    num: "01",
+    label: "HOW IT WORKS",
+    title: "One binary, your existing agent, one gate.",
+    copy: "The real mechanism, in four steps.",
+  },
+  {
+    href: "/use-it",
+    num: "02",
+    label: "USE IT",
+    title: "Code graph, semantic search, coverage.",
+    copy: "What it gives you today, and the three commands.",
+  },
+  {
+    href: "/security",
+    num: "03",
+    label: "SECURITY",
+    title: "No code, content or query text leaves.",
+    copy: "Exactly what is recorded — and what never is.",
+  },
+] as const;
 
 export default function Home() {
   return (
     <div className={styles.page}>
-      <div aria-hidden className={styles.bloom}>
-        <div className={`${styles.blob} ${styles.blob1}`} />
-        <div className={`${styles.blob} ${styles.blob2}`} />
-        <div className={`${styles.blob} ${styles.blob3}`} />
-        <div className={`${styles.blob} ${styles.blob4}`} />
-      </div>
-      <div aria-hidden className={styles.wash} />
-      <div aria-hidden className={styles.vignette} />
+      <SiteNav active="/" />
 
-      <div className={styles.wrap}>
-        <nav className={styles.nav}>
-          <div className={styles.navLeft}>
-            <span className={styles.wordmark}>Shimmr</span>
-            <span className={styles.statusPill}>
-              <span className={styles.liveDot}>
-                <span className={styles.liveDotCore} />
-                <span className={styles.liveDotRing} />
-              </span>
-              <span className={styles.statusLabel}>Building</span>
-            </span>
-          </div>
-          <div className={styles.navLinks}>
-            <a href="/login" className={styles.navSignIn}>
-              Sign in
-            </a>
-            {contacts.map(({ key, href, value, icon, external }) => {
-              const Icon = icons[icon];
-              return (
-                <a
-                  key={key}
-                  href={href}
-                  title={value}
-                  className={styles.iconButton}
-                  {...(external ? { target: "_blank", rel: "noopener" } : {})}
-                >
-                  <Icon />
-                </a>
-              );
-            })}
-            <a href="/signup" className={styles.navCta}>
-              Get started
-            </a>
-          </div>
-        </nav>
-
-        <header className={styles.hero}>
-          <span className={styles.badge}>
-            <span className={styles.badgeDot} />
-            <span className={styles.badgeLabel}>Coming soon</span>
-          </span>
-          <h1 className={styles.headline}>
-            The context layer between your <em className={styles.headlineEm}>teams</em>, your{" "}
-            <em className={styles.headlineEm}>agents</em>, and everything they run on.
-          </h1>
+      <header className={styles.hero}>
+        <div className={styles.heroText}>
+          <div className={styles.eyebrow}>THE CONTEXT LAYER</div>
+          <h1 className={styles.headline}>Between AI coding agents and everything they run on.</h1>
           <p className={styles.subhead}>
-            Microservices. Infra. Databases. The agents your team is already wiring in. Shimmr is
-            one layer that keeps them all speaking the same language — so context doesn&apos;t
-            die at the boundary between them.
+            Shimmr is a local-first tool that gives coding agents real
+            understanding of a codebase — plus an account layer and usage
+            metering. It runs on your machine, and by default nothing leaves
+            it.
           </p>
-          <div className={styles.heroCtaRow}>
-            <a href="/signup" className={styles.heroCta}>
-              Get started
-            </a>
-            <a href="/login" className={styles.heroCtaGhost}>
-              Sign in
-            </a>
+          <div className={styles.ctaRow}>
+            <Link href="/signup" className={styles.cta}>get started</Link>
+            <Link href="/login" className={styles.ctaGhost}>sign in</Link>
           </div>
-        </header>
-
-        <section className={styles.layerSection}>
-          <div className={styles.sectionLabelRow}>
-            <span className={`${styles.sectionLabelLine} ${styles.left}`} />
-            <span className={styles.sectionLabel}>The layer, shown</span>
-            <span className={`${styles.sectionLabelLine} ${styles.right}`} />
+          <div className={styles.statusLine}>
+            <span className={styles.statusDot} />
+            early · coming soon · actively being built
           </div>
+        </div>
 
-          <div className={styles.diagram}>
-            <div className={styles.agentsRow}>
-              <div className={styles.agentsCard}>
-                <div className={styles.eyebrow}>Talks to Shimmr</div>
-                <div className={styles.nodeTitle}>Agents</div>
-                <p className={styles.nodeCopy}>
-                  A shared, metered surface for the coding agents your team already runs — one
-                  gate, not one integration per tool.
-                </p>
-              </div>
-            </div>
-
-            <div className={styles.flowSingle}>
-              <span className={styles.flowLineDown} />
-              <span className={styles.flowDot} />
-              <span className={styles.flowDotSmall} style={{ animationDelay: "1.7s" }} />
-            </div>
-
-            <div className={styles.seam}>
-              <div aria-hidden className={styles.seamGradient} />
-              <div aria-hidden className={styles.seamGrain} />
-              <div aria-hidden className={styles.seamSweep} />
-              <div className={styles.seamContent}>
-                <span className={styles.seamLabel}>One layer</span>
-                <span className={styles.seamTitle}>Shimmr</span>
-                <span className={styles.seamLabelRight}>Context passes through</span>
-              </div>
-            </div>
-
-            <div className={styles.flowTriple}>
-              {[0.5, 1.4, 2.3].map((delay) => (
-                <div key={delay} className={styles.flowTripleCol}>
-                  <span className={styles.flowLineDownFade} />
-                  <span className={styles.flowDotFade} style={{ animationDelay: `${delay}s` }} />
-                </div>
-              ))}
-            </div>
-
-            <div className={styles.targetsGrid}>
-              {targets.map(({ key, title, copy }) => (
-                <div key={key} className={styles.targetCard}>
-                  <div className={styles.eyebrowFaint}>Shimmr talks to</div>
-                  <div className={styles.targetTitle}>{title}</div>
-                  <p className={styles.nodeCopy}>{copy}</p>
-                </div>
-              ))}
-            </div>
+        <div className={styles.terminal}>
+          <div className={styles.terminalBar}>TWO MINUTES, START TO GATED</div>
+          <div className={styles.terminalBody}>
+            <div><span className={styles.prompt}>$</span> shimmr signup</div>
+            <div className={styles.terminalMuted}>→ browser opens, email confirmed</div>
+            <div><span className={styles.prompt}>$</span> shimmr init</div>
+            <div className={styles.terminalMuted}>→ 2 config files shown, then applied</div>
+            <div><span className={styles.prompt}>$</span> shimmr doctor</div>
+            <div className={styles.terminalOk}>→ all checks passed</div>
           </div>
-        </section>
+        </div>
+      </header>
 
-        <section className={styles.contact}>
-          <h2 className={styles.contactTitle}>Building this. Want in early?</h2>
-          <p className={styles.contactLead}>Reach out directly — no form, no waitlist bot.</p>
-          <div className={styles.contactRow}>
+      <section className={styles.split}>
+        <div className={styles.splitCol}>
+          <div className={styles.splitLabel}>
+            <span className={`${styles.dot} ${styles.dotAccent}`} />
+            <span className={styles.splitLabelText}>FREE, FOREVER</span>
+          </div>
+          <div className={styles.splitHeading}>Everything that runs on your machine.</div>
+          <div className={styles.splitList}>
+            {LOCAL.map((item) => <div key={item}>{item}</div>)}
+          </div>
+        </div>
+        <div className={`${styles.splitCol} ${styles.splitColRight}`}>
+          <div className={styles.splitLabel}>
+            <span className={`${styles.dot} ${styles.dotAmber}`} />
+            <span className={`${styles.splitLabelText} ${styles.amber}`}>PAID ONLY WHEN CONNECTED</span>
+          </div>
+          <div className={styles.splitHeading}>You pay once you connect something outside it.</div>
+          <div className={styles.splitList}>
+            {CONNECTED.map((item) => <div key={item}>{item}</div>)}
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.teasers}>
+        {TEASERS.map((t) => (
+          <Link href={t.href} key={t.href} className={styles.teaser}>
+            <span className={styles.teaserLabel}>{t.num} / {t.label}</span>
+            <span className={styles.teaserTitle}>{t.title}</span>
+            <span className={styles.teaserCopy}>{t.copy}</span>
+          </Link>
+        ))}
+      </section>
+
+      <section className={styles.contact}>
+        <div className={styles.contactCol}>
+          <div className={styles.eyebrow}>REACH OUT DIRECTLY</div>
+          <div className={styles.contactHeading}>No form, no waitlist. Mail or call and you get a person.</div>
+          <div className={styles.contactList}>
             {contacts.map(({ key, href, label, value, icon, external }) => {
               const Icon = icons[icon];
               return (
                 <a
                   key={key}
                   href={href}
-                  className={styles.contactPill}
+                  className={styles.contactRow}
                   {...(external ? { target: "_blank", rel: "noopener" } : {})}
                 >
-                  <span className={styles.contactIcon}>
-                    <Icon size={16} />
+                  <span className={styles.contactKey}>
+                    <Icon size={14} /> {label.toLowerCase()}
                   </span>
-                  <span className={styles.contactLabelStack}>
-                    <span className={styles.contactKey}>{label}</span>
-                    <span className={styles.contactValue}>{value}</span>
-                  </span>
+                  <span className={styles.contactValue}>{value}</span>
                 </a>
               );
             })}
           </div>
-        </section>
+        </div>
+        <div className={styles.plainCard}>
+          <div className={styles.eyebrow}>IN PLAIN TERMS</div>
+          <p className={styles.plainCopy}>
+            Your agent already knows how to call tools. Shimmr is the tool it
+            calls to actually understand the repository it&apos;s working in
+            — structure, meaning, coverage — with an account attached so
+            usage is countable. The understanding is computed locally. The
+            account is what makes anything shared possible, later, and only
+            if you ask for it.
+          </p>
+        </div>
+      </section>
 
-        <footer className={styles.footer}>
-          <div className={styles.footerRule} />
-          <p className={styles.footerText}>Shimmr — built by Pratham Shirbhate. © 2026</p>
-        </footer>
-      </div>
+      <SiteFooter />
     </div>
   );
 }
