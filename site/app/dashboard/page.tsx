@@ -3,9 +3,15 @@ import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import SiteFooter from "../SiteFooter";
 import DashboardLive from "./DashboardLive";
+import { pageMetadata } from "../seo";
 import styles from "./dashboard.module.css";
 
-export const metadata: Metadata = { title: "Dashboard — Shimmr" };
+export const metadata: Metadata = pageMetadata({
+  title: "Dashboard — Shimmr",
+  description: "Your Shimmr usage: calls, coverage, connected machines.",
+  path: "/dashboard",
+  noIndex: true,
+});
 
 // Force dynamic: without this, `next build` still tries to prerender this
 // page once to see whether it *can* be static, which means running the

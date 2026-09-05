@@ -81,7 +81,8 @@
   animation: pulseDot 1.6s infinite;
 }
 
-.signout {
+.signout,
+.download {
   border: 1px solid var(--line-md);
   background: transparent;
   color: var(--ink);
@@ -89,10 +90,14 @@
   font-family: var(--font-mono-family);
   font-size: 11.5px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
 }
 
-.signout:hover {
+.signout:hover,
+.download:hover {
   border-color: var(--line-strong);
+  color: var(--ink);
 }
 
 /* ---- empty state ---- */

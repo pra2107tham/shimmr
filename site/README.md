@@ -9,7 +9,7 @@ theme (flat panels, hairline rules, a lime accent, Geist + Geist Mono), the
 same way the previous "Light Warm" design was fixed. No toggle, no light
 variant; this design doesn't have one.
 
-Five parts:
+Six parts:
 
 - **The marketing page** (`/`) — hero, a terminal-style command preview, a
   free-vs-connected split, and three cards into the other marketing pages.
@@ -18,6 +18,11 @@ Five parts:
   homepage. Diagram-led rather than paragraph-led, and consistent with [ADR
   0006](../docs/decisions/0006-engine-naming-and-attribution.md): what
   Shimmr does, never what it's built on.
+- **Download** (`/download`) — the actual "get started" destination site-wide:
+  the install one-liner for macOS/Linux and Windows, then `shimmr signup` /
+  `init` / `doctor`. Signup and sign-in are one click further from here, not
+  the first thing a new visitor is asked to do — installing the binary comes
+  before creating an account, matching the CLI's own order of operations.
 - **Sign up / sign in** (`/signup`, `/login`) — one tabbed card
   (`AuthForm.tsx`), Supabase Auth: a magic link, or Google/GitHub. The tabs
   are real navigation between the two routes (preserving `next`), not
@@ -40,7 +45,16 @@ Five parts:
   additionally sees that org's aggregate totals and tool breakdown — never
   which teammate made which call. See [ADR
   0011](../docs/decisions/0011-web-auth-and-dashboard.md) and [ADR
-  0013](../docs/decisions/0013-org-dashboard-is-aggregate-only.md).
+  0013](../docs/decisions/0013-org-dashboard-is-aggregate-only.md). The
+  dashboard header also links back to `/download`, for adding a second
+  machine to the same account.
+
+The nav's sign-in/get-started links vs. the signed-in "dashboard" link
+(`NavAuthLinks.tsx`) are decided client-side, from `supabase.auth.getUser()`
+plus `onAuthStateChange` — not server-side from the request cookie. That
+keeps the four marketing pages and `/download` statically generated
+(`○` in the build output) instead of forcing them to render per-request just
+to know whether to show "sign in".
 
 ## Develop
 
@@ -62,6 +76,10 @@ Two, both meant to be public (see `.env.example` for why):
 Set both in **Vercel → Project Settings → Environment Variables** for the
 deployed site, the same values as `.env.local`.
 
+A third, `NEXT_PUBLIC_SITE_URL`, is optional — see the comment above it in
+`.env.example`. It only needs setting if the deployed URL ever diverges from
+`packaging/site_url`.
+
 ## Build
 
 ```bash
@@ -71,6 +89,31 @@ npm run build
 A real Next.js server now, not a static export — the dashboard needs a
 session cookie read per request, and `proxy.ts` needs to run on every
 request to refresh it and gate `/dashboard`. Vercel runs this natively.
+
+## SEO
+
+- `app/seo.ts` — `pageMetadata()`, one call per page for title, description,
+  canonical, robots, and Open Graph/Twitter fields. `SITE_URL` comes from
+  `NEXT_PUBLIC_SITE_URL`, falling back to the same production URL already
+  pinned in `packaging/site_url`.
+- `app/robots.ts`, `app/sitemap.ts`, `app/manifest.ts` — file-convention
+  routes, generated rather than static files. The sitemap lists only the
+  fully-indexable pages (`/`, `/download`, `/how-it-works`, `/use-it`,
+  `/security`); `/login`, `/signup`, `/cli-auth`, `/dashboard` carry
+  `noIndex: true` in their `pageMetadata()` call instead — crawlable but
+  excluded from the sitemap and marked `noindex`, not blocked in
+  `robots.txt` (a `Disallow` would stop Google from ever seeing the
+  `noindex` tag, which can leave a bare, contentless URL indexed instead of
+  none at all). `robots.txt` only disallows `/dashboard`, `/cli-auth`, and
+  `/auth/` — routes with no content to index regardless.
+- `app/opengraph-image.tsx`, `app/twitter-image.tsx` — both render
+  `brand-og-image.tsx`'s `renderBrandImage()`. It loads real Inter font data
+  into `ImageResponse` rather than relying on `next/og`'s undocumented
+  default fallback font, which has a genuine text-spacing bug on real
+  English word pairs (invisible on placeholder text, so it's easy to miss).
+- `page.tsx` carries one `SoftwareApplication` JSON-LD block, honest fields
+  only — no `aggregateRating` or reviews, since the product has neither yet
+  and fabricating either is exactly the kind of number CLAUDE.md rules out.
 
 ## Manual steps this repo cannot do for itself
 
@@ -105,9 +148,16 @@ collaborator.
 app/
   page.tsx                  marketing page
   how-it-works/, use-it/, security/   the three other marketing pages
+  download/                 install one-liners + the three commands; the site-wide
+                             "get started" destination
   marketing.module.css       shared hero/section/card primitives for those three
+  seo.ts                    pageMetadata() — title/description/canonical/robots/OG per page
+  robots.ts, sitemap.ts, manifest.ts   generated, not static files
+  opengraph-image.tsx, twitter-image.tsx, brand-og-image.tsx   generated share image
   SiteNav.tsx, SiteFooter.tsx         shared nav/footer, every marketing + auth page
                                        (the dashboard has its own header instead)
+  NavAuthLinks.tsx           client-side sign-in/get-started vs. dashboard link,
+                             so the marketing pages stay statically generated
   login/, signup/           auth pages (share AuthForm.tsx: one tabbed card,
                                         magic link + Google/GitHub OAuth)
   auth/callback/route.ts    exchanges whatever PKCE code comes back (magic link or OAuth) for a session

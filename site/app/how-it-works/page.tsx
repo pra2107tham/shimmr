@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import SiteNav from "../SiteNav";
 import SiteFooter from "../SiteFooter";
+import { pageMetadata } from "../seo";
 import shared from "../marketing.module.css";
 import styles from "./how-it-works.module.css";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "How it works — Shimmr",
   description: "One binary, the protocol your agent already speaks, and a gate on every call. No separate integration per tool, no upload step.",
-};
+  path: "/how-it-works",
+});
 
 const STEPS = [
   {
@@ -64,27 +66,27 @@ export default function HowItWorks() {
         {STEPS.map((s) => (
           <div className={styles.step} key={s.num}>
             <span className={styles.stepNum}>{s.num}</span>
-            <span className={styles.stepTitle}>{s.title}</span>
+            <h2 className={styles.stepTitle}>{s.title}</h2>
             <span className={styles.stepBody}>{s.body}</span>
           </div>
         ))}
       </section>
 
       <section className={shared.section}>
-        <span className={shared.sectionLabel}>THE BOUNDARY</span>
+        <h2 className={shared.sectionLabel}>THE BOUNDARY</h2>
         <div className={`${shared.grid3} ${styles.boundaryGrid}`}>
           <div className={`${shared.cell} ${shared.cellPanel}`}>
-            <span className={styles.boundaryLabel}>YOUR MACHINE</span>
+            <h3 className={styles.boundaryLabel}>YOUR MACHINE</h3>
             <span className={styles.boundaryFlow}>agent → shimmr → local index</span>
             <span className={shared.cardCopy}>All understanding is computed and stored here.</span>
           </div>
           <div className={`${shared.cell} ${shared.cellPanel} ${styles.boundaryGate}`}>
-            <span className={`${styles.boundaryLabel} ${styles.accent}`}>THE GATE</span>
+            <h3 className={`${styles.boundaryLabel} ${styles.accent}`}>THE GATE</h3>
             <span className={styles.boundaryFlow}>account check + meter</span>
             <span className={shared.cardCopy}>Records the tool name and the outcome. Nothing about the work itself.</span>
           </div>
           <div className={`${shared.cell} ${shared.cellPanel} ${styles.boundaryOff}`}>
-            <span className={`${styles.boundaryLabel} ${styles.amber}`}>OFF-MACHINE — OPT IN</span>
+            <h3 className={`${styles.boundaryLabel} ${styles.amber}`}>OFF-MACHINE — OPT IN</h3>
             <span className={styles.boundaryFlow}>only what you connect</span>
             <span className={shared.cardCopy}>Silent unless you explicitly connect team sync, GitHub, or automations.</span>
           </div>
@@ -94,7 +96,7 @@ export default function HowItWorks() {
       <section className={`${shared.wrap} ${styles.listsWrap}`}>
         <div className={styles.listCol}>
           <div className={styles.listHead}>
-            <span className={`${shared.eyebrow} ${styles.accent}`}>LOCAL &amp; FREE FOREVER</span>
+            <h2 className={`${shared.eyebrow} ${styles.accent}`}>LOCAL &amp; FREE FOREVER</h2>
           </div>
           {LOCAL.map((item) => (
             <div className={styles.listRow} key={item}>
@@ -105,7 +107,7 @@ export default function HowItWorks() {
         </div>
         <div className={styles.listCol}>
           <div className={styles.listHead}>
-            <span className={`${shared.eyebrow} ${styles.amber}`}>OPTIONAL &amp; CONNECTED</span>
+            <h2 className={`${shared.eyebrow} ${styles.amber}`}>OPTIONAL &amp; CONNECTED</h2>
           </div>
           {CONNECTED.map((item) => (
             <div className={styles.listRow} key={item}>

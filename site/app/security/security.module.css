@@ -18,6 +18,7 @@
 }
 
 .columnHead {
+  margin: 0;
   padding: 14px 18px;
   border-bottom: 1px solid rgba(var(--accent-rgb), 0.22);
   font-family: var(--font-mono-family);

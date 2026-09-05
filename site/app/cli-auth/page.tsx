@@ -4,10 +4,16 @@ import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import SiteNav from "../SiteNav";
 import { claimCliCode } from "./actions";
+import { pageMetadata } from "../seo";
 import formStyles from "../auth-form.module.css";
 import styles from "./cli-auth.module.css";
 
-export const metadata: Metadata = { title: "Connect a device — Shimmr" };
+export const metadata: Metadata = pageMetadata({
+  title: "Connect a device — Shimmr",
+  description: "Confirm a shimmr login or shimmr signup browser pairing.",
+  path: "/cli-auth",
+  noIndex: true,
+});
 
 type PollResult =
   | { status: "expired" }
