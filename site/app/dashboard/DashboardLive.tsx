@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { CallsChart, ToolsChart, bucketDaily, topTools, type UsageLogEntry } from "./charts";
 import styles from "./dashboard.module.css";
@@ -161,6 +162,7 @@ export default function DashboardLive({
             <span className={`${styles.pulseDot} ${reportingCount > 0 ? styles.pulseDotOn : ""}`} />
             {liveLabel}
           </span>
+          <Link href="/download" className={styles.download}>+ machine</Link>
           <form action="/auth/signout" method="post">
             <button className={styles.signout} type="submit">sign out</button>
           </form>
@@ -174,7 +176,7 @@ export default function DashboardLive({
           <code className={styles.emptyCmd}>$ shimmr init</code>
           <p className={styles.emptyNote}>
             Don&apos;t have the binary?{" "}
-            <a href="https://fpxntzwkiepnwsazmaxf.supabase.co/storage/v1/object/public/releases/install.sh">get the installer</a> —
+            <Link href="/download">get the installer</Link> —
             then <code>shimmr doctor</code> to verify.
           </p>
         </div>

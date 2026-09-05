@@ -1,4 +1,5 @@
 import Link from "next/link";
+import NavAuthLinks from "./NavAuthLinks";
 import styles from "./sitenav.module.css";
 
 const PAGES = [
@@ -7,11 +8,15 @@ const PAGES = [
   { href: "/security", label: "security" },
 ] as const;
 
-type PageKey = (typeof PAGES)[number]["href"] | "/";
+type PageKey = (typeof PAGES)[number]["href"] | "/" | "/download";
 
-/** The nav bar every marketing page shares — wordmark, page links, sign in,
- * get started. `active` underlines the current page. Not used on the
- * dashboard, which has its own header (signed-in context, not marketing). */
+/** The nav bar every marketing page shares — wordmark, page links, and
+ * either sign-in/get-started or a dashboard link, whichever this browser's
+ * session actually calls for (see NavAuthLinks — checked client-side so
+ * this stays a plain Server Component and every page using it stays
+ * statically generated). `active` underlines the current page. Not used on
+ * the dashboard, which has its own header (signed-in context, not
+ * marketing). */
 export default function SiteNav({ active }: { active?: PageKey }) {
   return (
     <nav className={styles.nav}>
@@ -36,12 +41,7 @@ export default function SiteNav({ active }: { active?: PageKey }) {
               {p.label}
             </Link>
           ))}
-          <Link href="/login" className={styles.signIn}>
-            sign in
-          </Link>
-          <Link href="/signup" className={styles.cta}>
-            get started
-          </Link>
+          <NavAuthLinks />
         </div>
       </div>
     </nav>
