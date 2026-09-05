@@ -1,137 +1,96 @@
 .page {
-  position: relative;
   min-height: 100vh;
   background: var(--ground);
   color: var(--ink);
-  overflow: hidden;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
+  flex-direction: column;
 }
 
-.card {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  max-width: 400px;
-  padding: 34px 30px;
-  border-radius: 20px;
-  background: var(--glass);
-  border: 1px solid var(--ink-15);
-  backdrop-filter: blur(24px);
-  text-align: center;
-}
-
-.wordmark {
-  display: inline-block;
-  font-family: var(--font-sans-family);
-  font-weight: 600;
-  font-size: 20px;
-  margin-bottom: 22px;
-  color: var(--ink);
-}
-
-.title {
-  font-family: var(--font-sans-family);
-  font-weight: 600;
-  font-size: 28px;
-  margin: 0 0 8px;
-  letter-spacing: -0.4px;
-}
-
-.sub {
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--ink-72);
-  margin: 0 0 26px;
-}
-
-.oauthRow {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.oauthButton {
+.center {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
-  height: 42px;
-  border-radius: 10px;
-  border: 1px solid var(--ink-15);
-  background: var(--surface-1);
+  padding: 56px 22px;
+  animation: riseIn 0.4s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+.card {
+  width: 100%;
+  max-width: 460px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.tab {
+  padding: 15px;
+  text-align: center;
+  font-family: var(--font-mono-family);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  background: transparent;
+  border-bottom: 1px solid var(--line);
+}
+
+.tabActive {
   color: var(--ink);
-  font-size: 13.5px;
-  font-family: var(--font-sans-family);
-  cursor: pointer;
-  transition: background 150ms, opacity 150ms;
+  background: var(--panel-2);
+  border-bottom: 1px solid var(--accent);
 }
 
-.oauthButton:hover:not(:disabled) {
-  background: var(--ink-11);
-}
-
-.oauthButton:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-
-.divider {
-  position: relative;
+.body {
+  padding: 30px 30px 26px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 20px;
+  flex-direction: column;
+  gap: 18px;
 }
 
-.divider::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: var(--ink-15);
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
 }
 
-.divider span {
-  position: relative;
-  padding: 0 10px;
-  background: var(--glass);
-  font-family: var(--font-mono-family);
-  font-size: 10px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--ink-60);
+.title {
+  margin: 0;
+  font-family: var(--font-sans-family);
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.25;
+  letter-spacing: -0.03em;
 }
 
-.field {
-  text-align: left;
-  margin-bottom: 16px;
+.sub {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted);
 }
 
-.label {
-  display: block;
-  font-family: var(--font-mono-family);
-  font-size: 10px;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  color: var(--ink-60);
-  margin-bottom: 7px;
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .input {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 12px 14px;
-  border-radius: 10px;
-  border: 1px solid var(--ink-15);
-  background: var(--surface-1);
+  background: var(--ground);
+  border: 1px solid var(--line-md);
+  padding: 13px 15px;
+  font-family: var(--font-mono-family);
+  font-size: 13.5px;
   color: var(--ink);
-  font-size: 14px;
-  font-family: var(--font-sans-family);
+}
+
+.input::placeholder {
+  color: var(--muted);
 }
 
 .input:focus {
@@ -140,20 +99,19 @@
 }
 
 .submit {
-  width: 100%;
-  padding: 12px 16px;
-  border-radius: 10px;
-  border: 1px solid var(--ink-15);
-  background: var(--ink);
-  color: var(--ground);
-  font-size: 14px;
-  font-weight: 500;
+  background: var(--accent);
+  color: var(--accent-ink);
+  text-align: center;
+  padding: 13px;
+  font-family: var(--font-mono-family);
+  font-weight: 600;
+  font-size: 13px;
   cursor: pointer;
-  transition: opacity 150ms;
+  border: none;
 }
 
-.submit:hover {
-  opacity: 0.88;
+.submit:hover:not(:disabled) {
+  background: var(--accent-hover);
 }
 
 .submit:disabled {
@@ -161,40 +119,79 @@
   cursor: default;
 }
 
-.message {
-  margin-top: 16px;
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.divider span:first-child,
+.divider span:last-child {
+  flex: 1;
+  height: 1px;
+  background: var(--line-md);
+}
+
+.dividerLabel {
+  font-family: var(--font-mono-family);
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+.oauthRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.oauthButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--line-md);
+  background: transparent;
+  text-align: center;
+  padding: 12px;
+  font-family: var(--font-mono-family);
+  font-weight: 500;
   font-size: 12.5px;
-  line-height: 1.6;
+  color: var(--ink);
+  cursor: pointer;
 }
 
-.message.ok {
-  color: var(--accent);
+.oauthButton:hover:not(:disabled) {
+  border-color: var(--line-strong);
 }
 
-.message.error {
+.oauthButton:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.error {
+  margin: 0;
+  font-size: 12.5px;
   color: var(--danger);
 }
 
 .switch {
-  margin-top: 22px;
-  font-size: 12.5px;
-  color: var(--ink-72);
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
 }
 
 .switch a {
-  color: var(--ink);
-  font-weight: 500;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  color: var(--accent);
 }
 
-.back {
-  position: absolute;
-  top: 22px;
-  left: 22px;
-  z-index: 1;
+.footnote {
+  margin: 4px 0 0;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
   font-family: var(--font-mono-family);
-  font-size: 11px;
-  letter-spacing: 0.5px;
-  color: var(--ink-72);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
 }

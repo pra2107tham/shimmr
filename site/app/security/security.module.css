@@ -1,70 +1,116 @@
+.pairGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 22px;
+}
+
 .column {
-  border-radius: 16px;
-  padding: 22px;
-  border: 1px solid var(--ink-15);
+  border: 1px solid var(--line);
+  min-width: 0;
 }
 
 .columnYes {
-  background: var(--accent-18);
-  border-color: var(--accent-25);
+  border-color: rgba(var(--accent-rgb), 0.28);
 }
 
 .columnNo {
-  background: var(--glass);
-  backdrop-filter: blur(20px);
+  border-color: rgba(var(--danger-rgb), 0.28);
 }
 
-.columnLabel {
-  display: block;
-  margin-bottom: 14px;
+.columnHead {
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(var(--accent-rgb), 0.22);
   font-family: var(--font-mono-family);
-  font-size: 10px;
-  letter-spacing: 1.3px;
-  text-transform: uppercase;
-  color: var(--ink-72);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--accent);
 }
 
-.list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 11px;
+.columnHeadNo {
+  border-bottom-color: rgba(var(--danger-rgb), 0.22);
+  color: var(--danger);
 }
 
-.listItem {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  font-size: 13px;
+.columnBody {
+  padding: 6px 18px 16px;
+}
+
+.row {
+  padding: 13px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14.5px;
   line-height: 1.5;
   color: var(--ink);
 }
 
-.columnYes .listItem svg {
+.row:last-child {
+  border-bottom: none;
+}
+
+/* ---- record example ---- */
+
+.record {
+  margin-top: 20px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 20px;
+  font-family: var(--font-mono-family);
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--muted-2);
+  overflow-x: auto;
+}
+
+.recIndent {
+  padding-left: 14px;
+}
+
+.recKey {
+  color: var(--muted);
+}
+
+.recVal {
   color: var(--accent);
 }
 
-.columnNo .listItem svg {
-  color: var(--danger);
+.recComment {
+  color: var(--muted);
 }
 
-.listItem svg {
-  flex: none;
-  margin-top: 3px;
+.recordNote {
+  margin: 16px 0 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted);
 }
 
-.ctaSection {
-  text-align: center;
+/* ---- practice cards ---- */
+
+.cardsSection {
+  border-bottom: none;
+  padding-bottom: 70px;
 }
 
-.codeInline {
+.copy {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--muted-2);
+}
+
+.testLine {
   font-family: var(--font-mono-family);
-  font-size: 12.5px;
-  background: var(--code-bg);
-  border: 1px solid var(--ink-11);
-  border-radius: 6px;
-  padding: 2px 7px;
+  font-size: 12px;
+  color: var(--accent);
+}
+
+.cmd {
+  font-family: var(--font-mono-family);
+  font-size: 13px;
   color: var(--ink);
+}
+
+.muted {
+  color: var(--muted) !important;
 }

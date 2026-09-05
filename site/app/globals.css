@@ -1,92 +1,37 @@
-/* Shimmr — design tokens. Light by default, a real dark palette under
-   prefers-color-scheme (no toggle — the system already tells us). Every
-   component reads these variables rather than a hardcoded colour, which is
-   what makes the dark palette below apply everywhere in one place instead
-   of needing a second pass through every stylesheet. */
+/* Shimmr — "Terminal Ledger": one fixed dark theme (design source:
+   Claude Design, "Shimmr - Terminal Ledger"), the same way the previous
+   "Light Warm" bloom-glass design was fixed with no toggle. Flat panels,
+   hairline rules, monospace-forward — no blur, no glass, no rounded
+   corners anywhere except the circular status dots. */
 
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
 
-  --ground: #f4f0e8;
-  --ground-rgb: 244, 240, 232;
-  --ink: #211d17;
-  --ink-rgb: 33, 29, 23;
-  --ink-72: rgba(33, 29, 23, 0.72);
-  --ink-60: rgba(33, 29, 23, 0.6);
-  --ink-24: rgba(33, 29, 23, 0.24);
-  --ink-15: rgba(33, 29, 23, 0.149);
-  --ink-12: rgba(33, 29, 23, 0.121);
-  --ink-11: rgba(33, 29, 23, 0.115);
-  --ink-07: rgba(33, 29, 23, 0.068);
+  --ground: #08090a;
+  --panel: #0d0f10;
+  --panel-2: #131617;
 
-  --glass: rgba(255, 255, 255, 0.6);
-  --surface-1: rgba(255, 255, 255, 0.5);
-  --code-bg: rgba(33, 29, 23, 0.06);
-  --danger: #b3422a;
+  --ink: #e8eaed;
+  --muted: #8b9199;
+  /* A lighter grey than --muted, reserved for body prose (paragraphs) —
+     --muted itself is for labels, nav text, and mono metadata. */
+  --muted-2: #a5abb3;
 
-  --accent: #1f8a7c;
-  --accent-95: rgba(25, 120, 108, 0.95);
-  --accent-88: rgba(25, 120, 108, 0.875);
-  --accent-68: rgba(25, 120, 108, 0.675);
-  --accent-25: rgba(25, 120, 108, 0.25);
-  --accent-22: rgba(25, 120, 108, 0.216);
-  --accent-19: rgba(25, 120, 108, 0.189);
-  --accent-18: rgba(25, 120, 108, 0.18);
-  --seam-secondary: rgba(108, 96, 190, 0.16);
+  --accent: #9fe870;
+  --accent-rgb: 159, 232, 112;
+  --accent-hover: #b6f091;
+  --accent-ink: #08090a;
 
-  --bloom-1: #1f8a7c;
-  --bloom-2: #e6d3b4;
-  --bloom-3: #bfe1d9;
-  --bloom-4: #e8cfd6;
-  --bloom-opacity: 0.62;
+  --amber: #f0b866;
+  --danger: #f0866b;
+  --danger-rgb: 240, 134, 107;
 
-  --chart-line: var(--accent);
-  --chart-track: var(--ink-11);
-  --chart-fail: var(--danger);
+  --line: rgba(255, 255, 255, 0.09);
+  --line-md: rgba(255, 255, 255, 0.16);
+  --line-strong: rgba(255, 255, 255, 0.4);
 
-  --font-serif-family: var(--font-sans-family);
   --font-sans-family: var(--font-sans), system-ui, -apple-system, sans-serif;
   --font-mono-family: var(--font-mono), ui-monospace, "SFMono-Regular", monospace;
-}
-
-/* System dark mode. Values drawn from the same "layer, shown" design,
-   restated for a near-black ground instead of warm paper — same relative
-   contrast, same accent role, different literal colours. */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ground: #0a0b0d;
-    --ground-rgb: 10, 11, 13;
-    --ink: #f2f0ea;
-    --ink-rgb: 242, 240, 234;
-    --ink-72: rgba(242, 240, 234, 0.72);
-    --ink-60: rgba(242, 240, 234, 0.6);
-    --ink-24: rgba(242, 240, 234, 0.24);
-    --ink-15: rgba(242, 240, 234, 0.149);
-    --ink-12: rgba(242, 240, 234, 0.121);
-    --ink-11: rgba(242, 240, 234, 0.115);
-    --ink-07: rgba(242, 240, 234, 0.068);
-
-    --glass: rgba(255, 255, 255, 0.06);
-    --surface-1: rgba(255, 255, 255, 0.05);
-    --code-bg: rgba(255, 255, 255, 0.05);
-    --danger: #e0654a;
-
-    --accent: #8cdccd;
-    --accent-95: rgba(140, 220, 205, 0.95);
-    --accent-88: rgba(140, 220, 205, 0.875);
-    --accent-68: rgba(140, 220, 205, 0.675);
-    --accent-25: rgba(140, 220, 205, 0.25);
-    --accent-22: rgba(140, 220, 205, 0.216);
-    --accent-19: rgba(140, 220, 205, 0.189);
-    --accent-18: rgba(140, 220, 205, 0.18);
-    --seam-secondary: rgba(150, 140, 220, 0.22);
-
-    --bloom-1: #2f6f66;
-    --bloom-2: #6b5636;
-    --bloom-3: #355e56;
-    --bloom-4: #5c3a44;
-    --bloom-opacity: 0.5;
-  }
 }
 
 * {
@@ -107,48 +52,19 @@ body {
 }
 
 a {
-  color: var(--ink);
+  color: inherit;
   text-decoration: none;
+  transition: opacity 0.18s cubic-bezier(0.2, 0.7, 0.3, 1), color 0.18s cubic-bezier(0.2, 0.7, 0.3, 1);
 }
 
-@keyframes driftA {
-  0% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(4%, -3%, 0) scale(1.08); }
-  100% { transform: translate3d(0, 0, 0) scale(1); }
-}
-
-@keyframes driftB {
-  0% { transform: translate3d(0, 0, 0) scale(1.04); }
-  50% { transform: translate3d(-5%, 4%, 0) scale(1); }
-  100% { transform: translate3d(0, 0, 0) scale(1.04); }
-}
-
-@keyframes driftC {
-  0% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(3%, 5%, 0) scale(1.1); }
-  100% { transform: translate3d(0, 0, 0) scale(1); }
-}
-
-@keyframes livePulse {
+@keyframes pulseDot {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.45; transform: scale(0.82); }
+  50% { opacity: 0.3; transform: scale(0.7); }
 }
 
-@keyframes liveRing {
-  0% { opacity: 0.5; transform: scale(0.7); }
-  100% { opacity: 0; transform: scale(2.6); }
-}
-
-@keyframes flowDown {
-  0% { transform: translateY(-8px); opacity: 0; }
-  14% { opacity: 1; }
-  86% { opacity: 1; }
-  100% { transform: translateY(54px); opacity: 0; }
-}
-
-@keyframes seamSweep {
-  0% { transform: translateX(-45%); }
-  100% { transform: translateX(145%); }
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,79 +1,196 @@
-/* ---- terminal ---- */
+.accent { color: var(--accent); }
 
-.terminal {
-  border-radius: 14px;
-  overflow: hidden;
-  border: 1px solid var(--ink-15);
-  background: var(--code-bg);
-  backdrop-filter: blur(20px);
-}
-
-.terminalBar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--ink-11);
-}
-
-.terminalDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--ink-24);
-}
-
-.terminalBody {
-  padding: 18px 22px 20px;
-}
-
-.terminalLine {
-  margin: 0;
-  font-family: var(--font-mono-family);
-  font-size: 13.5px;
-  color: var(--ink);
-}
-
-.terminalLine + .terminalLine {
-  margin-top: 16px;
-}
-
-.prompt {
-  color: var(--accent);
-  margin-right: 8px;
-}
-
-.terminalComment {
-  margin: 4px 0 0;
-  font-family: var(--font-mono-family);
-  font-size: 11.5px;
-  color: var(--ink-60);
+.featuresWrap {
+  padding: 40px 22px;
+  border-bottom: 1px solid var(--line);
 }
 
 /* ---- agents ---- */
 
-.agentsSection {
-  text-align: center;
-}
-
 .agentRow {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
   gap: 10px;
   margin-top: 18px;
 }
 
 .agentPill {
-  padding: 9px 18px;
-  border-radius: 999px;
-  background: var(--glass);
-  border: 1px solid var(--ink-15);
-  font-size: 13px;
-  color: var(--ink-72);
+  border: 1px solid var(--line-md);
+  padding: 11px 18px;
+  font-family: var(--font-mono-family);
+  font-size: 13.5px;
+  color: var(--ink);
 }
 
-.ctaSection {
-  text-align: center;
+/* ---- setup / live usage preview panels ---- */
+
+.previewGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 22px;
+}
+
+.previewPanel {
+  border: 1px solid var(--line);
+  min-width: 0;
+}
+
+.previewHead {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.previewLabel {
+  font-family: var(--font-mono-family);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+
+.pendingTag {
+  font-family: var(--font-mono-family);
+  font-size: 10.5px;
+  color: var(--amber);
+}
+
+.diffBody {
+  padding: 18px;
+  font-family: var(--font-mono-family);
+  font-size: 12.5px;
+  line-height: 1.7;
+  background: var(--panel);
+}
+
+.diffPath {
+  color: var(--muted);
+}
+
+.diffLine {
+  color: var(--accent);
+  overflow-wrap: break-word;
+}
+
+.diffPrompt {
+  margin-top: 14px;
+  color: var(--ink);
+}
+
+.updatingTag {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono-family);
+  font-size: 10.5px;
+  color: var(--accent);
+}
+
+.pulseDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulseDot 1.6s infinite;
+}
+
+.usageBody {
+  padding: 18px;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 92px;
+}
+
+.bar {
+  flex: 1;
+  background: var(--accent);
+  opacity: 0.7;
+}
+
+.usageFoot {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono-family);
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.usageCount {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.dashLink {
+  font-family: var(--font-mono-family);
+  font-size: 12px;
+  color: var(--accent);
+}
+
+/* ---- three commands ---- */
+
+.commandsSection {
+  border-bottom: none;
+  padding-bottom: 70px;
+}
+
+.commandTable {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+
+.commandRow {
+  background: var(--panel);
+  padding: 22px;
+  display: grid;
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 560px) {
+  .commandRow {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+.commandCmd {
+  font-family: var(--font-mono-family);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--accent);
+}
+
+.commandDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.commandWhat {
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.commandOut {
+  font-family: var(--font-mono-family);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--muted);
 }

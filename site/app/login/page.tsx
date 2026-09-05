@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import Bloom from "../Bloom";
+import SiteNav from "../SiteNav";
 import AuthForm from "../AuthForm";
 import styles from "../auth-form.module.css";
 
@@ -15,11 +14,10 @@ export default async function LoginPage({
 
   return (
     <div className={styles.page}>
-      <Bloom />
-      <Link href="/" className={styles.back}>
-        ← Back
-      </Link>
-      <AuthForm mode="login" next={next} />
+      <SiteNav />
+      <div className={styles.center}>
+        <AuthForm mode="login" next={next} />
+      </div>
     </div>
   );
 }

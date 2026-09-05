@@ -1,139 +1,121 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import SiteNav from "../SiteNav";
 import SiteFooter from "../SiteFooter";
-import Bloom from "../Bloom";
-import { CheckIcon } from "../icons";
 import shared from "../marketing.module.css";
 import styles from "./how-it-works.module.css";
 
 export const metadata: Metadata = {
   title: "How it works — Shimmr",
-  description: "One command to install, one protocol your agent already speaks, and nothing crosses the network unless you connect it.",
+  description: "One binary, the protocol your agent already speaks, and a gate on every call. No separate integration per tool, no upload step.",
 };
 
 const STEPS = [
   {
-    n: "1",
-    title: "Install",
-    copy: "One command. No dependencies, nothing to hand-edit first — the binary is all there is.",
+    num: "01",
+    title: "Install one binary",
+    body: "A single install per machine. Nothing per project, nothing per agent, no daemon to babysit.",
   },
   {
-    n: "2",
-    title: "Connect your agent",
-    copy: "Claude Code, Cursor, Windsurf, Copilot — whichever you already run. Shimmr speaks the same protocol they already speak.",
+    num: "02",
+    title: "Point your existing agent at it",
+    body: "It speaks the same protocol your agent already uses to call tools, so there is no separate integration to build or maintain for each tool.",
   },
   {
-    n: "3",
-    title: "Every call, metered",
-    copy: "Tool name and outcome, recorded the moment it happens — never the code, the path, or the argument behind it.",
+    num: "03",
+    title: "Every tool call is gated on an account and metered",
+    body: "The gate checks the account, then records the tool name and the outcome. Not the arguments, not the query, not the code.",
   },
   {
-    n: "4",
-    title: "Stays local, or doesn't",
-    copy: "Nothing crosses the network on its own. You decide when to connect something — and what.",
+    num: "04",
+    title: "Nothing leaves the machine unless you connect something",
+    body: "The default is fully local. Connecting team sync, GitHub, or automations is an explicit, separate act.",
   },
 ];
 
 const LOCAL = [
-  "Reading and understanding your codebase",
-  "Semantic and structural search",
-  "Coverage — files, lines, what's actually indexed",
+  "Code understanding and indexing",
+  "Semantic search",
+  "Coverage measurement",
   "The usage log itself",
 ];
 
 const CONNECTED = [
-  "Your team's usage, rolled up in one place",
-  "Pulling in issues and pull requests as context",
-  "Scheduled automations across repos",
-  "Seats and shared visibility for a whole team",
+  "Team-wide usage rolled up in one place",
+  "GitHub issues and pull requests as agent context",
+  "Scheduled automations",
+  "Multi-seat team visibility",
 ];
 
 export default function HowItWorks() {
   return (
     <div className={shared.page}>
-      <Bloom />
       <SiteNav active="/how-it-works" />
 
-      <div className={shared.wrap}>
-        <header className={shared.hero}>
-          <span className={shared.badge}>
-            <span className={shared.badgeDot} />
-            <span className={shared.badgeLabel}>How it works</span>
-          </span>
-          <h1 className={shared.headline}>Four steps, one of them optional.</h1>
-          <p className={shared.subhead}>
-            Shimmr sits between your agent and the work it&apos;s already doing —
-            gating, metering, and staying out of the way. Here&apos;s the
-            whole shape of it.
-          </p>
-        </header>
+      <header className={shared.hero}>
+        <span className={shared.eyebrow}>HOW IT WORKS</span>
+        <h1 className={shared.h1}>One binary, the protocol your agent already speaks, and a gate on every call.</h1>
+        <p className={shared.subhead}>
+          There is no separate integration per tool, and no step where your
+          repository is uploaded somewhere.
+        </p>
+      </header>
 
-        <section className={shared.section}>
-          <div className={styles.stepRow}>
-            {STEPS.map((s, i) => (
-              <div className={styles.step} key={s.n}>
-                <div className={styles.stepTop}>
-                  <span className={styles.stepNum}>{s.n}</span>
-                  {i < STEPS.length - 1 && <span className={styles.stepLine} />}
-                </div>
-                <h3 className={styles.stepTitle}>{s.title}</h3>
-                <p className={styles.stepCopy}>{s.copy}</p>
-              </div>
-            ))}
+      <section className={`${shared.wrap} ${styles.stepsWrap}`}>
+        {STEPS.map((s) => (
+          <div className={styles.step} key={s.num}>
+            <span className={styles.stepNum}>{s.num}</span>
+            <span className={styles.stepTitle}>{s.title}</span>
+            <span className={styles.stepBody}>{s.body}</span>
           </div>
-        </section>
+        ))}
+      </section>
 
-        <section className={shared.section}>
-          <div className={shared.sectionLabelRow}>
-            <span className={`${shared.sectionLabelLine} ${shared.left}`} />
-            <span className={shared.sectionLabel}>What happens where</span>
-            <span className={`${shared.sectionLabelLine} ${shared.right}`} />
+      <section className={shared.section}>
+        <span className={shared.sectionLabel}>THE BOUNDARY</span>
+        <div className={`${shared.grid3} ${styles.boundaryGrid}`}>
+          <div className={`${shared.cell} ${shared.cellPanel}`}>
+            <span className={styles.boundaryLabel}>YOUR MACHINE</span>
+            <span className={styles.boundaryFlow}>agent → shimmr → local index</span>
+            <span className={shared.cardCopy}>All understanding is computed and stored here.</span>
           </div>
-          <h2 className={shared.sectionHeading}>Local by default. Connected by choice.</h2>
-          <p className={shared.sectionLead}>
-            Everything on the left runs on your machine, permanently, with no
-            account required. Everything on the right is something you turn
-            on — never something that turns itself on.
-          </p>
+          <div className={`${shared.cell} ${shared.cellPanel} ${styles.boundaryGate}`}>
+            <span className={`${styles.boundaryLabel} ${styles.accent}`}>THE GATE</span>
+            <span className={styles.boundaryFlow}>account check + meter</span>
+            <span className={shared.cardCopy}>Records the tool name and the outcome. Nothing about the work itself.</span>
+          </div>
+          <div className={`${shared.cell} ${shared.cellPanel} ${styles.boundaryOff}`}>
+            <span className={`${styles.boundaryLabel} ${styles.amber}`}>OFF-MACHINE — OPT IN</span>
+            <span className={styles.boundaryFlow}>only what you connect</span>
+            <span className={shared.cardCopy}>Silent unless you explicitly connect team sync, GitHub, or automations.</span>
+          </div>
+        </div>
+      </section>
 
-          <div className={shared.grid2}>
-            <div className={`${styles.column} ${styles.columnLocal}`}>
-              <span className={styles.columnLabel}>On your machine</span>
-              <ul className={styles.list}>
-                {LOCAL.map((item) => (
-                  <li key={item} className={styles.listItem}>
-                    <CheckIcon />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
+      <section className={`${shared.wrap} ${styles.listsWrap}`}>
+        <div className={styles.listCol}>
+          <div className={styles.listHead}>
+            <span className={`${shared.eyebrow} ${styles.accent}`}>LOCAL &amp; FREE FOREVER</span>
+          </div>
+          {LOCAL.map((item) => (
+            <div className={styles.listRow} key={item}>
+              <span>{item}</span>
+              <span className={styles.tagFree}>FREE</span>
             </div>
-            <div className={`${styles.column} ${styles.columnConnected}`}>
-              <span className={styles.columnLabel}>Only if you connect it</span>
-              <ul className={styles.list}>
-                {CONNECTED.map((item) => (
-                  <li key={item} className={styles.listItem}>
-                    <CheckIcon />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
+          ))}
+        </div>
+        <div className={styles.listCol}>
+          <div className={styles.listHead}>
+            <span className={`${shared.eyebrow} ${styles.amber}`}>OPTIONAL &amp; CONNECTED</span>
+          </div>
+          {CONNECTED.map((item) => (
+            <div className={styles.listRow} key={item}>
+              <span>{item}</span>
+              <span className={styles.tagOptIn}>OPT IN</span>
             </div>
-          </div>
-        </section>
+          ))}
+        </div>
+      </section>
 
-        <section className={`${shared.section} ${styles.ctaSection}`}>
-          <p className={shared.sectionLead}>
-            Curious what that actually gets you day to day? See{" "}
-            <Link href="/use-it" className={styles.inlineLink}>how you&rsquo;d use it</Link>.
-          </p>
-          <div className={shared.ctaRow}>
-            <a href="/signup" className={shared.cta}>Get started</a>
-            <a href="/login" className={shared.ctaGhost}>Sign in</a>
-          </div>
-        </section>
-      </div>
       <SiteFooter />
     </div>
   );

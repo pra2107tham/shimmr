@@ -1,218 +1,193 @@
 /* Shared layout for the secondary marketing pages (how-it-works, use-it,
-   security) — the hero/section-label/card language the homepage already
-   established, factored out so three pages don't each redefine it slightly
-   differently. Page-specific diagrams still get their own stylesheet. */
+   security) — the hero/section/card language the homepage already
+   establishes, factored out so three pages don't each redefine it
+   slightly differently. Page-specific content still gets its own
+   stylesheet. */
 
 .page {
-  position: relative;
-  min-height: 100vh;
   background: var(--ground);
   color: var(--ink);
-  overflow: hidden;
 }
 
 .wrap {
-  position: relative;
-  max-width: 900px;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 0 30px;
+  padding: 0 22px;
 }
 
 .hero {
-  padding: 64px 0 56px;
-  text-align: center;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: var(--glass);
-  border: 1px solid var(--ink-15);
-  backdrop-filter: blur(14px);
-}
-
-.badgeDot {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--accent);
-}
-
-.badgeLabel {
-  font-family: var(--font-mono-family);
-  font-size: 10px;
-  letter-spacing: 1.6px;
-  text-transform: uppercase;
-  color: var(--ink-72);
-}
-
-.headline {
-  margin: 22px auto 0;
-  max-width: 22ch;
-  font-family: var(--font-sans-family);
-  font-weight: 600;
-  font-size: clamp(30px, 4vw, 46px);
-  line-height: 1.12;
-  letter-spacing: -1.1px;
-  color: var(--ink);
-  text-wrap: balance;
-}
-
-.subhead {
-  margin: 18px auto 0;
-  max-width: 56ch;
-  font-size: 14px;
-  line-height: 1.7;
-  font-weight: 400;
-  color: var(--ink-72);
-  text-wrap: pretty;
-}
-
-.section {
-  padding: 0 0 72px;
-}
-
-.sectionLabelRow {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 76px 22px 52px;
+  border-bottom: 1px solid var(--line);
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  margin-bottom: 34px;
-}
-
-.sectionLabelLine {
-  height: 1px;
-  width: 54px;
-}
-
-.sectionLabelLine.left {
-  background: linear-gradient(90deg, transparent 0%, var(--ink-24) 100%);
-}
-
-.sectionLabelLine.right {
-  background: linear-gradient(90deg, var(--ink-24) 0%, transparent 100%);
-}
-
-.sectionLabel {
-  font-family: var(--font-mono-family);
-  font-size: 10px;
-  letter-spacing: 1.7px;
-  text-transform: uppercase;
-  color: var(--ink-72);
-}
-
-.sectionHeading {
-  margin: 0 0 10px;
-  text-align: center;
-  font-family: var(--font-sans-family);
-  font-weight: 600;
-  font-size: clamp(21px, 2.6vw, 28px);
-  letter-spacing: -0.5px;
-}
-
-.sectionLead {
-  margin: 0 auto 36px;
-  max-width: 52ch;
-  text-align: center;
-  font-size: 13.5px;
-  line-height: 1.7;
-  color: var(--ink-72);
-}
-
-.card {
-  border-radius: 16px;
-  padding: 20px 22px;
-  background: var(--glass);
-  border: 1px solid var(--ink-15);
-  backdrop-filter: blur(22px);
+  flex-direction: column;
+  gap: 22px;
 }
 
 .eyebrow {
   font-family: var(--font-mono-family);
-  font-size: 9.5px;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: var(--ink-60);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+}
+
+.h1 {
+  margin: 0;
+  max-width: 940px;
+  font-family: var(--font-sans-family);
+  font-weight: 500;
+  font-size: clamp(30px, 3.9vw, 48px);
+  line-height: 1.07;
+  letter-spacing: -0.035em;
+  text-wrap: pretty;
+}
+
+.subhead {
+  margin: 0;
+  max-width: 660px;
+  font-size: 16.5px;
+  line-height: 1.62;
+  color: var(--muted-2);
+}
+
+.section {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 44px 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sectionTight {
+  padding: 0 22px;
+}
+
+.sectionLabel {
+  font-family: var(--font-mono-family);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+
+/* ---- hairline-ruled grids: 1px gap filled with --line, cells opaque ----
+   Use where the mockup shows `gap:1px;background:rgba(255,255,255,.09)` —
+   the divider IS the gap, cells carry no border of their own. */
+
+.grid2,
+.grid3,
+.grid4 {
+  display: grid;
+  gap: 1px;
+  background: var(--line);
+}
+
+.grid2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.grid3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.grid4 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+
+.cell {
+  background: var(--ground);
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  min-width: 0;
+}
+
+.cellPanel {
+  background: var(--panel);
+}
+
+/* ---- individually-bordered card grids: a real gap, each cell its own
+   border ---- Use where the mockup shows a real `gap` value (14-22px)
+   with `border:1px solid rgba(255,255,255,.09)` on every child. */
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.cardCell {
+  border: 1px solid var(--line);
+  background: var(--ground);
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  min-width: 0;
+}
+
+.cardCellPanel {
+  background: var(--panel);
+}
+
+/* ---- plain bordered card, no ruled-grid neighbours ---- */
+
+.card {
+  border: 1px solid var(--line);
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  min-width: 0;
+}
+
+.label {
+  font-family: var(--font-mono-family);
+  font-weight: 600;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  color: var(--accent);
 }
 
 .cardTitle {
-  margin: 9px 0 0;
   font-family: var(--font-sans-family);
-  font-weight: 600;
+  font-weight: 500;
   font-size: 18px;
-  letter-spacing: -0.2px;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
   color: var(--ink);
 }
 
 .cardCopy {
-  margin: 9px 0 0;
-  font-size: 12.5px;
-  line-height: 1.6;
-  color: var(--ink-72);
-  text-wrap: pretty;
-}
-
-.grid2 {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.grid3 {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-
-@media (max-width: 640px) {
-  .grid2,
-  .grid3 {
-    grid-template-columns: 1fr;
-  }
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted);
 }
 
 .ctaRow {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 12px;
-  margin-top: 8px;
+  flex-wrap: wrap;
 }
 
 .cta {
-  display: inline-flex;
-  align-items: center;
-  height: 44px;
-  padding: 0 24px;
-  border-radius: 999px;
-  background: var(--ink);
-  color: var(--ground);
-  font-size: 14px;
-  font-weight: 500;
-  transition: opacity 200ms;
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: 13px 24px;
+  font-family: var(--font-mono-family);
+  font-weight: 600;
+  font-size: 13.5px;
 }
 
 .cta:hover {
-  opacity: 0.88;
-  color: var(--ground);
+  background: var(--accent-hover);
+  color: var(--accent-ink);
 }
 
 .ctaGhost {
-  display: inline-flex;
-  align-items: center;
-  height: 44px;
-  padding: 0 22px;
-  border-radius: 999px;
-  background: var(--glass);
-  border: 1px solid var(--ink-15);
+  border: 1px solid var(--line-md);
   color: var(--ink);
-  font-size: 14px;
-  transition: background 200ms;
+  padding: 13px 24px;
+  font-family: var(--font-mono-family);
+  font-weight: 500;
+  font-size: 13.5px;
 }
 
 .ctaGhost:hover {
-  background: var(--ink-11);
+  border-color: var(--line-strong);
+  color: var(--ink);
 }

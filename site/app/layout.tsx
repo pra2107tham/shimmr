@@ -1,17 +1,16 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-// Inter + JetBrains Mono: standard, widely-recognised faces rather than a
-// display serif — the earlier Instrument Serif pairing read as "designed"
-// in a way plain product UI shouldn't.
-const sans = Inter({
+// Geist + Geist Mono — the "Terminal Ledger" design's type pair. Confirmed
+// available in next/font/google's own font-data.json rather than assumed.
+const sans = Geist({
   variable: "--font-sans",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600"],
 });
 
-const mono = JetBrains_Mono({
+const mono = Geist_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
   weight: ["400", "500", "600"],
@@ -20,7 +19,7 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Shimmr — coming soon",
   description:
-    "Shimmr is the context layer between your teams, your agents, and everything they run on — microservices, infra, databases, and more. Coming soon.",
+    "Shimmr is a local-first tool that gives coding agents real understanding of a codebase — plus an account layer and usage metering. Coming soon.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
