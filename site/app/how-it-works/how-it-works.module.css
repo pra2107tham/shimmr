@@ -37,6 +37,7 @@
 }
 
 .stepTitle {
+  margin: 0;
   font-family: var(--font-sans-family);
   font-weight: 500;
   font-size: 21px;
@@ -69,6 +70,7 @@
 }
 
 .boundaryLabel {
+  margin: 0;
   font-family: var(--font-mono-family);
   font-weight: 600;
   font-size: 10.5px;

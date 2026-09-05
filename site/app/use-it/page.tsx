@@ -2,13 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import SiteNav from "../SiteNav";
 import SiteFooter from "../SiteFooter";
+import { pageMetadata } from "../seo";
 import shared from "../marketing.module.css";
 import styles from "./use-it.module.css";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Use it — Shimmr",
   description: "A code graph, semantic search, and coverage your agent can trust — behind one command, for whichever agent you already run.",
-};
+  path: "/use-it",
+});
 
 const FEATURES = [
   { label: "CODE GRAPH", title: "Structural understanding", copy: "What calls what, what lives where, across the whole repository." },
@@ -40,7 +42,7 @@ export default function UseIt() {
           {FEATURES.map((f) => (
             <div className={`${shared.cardCell} ${shared.cardCellPanel}`} key={f.label}>
               <span className={shared.label}>{f.label}</span>
-              <span className={shared.cardTitle}>{f.title}</span>
+              <h2 className={shared.cardTitle}>{f.title}</h2>
               <p className={shared.cardCopy}>{f.copy}</p>
             </div>
           ))}
@@ -48,7 +50,7 @@ export default function UseIt() {
       </section>
 
       <section className={shared.section}>
-        <span className={shared.sectionLabel}>WORKS WITH TODAY</span>
+        <h2 className={shared.sectionLabel}>WORKS WITH TODAY</h2>
         <div className={styles.agentRow}>
           {AGENTS.map((a) => <span className={styles.agentPill} key={a}>{a}</span>)}
         </div>
@@ -57,7 +59,7 @@ export default function UseIt() {
       <section className={`${shared.section} ${styles.previewGrid}`}>
         <div className={styles.previewPanel}>
           <div className={styles.previewHead}>
-            <span className={styles.previewLabel}>SETUP SHOWS EVERY CHANGE FIRST</span>
+            <h2 className={styles.previewLabel}>SETUP SHOWS EVERY CHANGE FIRST</h2>
             <span className={styles.pendingTag}>PENDING APPROVAL</span>
           </div>
           <div className={styles.diffBody}>
@@ -72,7 +74,7 @@ export default function UseIt() {
 
         <div className={styles.previewPanel}>
           <div className={styles.previewHead}>
-            <span className={styles.previewLabel}>LIVE USAGE</span>
+            <h2 className={styles.previewLabel}>LIVE USAGE</h2>
             <span className={styles.updatingTag}><span className={styles.pulseDot} />UPDATING</span>
           </div>
           <div className={styles.usageBody}>
@@ -91,11 +93,11 @@ export default function UseIt() {
       </section>
 
       <section className={`${shared.section} ${styles.commandsSection}`}>
-        <span className={shared.sectionLabel}>THE WHOLE FLOW — THREE COMMANDS</span>
+        <h2 className={shared.sectionLabel}>THE WHOLE FLOW — THREE COMMANDS</h2>
         <div className={styles.commandTable}>
           {COMMANDS.map((c) => (
             <div className={styles.commandRow} key={c.cmd}>
-              <span className={styles.commandCmd}>{c.cmd}</span>
+              <code className={styles.commandCmd}>{c.cmd}</code>
               <span className={styles.commandDetail}>
                 <span className={styles.commandWhat}>{c.what}</span>
                 <span className={styles.commandOut}>{c.out}</span>

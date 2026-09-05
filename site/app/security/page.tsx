@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import SiteNav from "../SiteNav";
 import SiteFooter from "../SiteFooter";
+import { pageMetadata } from "../seo";
 import shared from "../marketing.module.css";
 import styles from "./security.module.css";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Security — Shimmr",
   description: "No code, file content, or query text ever leaves your machine. Here's exactly what we do and don't record, and why.",
-};
+  path: "/security",
+});
 
 const RECORDED = [
   "Which tool was called, and how many times",
@@ -40,13 +42,13 @@ export default function Security() {
       <section className={shared.section}>
         <div className={styles.pairGrid}>
           <div className={`${styles.column} ${styles.columnYes}`}>
-            <div className={styles.columnHead}>EVER RECORDED</div>
+            <h2 className={styles.columnHead}>EVER RECORDED</h2>
             <div className={styles.columnBody}>
               {RECORDED.map((item) => <div className={styles.row} key={item}>{item}</div>)}
             </div>
           </div>
           <div className={`${styles.column} ${styles.columnNo}`}>
-            <div className={`${styles.columnHead} ${styles.columnHeadNo}`}>NEVER RECORDED</div>
+            <h2 className={`${styles.columnHead} ${styles.columnHeadNo}`}>NEVER RECORDED</h2>
             <div className={styles.columnBody}>
               {NEVER.map((item) => <div className={styles.row} key={item}>{item}</div>)}
             </div>
@@ -55,7 +57,7 @@ export default function Security() {
       </section>
 
       <section className={shared.section}>
-        <span className={shared.sectionLabel}>ONE ACTUAL RECORD, IN FULL</span>
+        <h2 className={shared.sectionLabel}>ONE ACTUAL RECORD, IN FULL</h2>
         <div className={styles.record}>
           <div>{"{ "}<span className={styles.recKey}>&quot;tool&quot;</span>: <span className={styles.recVal}>&quot;search.semantic&quot;</span>, <span className={styles.recKey}>&quot;ok&quot;</span>: <span className={styles.recVal}>true</span>, <span className={styles.recKey}>&quot;dur_ms&quot;</span>: <span className={styles.recVal}>142</span>,</div>
           <div className={styles.recIndent}><span className={styles.recKey}>&quot;repo&quot;</span>: <span className={styles.recVal}>&quot;h:9f31c8ad&quot;</span> <span className={styles.recComment}>{"// per-machine hash, never the name"}</span> {"}"}</div>
@@ -66,22 +68,22 @@ export default function Security() {
       <section className={`${shared.section} ${styles.cardsSection}`}>
         <div className={shared.cardGrid}>
           <div className={shared.cardCell}>
-            <span className={shared.label}>FAILS OPEN, NEVER SHUT</span>
+            <h3 className={shared.label}>FAILS OPEN, NEVER SHUT</h3>
             <p className={styles.copy}>A missing config or an account problem degrades to the free tier. It never breaks a working tool.</p>
           </div>
           <div className={shared.cardCell}>
-            <span className={shared.label}>TESTED, NOT ASSERTED</span>
+            <h3 className={shared.label}>TESTED, NOT ASSERTED</h3>
             <p className={styles.copy}>That fallback is backed by an automated test in the build, not just a stated policy.</p>
             <span className={styles.testLine}>degrade_to_free_tier · passing</span>
           </div>
           <div className={shared.cardCell}>
-            <span className={shared.label}>NUMBERS COME WITH METHOD</span>
+            <h3 className={shared.label}>NUMBERS COME WITH METHOD</h3>
             <p className={styles.copy}>Any figure used externally has its measurement method available on request.</p>
           </div>
           <div className={shared.cardCell}>
-            <span className={`${shared.label} ${styles.muted}`}>WHAT&apos;S UNDER IT</span>
+            <h3 className={`${shared.label} ${styles.muted}`}>WHAT&apos;S UNDER IT</h3>
             <p className={styles.copy}>If you need to know what a given install is running, ask the install:</p>
-            <span className={styles.cmd}>$ shimmr licenses</span>
+            <span className={styles.cmd}>$ <code>shimmr licenses</code></span>
           </div>
         </div>
       </section>

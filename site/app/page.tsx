@@ -1,9 +1,40 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import styles from "./page.module.css";
 import { MailIcon, PhoneIcon, LinkedInIcon } from "./icons";
 import { contacts } from "./content";
+import { pageMetadata, SITE_URL } from "./seo";
 import SiteNav from "./SiteNav";
 import SiteFooter from "./SiteFooter";
+
+export const metadata: Metadata = pageMetadata({
+  title: "Shimmr — coming soon",
+  description:
+    "Shimmr is a local-first tool that gives coding agents real understanding of a codebase — plus an account layer and usage metering. Everything on your machine is free, forever.",
+  path: "/",
+});
+
+// Honest fields only: no aggregateRating or review — this product has
+// neither yet, and inventing either is exactly the kind of number that
+// falls apart the moment someone checks it (see CLAUDE.md on that).
+// "Free, forever" for the local tier is the one claim this schema makes
+// about price, and it's the one this whole product is actually built on.
+const softwareSchema = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Shimmr",
+  description:
+    "A local-first tool that gives AI coding agents real understanding of a codebase — plus an account layer and usage metering.",
+  url: SITE_URL,
+  applicationCategory: "DeveloperApplication",
+  operatingSystem: "macOS, Linux, Windows",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+    description: "Everything that runs on your machine is free, forever.",
+  },
+};
 
 const icons = { mail: MailIcon, phone: PhoneIcon, linkedin: LinkedInIcon };
 
@@ -37,6 +68,9 @@ const TEASERS = [
 export default function Home() {
   return (
     <div className={styles.page}>
+      {/* Static, build-time JSON we generate ourselves — nothing here comes
+          from user input. */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }} />
       <SiteNav active="/" />
 
       <header className={styles.hero}>
@@ -50,7 +84,7 @@ export default function Home() {
             it.
           </p>
           <div className={styles.ctaRow}>
-            <Link href="/signup" className={styles.cta}>get started</Link>
+            <Link href="/download" className={styles.cta}>get started</Link>
             <Link href="/login" className={styles.ctaGhost}>sign in</Link>
           </div>
           <div className={styles.statusLine}>
@@ -62,11 +96,11 @@ export default function Home() {
         <div className={styles.terminal}>
           <div className={styles.terminalBar}>TWO MINUTES, START TO GATED</div>
           <div className={styles.terminalBody}>
-            <div><span className={styles.prompt}>$</span> shimmr signup</div>
+            <div><span className={styles.prompt}>$</span> <code>shimmr signup</code></div>
             <div className={styles.terminalMuted}>→ browser opens, email confirmed</div>
-            <div><span className={styles.prompt}>$</span> shimmr init</div>
+            <div><span className={styles.prompt}>$</span> <code>shimmr init</code></div>
             <div className={styles.terminalMuted}>→ 2 config files shown, then applied</div>
-            <div><span className={styles.prompt}>$</span> shimmr doctor</div>
+            <div><span className={styles.prompt}>$</span> <code>shimmr doctor</code></div>
             <div className={styles.terminalOk}>→ all checks passed</div>
           </div>
         </div>
@@ -78,7 +112,7 @@ export default function Home() {
             <span className={`${styles.dot} ${styles.dotAccent}`} />
             <span className={styles.splitLabelText}>FREE, FOREVER</span>
           </div>
-          <div className={styles.splitHeading}>Everything that runs on your machine.</div>
+          <h2 className={styles.splitHeading}>Everything that runs on your machine.</h2>
           <div className={styles.splitList}>
             {LOCAL.map((item) => <div key={item}>{item}</div>)}
           </div>
@@ -88,7 +122,7 @@ export default function Home() {
             <span className={`${styles.dot} ${styles.dotAmber}`} />
             <span className={`${styles.splitLabelText} ${styles.amber}`}>PAID ONLY WHEN CONNECTED</span>
           </div>
-          <div className={styles.splitHeading}>You pay once you connect something outside it.</div>
+          <h2 className={styles.splitHeading}>You pay once you connect something outside it.</h2>
           <div className={styles.splitList}>
             {CONNECTED.map((item) => <div key={item}>{item}</div>)}
           </div>
@@ -99,7 +133,7 @@ export default function Home() {
         {TEASERS.map((t) => (
           <Link href={t.href} key={t.href} className={styles.teaser}>
             <span className={styles.teaserLabel}>{t.num} / {t.label}</span>
-            <span className={styles.teaserTitle}>{t.title}</span>
+            <h3 className={styles.teaserTitle}>{t.title}</h3>
             <span className={styles.teaserCopy}>{t.copy}</span>
           </Link>
         ))}
@@ -108,7 +142,7 @@ export default function Home() {
       <section className={styles.contact}>
         <div className={styles.contactCol}>
           <div className={styles.eyebrow}>REACH OUT DIRECTLY</div>
-          <div className={styles.contactHeading}>No form, no waitlist. Mail or call and you get a person.</div>
+          <h2 className={styles.contactHeading}>No form, no waitlist. Mail or call and you get a person.</h2>
           <div className={styles.contactList}>
             {contacts.map(({ key, href, label, value, icon, external }) => {
               const Icon = icons[icon];
