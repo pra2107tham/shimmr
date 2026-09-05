@@ -115,9 +115,13 @@ export default async function DashboardPage() {
             <p className={styles.connectCopy}>
               Run this on the machine you want to see here:
             </p>
-            <code className={styles.connectCmd}>
-              shimmr login --email {profile?.email ?? user.email}
-            </code>
+            <code className={styles.connectCmd}>shimmr login</code>
+            <p className={styles.connectCopy}>
+              It opens a browser back to a page like this one to confirm —
+              you&apos;re already signed in, so it&apos;s one click.
+              (Scripted or headless machine? <code>shimmr login --email {profile?.email ?? user.email}</code> skips
+              the browser, unverified.)
+            </p>
             <p className={styles.connectCopy}>
               Don&apos;t have it yet:
             </p>

@@ -46,6 +46,16 @@ var ErrNoAccount = errors.New("no Shimmr account on this machine")
 // Left empty, the build is fully offline: nothing is ever sent anywhere.
 var DefaultEndpoint = ""
 
+// DefaultSiteURL is the website `shimmr login`/`shimmr signup` open a
+// browser to for the verified sign-in flow — a separate host from
+// DefaultEndpoint (Vercel, not Supabase), baked in the same way:
+//
+//	go build -ldflags "-X github.com/pra2107tham/shimmr/internal/config.DefaultSiteURL=https://your-site.example"
+//
+// Left empty, that flow has nowhere to send the browser, so it refuses with
+// a clear error instead of opening a dead link — `--email` still works.
+var DefaultSiteURL = ""
+
 // Dir is ~/.shimmr, overridable for tests via SHIMMR_HOME.
 func Dir() (string, error) {
 	if d := os.Getenv("SHIMMR_HOME"); d != "" {
@@ -141,6 +151,17 @@ func (c *Config) ResolveEndpoint() string {
 		return c.Endpoint
 	}
 	return DefaultEndpoint
+}
+
+// ResolveSiteURL prefers SHIMMR_SITE_URL, then the build-time default — the
+// same override shape SHIMMR_ENGINE_PATH already gives the engine location,
+// for the same reason: someone pointing this build at a different
+// deployment should not have to rebuild it to do so.
+func ResolveSiteURL() string {
+	if v := os.Getenv("SHIMMR_SITE_URL"); v != "" {
+		return v
+	}
+	return DefaultSiteURL
 }
 
 // Reports says whether this machine should send usage as it happens.

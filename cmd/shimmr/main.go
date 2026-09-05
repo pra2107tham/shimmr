@@ -17,7 +17,10 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
+	"os/signal"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -93,9 +96,9 @@ Start with: shimmr signup
 
 func cmdSignup(args []string) error {
 	fs := flag.NewFlagSet("signup", flag.ExitOnError)
-	email := fs.String("email", "", "your work email")
-	org := fs.String("org", "", "your company or organisation (optional)")
-	team := fs.String("team", "", "your team within the org (optional)")
+	email := fs.String("email", "", "your work email (skip the browser and use this instead — unverified)")
+	org := fs.String("org", "", "your company or organisation (optional, --email only)")
+	team := fs.String("team", "", "your team within the org (optional, --email only)")
 	endpoint := fs.String("endpoint", "", "Shimmr backend base URL (optional)")
 	engine := fs.String("engine", "", "path to the engine binary (optional)")
 	force := fs.Bool("force", false, "overwrite an existing account on this machine")
@@ -108,25 +111,22 @@ func cmdSignup(args []string) error {
 			"  Use --force to replace it", existing.Email, existing.Org)
 	}
 
-	// Only prompt when a person is actually there. Piped or scripted input
-	// must fail with a message rather than block forever on a read.
-	//
-	// Email is the only thing required. An organisation is asked for but may be
-	// skipped: somebody trying this on a personal project should not have to
-	// invent a company, and making them type one produces junk rows rather than
-	// information.
-	if *email == "" && interactive() {
-		in := bufio.NewReader(os.Stdin)
-		// && short-circuits, so end-of-input on any answer stops the rest
-		// rather than printing labels nobody is there to read.
-		_ = ask(in, "Work email", email) &&
-			ask(in, "Organisation (optional, press enter to skip)", org) &&
-			ask(in, "Team (optional, press enter to skip)", team)
-	}
+	// No --email: open a browser to a real, verified sign-in instead of
+	// asking for an address at this prompt — see ADR 0012. This needs a
+	// real backend to pair against; unlike the --email path below, there is
+	// no offline version of it.
 	if *email == "" {
-		return errors.New("an email address is required\n" +
-			"  shimmr signup --email you@company.com\n" +
-			"  shimmr signup --email you@company.com --org \"Your Co\"")
+		if *org != "" || *team != "" {
+			fmt.Println("Note: --org/--team only apply with --email. Once you're signed in, join one with:\n" +
+				"  shimmr signup --force --email you@company.com --org \"Your Co\"")
+		}
+		c := &config.Config{Endpoint: *endpoint, EnginePath: *engine}
+		target := c.ResolveEndpoint()
+		if target == "" {
+			return errors.New("this build has no backend configured, so there is nothing to open " +
+				"a browser to.\n  For a fully local account instead: shimmr signup --email you@company.com")
+		}
+		return pairInBrowser(c, target, "signup")
 	}
 	if !strings.Contains(*email, "@") {
 		return fmt.Errorf("%q does not look like an email address", *email)
@@ -192,7 +192,7 @@ func cmdSignup(args []string) error {
 // verification is Q11 in docs/04-open-questions.md.
 func cmdLogin(args []string) error {
 	fs := flag.NewFlagSet("login", flag.ExitOnError)
-	email := fs.String("email", "", "the email you signed up with")
+	email := fs.String("email", "", "the email you signed up with (skip the browser and use this instead — unverified)")
 	endpoint := fs.String("endpoint", "", "Shimmr backend base URL (optional)")
 	engine := fs.String("engine", "", "path to the engine binary (optional)")
 	force := fs.Bool("force", false, "replace the account already on this machine")
@@ -204,20 +204,20 @@ func cmdLogin(args []string) error {
 		return fmt.Errorf("this machine is already signed in as %s.\n"+
 			"  Use --force to replace it", existing.Email)
 	}
-	if *email == "" && interactive() {
-		_ = ask(bufio.NewReader(os.Stdin), "Work email", email)
-	}
-	if *email == "" {
-		return errors.New("an email address is required\n" +
-			"  shimmr login --email you@company.com")
-	}
 
-	c := &config.Config{Email: strings.TrimSpace(*email), Endpoint: *endpoint, EnginePath: *engine}
+	c := &config.Config{Endpoint: *endpoint, EnginePath: *engine}
 	target := c.ResolveEndpoint()
 	if target == "" {
 		return errors.New("this build has no backend configured, so there is no " +
 			"account to log in to.\n  Run `shimmr signup` to set this machine up locally")
 	}
+
+	// No --email: open a browser to a real, verified sign-in instead of
+	// asking for an address at this prompt — see ADR 0012.
+	if *email == "" {
+		return pairInBrowser(c, target, "login")
+	}
+	c.Email = strings.TrimSpace(*email)
 
 	// A new machine means a new token: signing in somewhere else must never
 	// need the first machine's credential, and revoking one must not touch the
@@ -268,19 +268,146 @@ func interactive() bool {
 	return err == nil && st.Mode()&os.ModeCharDevice != 0
 }
 
-// ask fills dst if it is empty, and reports whether input is still readable.
-func ask(r *bufio.Reader, label string, dst *string) bool {
-	if *dst != "" {
-		return true
+// ---- browser pairing ----
+//
+// The default path for both `shimmr login` and `shimmr signup` now: open a
+// browser to a short-lived code, let the person confirm it against a real
+// signed-in session, and this machine is attached the moment they do. See
+// ADR 0012 — this is what closes the CLI half of Q11. --email still exists,
+// still doesn't verify anything, and is unaffected by any of this.
+
+const (
+	pairPollInterval = 2 * time.Second
+	pairDefaultTTL   = 10 * time.Minute
+)
+
+// pairInBrowser generates this machine's install credential exactly as the
+// --email path always has, registers a pairing code for it, opens a browser
+// to confirm it, and waits. flow is "login" or "signup" — cosmetic only,
+// forwarded so the website can offer to create an account or not without
+// this command needing two versions of the same wait loop.
+func pairInBrowser(c *config.Config, target, flow string) error {
+	// Checked before anything is generated or sent: a misconfigured build
+	// should fail with zero side effects, not after already registering a
+	// pairing code on the backend for a browser it can never point at.
+	site := strings.TrimRight(config.ResolveSiteURL(), "/")
+	if site == "" {
+		return errors.New("this build has no website configured for browser sign-in.\n" +
+			"  Use --email instead, or build with SITE_URL set (see the Makefile).")
 	}
-	fmt.Printf("%s: ", label)
-	line, err := r.ReadString('\n')
-	*dst = strings.TrimSpace(line)
+
+	token, err := config.NewToken()
 	if err != nil {
-		fmt.Println()
-		return false
+		return err
 	}
-	return true
+	userID, err := config.NewUserID()
+	if err != nil {
+		return err
+	}
+	c.Token, c.UserID, c.CreatedAt = token, userID, time.Now().UTC()
+
+	var start struct {
+		Code      string `json:"code"`
+		ExpiresIn int    `json:"expires_in"`
+	}
+	if err := postJSON(c, target+"/v1/cli_start", map[string]any{
+		"install_id": c.UserID,
+		"token":      c.Token,
+	}, &start); err != nil {
+		return fmt.Errorf("could not start sign-in: %w", err)
+	}
+
+	authURL := fmt.Sprintf("%s/cli-auth?code=%s&flow=%s", site, start.Code, flow)
+
+	fmt.Printf("\nOpening your browser to finish signing in...\n")
+	fmt.Printf("If it doesn't open, visit this URL and confirm the code matches:\n\n")
+	fmt.Printf("  %s\n\n", authURL)
+	fmt.Printf("  Code: %s\n\n", start.Code)
+	if err := openBrowser(authURL); err != nil {
+		fmt.Println("  (couldn't open a browser automatically — use the link above)")
+	}
+
+	ttl := time.Duration(start.ExpiresIn) * time.Second
+	if ttl <= 0 {
+		ttl = pairDefaultTTL
+	}
+	return waitForClaim(c, target, start.Code, ttl)
+}
+
+// waitForClaim polls until the code above is confirmed, expires, or the
+// person gives up with Ctrl+C. A network hiccup mid-poll is not treated as
+// failure — the person is still there, actively completing this in a
+// browser, and one bad request should not throw that away.
+func waitForClaim(c *config.Config, target, code string, ttl time.Duration) error {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
+	deadline := time.Now().Add(ttl)
+	fmt.Print("Waiting for confirmation")
+	defer fmt.Println()
+
+	for {
+		if !time.Now().Before(deadline) {
+			return errors.New("sign-in was not confirmed in time — run the command again")
+		}
+		select {
+		case <-ctx.Done():
+			return errors.New("cancelled")
+		case <-time.After(pairPollInterval):
+		}
+
+		var poll struct {
+			Status string `json:"status"`
+			Email  string `json:"email"`
+			Org    string `json:"org"`
+			Team   string `json:"team"`
+		}
+		if err := postJSON(c, target+"/v1/cli_poll", map[string]any{"code": code}, &poll); err != nil {
+			fmt.Print(".")
+			continue
+		}
+
+		switch poll.Status {
+		case "claimed":
+			c.Email, c.Org, c.Team, c.Synced = poll.Email, poll.Org, poll.Team, true
+			if err := c.Save(); err != nil {
+				return err
+			}
+			dir, _ := config.Dir()
+			fmt.Printf("\n\nSigned in as %s.\n\n", c.Email)
+			if c.Org != "" {
+				fmt.Printf("  Organisation   %s\n", c.Org)
+			}
+			if c.Team != "" {
+				fmt.Printf("  Team           %s\n", c.Team)
+			}
+			fmt.Printf("  Account        %s\n", filepath.Join(dir, "config.json"))
+			fmt.Printf("  Usage sharing  %s\n", reportingState(c))
+			fmt.Printf("\nNext: shimmr init\n")
+			return nil
+		case "expired":
+			return errors.New("that sign-in link expired — run the command again")
+		default: // "pending"
+			fmt.Print(".")
+		}
+	}
+}
+
+// openBrowser is best-effort. A machine with no display, an SSH session, or
+// simply no browser installed all fail here silently — the URL already
+// printed above is what actually matters, this is only a convenience.
+func openBrowser(url string) error {
+	var cmd string
+	var args []string
+	switch runtime.GOOS {
+	case "darwin":
+		cmd, args = "open", []string{url}
+	case "windows":
+		cmd, args = "rundll32", []string{"url.dll,FileProtocolHandler", url}
+	default:
+		cmd, args = "xdg-open", []string{url}
+	}
+	return exec.Command(cmd, args...).Start()
 }
 
 // ---- init ----

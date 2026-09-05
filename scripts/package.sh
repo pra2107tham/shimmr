@@ -22,6 +22,9 @@ VERSION="${VERSION:-$(sed -n 's/^VERSION := //p' Makefile)}"
 # Packaged builds point at the live backend; a plain `make build` stays offline
 # so development never reports usage to production.
 ENDPOINT="${ENDPOINT:-$(cat packaging/endpoint 2>/dev/null || true)}"
+# Same idea, different host: where `shimmr login`/`shimmr signup` open a
+# browser for verified sign-in.
+SITE_URL="${SITE_URL:-$(cat packaging/site_url 2>/dev/null || true)}"
 OUT="${OUT:-dist}"
 
 NAME="shimmr-${VERSION}-${GOOS}-${GOARCH}"
@@ -71,7 +74,7 @@ echo "==> $NAME"
 
 # ---------------------------------------------------------------- shimmr
 CGO_ENABLED=0 GOOS="$GOOS" GOARCH="$GOARCH" go build \
-  -ldflags "-s -w -X github.com/pra2107tham/shimmr/internal/config.DefaultEndpoint=$ENDPOINT" \
+  -ldflags "-s -w -X github.com/pra2107tham/shimmr/internal/config.DefaultEndpoint=$ENDPOINT -X github.com/pra2107tham/shimmr/internal/config.DefaultSiteURL=$SITE_URL" \
   -o "$STAGE/shimmr$EXE" ./cmd/shimmr
 echo "    shimmr        $(du -h "$STAGE/shimmr$EXE" | cut -f1)"
 

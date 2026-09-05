@@ -13,6 +13,9 @@ dashboard — packaged as one product that installs in a single command.
 > 0008](docs/decisions/0008-report-usage-as-it-happens.md)). A website now
 > exists too — sign up, sign in, and watch your own usage stream in over
 > Realtime at `site/` ([ADR 0011](docs/decisions/0011-web-auth-and-dashboard.md)).
+> `shimmr signup`/`shimmr login`, run with no flags, open a browser to that
+> same verified sign-in rather than trusting a stated `--email`
+> ([ADR 0012](docs/decisions/0012-browser-based-cli-sign-in.md)).
 > See [ADR 0004](docs/decisions/0004-local-free-connected-paid.md) and [ADR
 > 0005](docs/decisions/0005-harness-in-go.md) for the product decisions
 > behind the harness itself.
@@ -28,10 +31,15 @@ See [`docs/product-overview.html`](docs/product-overview.html) for the visual ve
 
 ```sh
 curl -fsSL https://fpxntzwkiepnwsazmaxf.supabase.co/storage/v1/object/public/releases/install.sh | sh
-shimmr signup --email you@company.com --org "Your Co"
+shimmr signup
 shimmr init
 shimmr doctor
 ```
+
+`shimmr signup` with no flags opens a browser to a verified sign-in — no
+password, just a magic-link email. Scripted or headless instead:
+`shimmr signup --email you@company.com --org "Your Co"` skips the browser
+(and the verification).
 
 This repository is private, so a `raw.githubusercontent.com` link 404s for
 anyone who isn't a collaborator — the URL above is object storage, and it's

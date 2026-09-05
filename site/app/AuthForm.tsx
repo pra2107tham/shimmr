@@ -24,23 +24,31 @@ const COPY: Record<Mode, { title: string; sub: string; switchText: string; switc
   },
 };
 
-export default function AuthForm({ mode }: { mode: Mode }) {
+export default function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [error, setError] = useState("");
   const copy = COPY[mode];
+
+  // Preserved across the switch link too: someone who followed `shimmr
+  // login` here, then clicks "New here? Create an account", should still
+  // land back on /cli-auth after signing up — not lose that on the detour.
+  const switchHref = next ? `${copy.switchHref}?next=${encodeURIComponent(next)}` : copy.switchHref;
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setStatus("sending");
     setError("");
 
+    const callback = new URL("/auth/callback", window.location.origin);
+    if (next) callback.searchParams.set("next", next);
+
     const supabase = supabaseBrowser();
     const { error: authError } = await supabase.auth.signInWithOtp({
       email: email.trim().toLowerCase(),
       options: {
         shouldCreateUser: mode === "signup",
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: callback.toString(),
       },
     });
 
@@ -97,8 +105,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       )}
 
       <p className={styles.switch}>
-        {copy.switchText}{" "}
-        <Link href={copy.switchHref}>{copy.switchLabel}</Link>
+        {copy.switchText} <Link href={switchHref}>{copy.switchLabel}</Link>
       </p>
     </div>
   );

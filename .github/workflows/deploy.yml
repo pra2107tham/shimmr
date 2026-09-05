@@ -69,10 +69,13 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
-          supabase functions deploy signup --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
-          supabase functions deploy login  --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
-          supabase functions deploy usage  --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
-          supabase functions deploy events --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+          supabase functions deploy signup    --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+          supabase functions deploy login     --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+          supabase functions deploy usage     --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+          supabase functions deploy events    --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+          supabase functions deploy cli_start --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+          supabase functions deploy cli_poll  --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+          supabase functions deploy cli_claim --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
 
       - name: smoke the deployed endpoints
         run: |
@@ -80,25 +83,41 @@ jobs:
 
           # A GET must be refused with 405 — proves the function is live and
           # that the JWT gateway is not intercepting our own auth.
-          for fn in signup login usage events; do
+          for fn in signup login usage events cli_start cli_poll cli_claim; do
             code=$(curl -s -o /dev/null -w '%{http_code}' "$BASE/$fn")
             echo "GET /$fn -> $code"
             [ "$code" = "405" ] || { echo "expected 405 from $fn" >&2; exit 1; }
           done
 
           # The authenticated endpoints must refuse an anonymous caller. events
-          # is the one that now runs continuously, so an open one would be a
-          # standing invitation to write into anybody's usage.
-          for fn in usage events; do
+          # is the one that now runs continuously, and cli_claim is the one
+          # that actually creates an account, so an open one would be a
+          # standing invitation to write into anybody's usage — or connect a
+          # machine to an account that never confirmed it.
+          for fn in usage events cli_claim; do
             code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
               -H 'content-type: application/json' -d '{}' "$BASE/$fn")
             echo "POST /$fn with no token -> $code"
             [ "$code" = "401" ] || { echo "expected 401 from $fn, got $code" >&2; exit 1; }
           done
 
-          # A bad token must be refused too, not just a missing one.
-          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
-            -H 'content-type: application/json' -H 'authorization: Bearer shm_not_a_real_token' \
-            -d '{"events":[]}' "$BASE/events")
-          echo "POST /events with a bogus token -> $code"
-          [ "$code" = "401" ] || { echo "expected 401 for a bogus token, got $code" >&2; exit 1; }
+          # A bad token must be refused too, not just a missing one — for both
+          # auth shapes this backend has: an install token (events) and a
+          # Supabase Auth session (cli_claim).
+          for fn in events cli_claim; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
+              -H 'content-type: application/json' -H 'authorization: Bearer shm_not_a_real_token' \
+              -d '{"events":[],"code":"AAAA-AAAA"}' "$BASE/$fn")
+            echo "POST /$fn with a bogus token -> $code"
+            [ "$code" = "401" ] || { echo "expected 401 for a bogus token from $fn, got $code" >&2; exit 1; }
+          done
+
+          # cli_start and cli_poll take no token by design — the code itself
+          # is the credential — but they must still refuse garbage input
+          # rather than accept it silently.
+          for fn in cli_start cli_poll; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
+              -H 'content-type: application/json' -d '{}' "$BASE/$fn")
+            echo "POST /$fn with an empty body -> $code"
+            [ "$code" = "400" ] || { echo "expected 400 from $fn, got $code" >&2; exit 1; }
+          done

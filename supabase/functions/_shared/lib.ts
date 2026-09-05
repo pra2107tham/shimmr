@@ -42,6 +42,19 @@ export async function sha256(input: string): Promise<string> {
     .join("");
 }
 
+// Ambiguous characters dropped: 0/O, 1/I/L look alike in a terminal font,
+// and this code gets read off a screen and compared against another one by
+// eye, the same way a device-flow user code does anywhere else.
+const CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+
+/** An 8-character pairing code, grouped for readability: "K3F9-72QP". */
+export function randomCode(): string {
+  const bytes = new Uint8Array(8);
+  crypto.getRandomValues(bytes);
+  const chars = Array.from(bytes, (b) => CODE_ALPHABET[b % CODE_ALPHABET.length]);
+  return chars.slice(0, 4).join("") + "-" + chars.slice(4).join("");
+}
+
 /** Reads and parses a JSON body, refusing anything oversized or malformed. */
 export async function readJSON(req: Request): Promise<Record<string, unknown>> {
   const declared = req.headers.get("content-length");

@@ -347,7 +347,7 @@ begin
   join pg_namespace n on n.oid = c.relnamespace
   where n.nspname = 'public'
     and c.relkind = 'r'
-    and c.relname in ('orgs', 'users', 'installs', 'usage_snapshots', 'usage_events')
+    and c.relname in ('orgs', 'users', 'installs', 'usage_snapshots', 'usage_events', 'cli_pairings')
     and c.relrowsecurity is false;
 
   if unprotected is not null then
@@ -399,5 +399,52 @@ begin
     raise notice '  ok — no RLS policies here (auth.uid() is unavailable on plain Postgres, as expected — see ADR 0011)';
   end if;
 end $$;
+
+-- ------------------------------------------------------------ cli_pairings
+
+-- Unlike the tables above, cli_pairings never gets a policy at all, with or
+-- without auth.uid() — only cli_claim writes here, and it verifies the
+-- caller's session itself rather than relying on a Postgres policy for a row
+-- that, before claiming, belongs to no one yet. See ADR 0012.
+select assert(
+  (select count(*) from pg_policies where schemaname = 'public' and tablename = 'cli_pairings') = 0,
+  'cli_pairings has no RLS policies under any condition — only the service role reaches it');
+
+insert into cli_pairings (code, install_id, token_hash)
+values ('TEST-0001', 'pair-laptop', 'hash-pair');
+
+do $$
+begin
+  begin
+    insert into cli_pairings (code, install_id, token_hash) values ('TEST-0001', 'someone-else', 'hash-x');
+    raise exception 'FAILED: a pairing code was reused';
+  exception when unique_violation then
+    raise notice '  ok — a pairing code is claimed by at most one install';
+  end;
+
+  begin
+    insert into cli_pairings (code, install_id, token_hash, status)
+    values ('TEST-0002', 'pair-laptop', 'hash-y', 'nonsense');
+    raise exception 'FAILED: an unknown pairing status was accepted';
+  exception when check_violation then
+    raise notice '  ok — a pairing status must be pending or claimed';
+  end;
+
+  begin
+    insert into cli_pairings (code, install_id, token_hash, status)
+    values ('TEST-0003', 'pair-laptop', 'hash-z', 'claimed');
+    raise exception 'FAILED: a claimed pairing with no claimant was accepted';
+  exception when check_violation then
+    raise notice '  ok — a claimed pairing must record who claimed it';
+  end;
+end $$;
+
+update cli_pairings
+set status = 'claimed', claimed_by = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', claimed_at = now()
+where code = 'TEST-0001';
+
+select assert(
+  (select status from cli_pairings where code = 'TEST-0001') = 'claimed',
+  'a pairing can be claimed once its consistency constraint is satisfied');
 
 rollback;

@@ -6,14 +6,20 @@ import styles from "../auth-form.module.css";
 
 export const metadata: Metadata = { title: "Sign in — Shimmr" };
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { next } = await searchParams;
+
   return (
     <div className={styles.page}>
       <Bloom />
       <Link href="/" className={styles.back}>
         ← Back
       </Link>
-      <AuthForm mode="login" />
+      <AuthForm mode="login" next={next} />
     </div>
   );
 }

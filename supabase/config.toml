@@ -31,3 +31,17 @@ verify_jwt = false
 
 [functions.events]
 verify_jwt = false
+
+# The browser-pairing flow behind `shimmr login`/`shimmr signup` opening a
+# browser instead of trusting --email. cli_claim still authenticates a real
+# Supabase Auth session — manually, inside the function, exactly like every
+# other function here does its own check — so verify_jwt is off for it too,
+# for the same reason. See supabase/functions/cli_claim and ADR 0012.
+[functions.cli_start]
+verify_jwt = false
+
+[functions.cli_poll]
+verify_jwt = false
+
+[functions.cli_claim]
+verify_jwt = false

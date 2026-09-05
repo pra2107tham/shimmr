@@ -1,10 +1,14 @@
 # Shimmr backend
 
-Two Edge Functions and three tables. `shimmr signup` registers a person and a
-machine; `shimmr sync` reports what that machine's agents used.
+Seven Edge Functions and five tables. `shimmr signup`/`shimmr login` register
+a person and a machine — now by opening a browser to a verified sign-in by
+default (`cli_start`/`cli_poll`/`cli_claim`, ADR 0012), with `--email` kept as
+an explicit, unverified fallback; `shimmr sync` and the live event stream
+report what that machine's agents used; the website (`site/`) reads a
+person's own usage back through Supabase Auth and RLS (ADR 0011).
 
-The CLI already speaks this contract — nothing in the Go client changes when you
-deploy this.
+The CLI already speaks this contract — nothing in the Go client's `usage`/
+`events` authentication changes when you deploy this.
 
 ## How the URLs line up
 
@@ -25,7 +29,7 @@ CI does this automatically when backend code lands on `main`
 (`.github/workflows/deploy.yml`). By hand:
 
 ```bash
-make deploy          # db push + both functions
+make deploy          # db push + every function
 ```
 
 ### Repository secrets
@@ -46,9 +50,10 @@ injects it into Edge Functions at runtime, along with `SUPABASE_URL`. It never
 needs to sit in GitHub, and it should never be pasted into a chat, a commit, or
 an issue — it bypasses every row-level security rule in this schema.
 
-The deploy job ends by curling both endpoints: a GET must return 405, and a
-POST to `usage` without a token must return 401. A deploy that leaves `usage`
-answering 200 to an anonymous request fails the run rather than going live.
+The deploy job ends by curling every endpoint: a GET must return 405, and a
+POST to an authenticated one (`usage`, `events`, `cli_claim`) without a valid
+token must return 401. A deploy that leaves any of them answering 200 to an
+anonymous request fails the run rather than going live.
 
 Then build a client that points at it:
 
@@ -132,12 +137,15 @@ select * from install_current;
 | Table | What it holds |
 |---|---|
 | `orgs` | One row per company. Identified by slug, so "Acme Inc" and "acme inc" are the same org. |
-| `users` | One row per person, keyed by email. A reinstall finds the same row. |
+| `users` | One row per person, keyed by email. A reinstall — or a web sign-in with the same address — finds the same row. `auth_user_id` links it to a Supabase Auth session once one exists (ADR 0011). |
 | `installs` | One row per machine, each with its own revocable token. |
 | `usage_snapshots` | Cumulative totals as of each sync. Tool names and counts only. |
+| `usage_events` | One row per tool call or index, reported live. Same privacy rule as above. |
+| `cli_pairings` | Short-lived codes linking a waiting `shimmr login`/`signup` to the browser tab where someone confirms it (ADR 0012). Disposable — nothing here is read again once claimed or expired. |
 
-Two views: `install_current` (latest snapshot per machine) and `org_totals`
-(people, installs, calls, repos, files and lines per org) — the second is what a
+Views worth knowing: `install_current`/`install_live`/`install_rollup` (a
+machine's current picture, from a sync or the live stream, whichever is
+newer) and `org_totals`/`tool_usage` (rolled up per company) — the pair a
 sales conversation actually needs.
 
 ### Snapshots, not deltas
@@ -165,10 +173,13 @@ its own install token, not a Supabase JWT, so the gateway's check would reject
 every legitimate request. Each function does its own authentication instead:
 `usage` and `events` hash the bearer token and look it up, and take the org
 from that row rather than from the payload, so no caller can write usage under
-someone else's org. A function added without a matching entry in `config.toml`
-is rejected at the gateway before it runs at all, which is exactly what
-happened to `login` and `events` on their first deploy — caught by the smoke
-test's GET-must-405 check, not by inspection.
+someone else's org. `cli_claim` is the one exception with something to check —
+it verifies a real Supabase Auth JWT itself (`authClient.auth.getUser(jwt)`),
+because that request *is* a Supabase session, not an install token; see ADR
+0012. A function added without a matching entry in `config.toml` is rejected
+at the gateway before it runs at all, which is exactly what happened to
+`login` and `events` on their first deploy — caught by the smoke test's
+GET-must-405 check, not by inspection.
 
 **Payloads are normalised on the way in.** Counts must be non-negative numbers,
 `by_tool` entries that are not `{tool, calls}` pairs are dropped, and bodies over
