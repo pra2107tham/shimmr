@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import SiteNav from "../SiteNav";
 import SiteFooter from "../SiteFooter";
+import CopyButton from "../CopyButton";
 import { pageMetadata } from "../seo";
+import { INSTALL_UNIX, INSTALL_WINDOWS } from "../install-commands";
 import shared from "../marketing.module.css";
 import styles from "./download.module.css";
 
@@ -31,21 +33,25 @@ export default function Download() {
 
       <section className={`${shared.wrap} ${styles.osGrid}`}>
         <div className={styles.terminal}>
-          <div className={styles.terminalBar}>MACOS / LINUX</div>
+          <div className={styles.terminalBar}>
+            <span>MACOS / LINUX</span>
+            <CopyButton text={INSTALL_UNIX} />
+          </div>
           <div className={styles.terminalBody}>
             <div>
-              <code className={styles.prompt}>$</code>{" "}
-              <code>curl -fsSL https://fpxntzwkiepnwsazmaxf.supabase.co/storage/v1/object/public/releases/install.sh | sh</code>
+              <code className={styles.prompt}>$</code> <code>{INSTALL_UNIX}</code>
             </div>
           </div>
         </div>
 
         <div className={styles.terminal}>
-          <div className={styles.terminalBar}>WINDOWS (POWERSHELL)</div>
+          <div className={styles.terminalBar}>
+            <span>WINDOWS (POWERSHELL)</span>
+            <CopyButton text={INSTALL_WINDOWS} />
+          </div>
           <div className={styles.terminalBody}>
             <div>
-              <code className={styles.prompt}>$</code>{" "}
-              <code>irm https://raw.githubusercontent.com/pra2107tham/shimmr/main/install.ps1 | iex</code>
+              <code className={styles.prompt}>$</code> <code>{INSTALL_WINDOWS}</code>
             </div>
           </div>
         </div>

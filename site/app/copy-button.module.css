@@ -1,0 +1,23 @@
+.copyBtn {
+  flex: none;
+  font-family: var(--font-mono-family);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--line-md);
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.copyBtn:hover {
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+
+.copyBtnCopied,
+.copyBtnCopied:hover {
+  color: var(--accent);
+  border-color: rgba(var(--accent-rgb), 0.4);
+}

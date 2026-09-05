@@ -4,8 +4,10 @@ import styles from "./page.module.css";
 import { MailIcon, PhoneIcon, LinkedInIcon } from "./icons";
 import { contacts } from "./content";
 import { pageMetadata, SITE_URL } from "./seo";
+import { INSTALL_UNIX, INSTALL_WINDOWS } from "./install-commands";
 import SiteNav from "./SiteNav";
 import SiteFooter from "./SiteFooter";
+import CopyButton from "./CopyButton";
 
 export const metadata: Metadata = pageMetadata({
   title: "Shimmr — coming soon",
@@ -105,6 +107,37 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      <section className={styles.downloadSection}>
+        <div className={styles.eyebrow}>GET SHIMMR</div>
+        <h2 className={styles.splitHeading}>One binary, on your machine, in about two minutes.</h2>
+        <div className={styles.downloadGrid}>
+          <div className={styles.terminal}>
+            <div className={styles.terminalBar}>
+              <span>MACOS / LINUX</span>
+              <CopyButton text={INSTALL_UNIX} />
+            </div>
+            <div className={styles.terminalBody}>
+              <div><span className={styles.prompt}>$</span> <code>{INSTALL_UNIX}</code></div>
+            </div>
+          </div>
+          <div className={styles.terminal}>
+            <div className={styles.terminalBar}>
+              <span>WINDOWS (POWERSHELL)</span>
+              <CopyButton text={INSTALL_WINDOWS} />
+            </div>
+            <div className={styles.terminalBody}>
+              <div><span className={styles.prompt}>$</span> <code>{INSTALL_WINDOWS}</code></div>
+            </div>
+          </div>
+        </div>
+        <p className={styles.downloadNote}>
+          Then <code>shimmr signup</code>, <code>shimmr init</code>,{" "}
+          <code>shimmr doctor</code>. Full walkthrough, including adding a
+          second machine, on the{" "}
+          <Link href="/download" className={styles.downloadLink}>download page</Link>.
+        </p>
+      </section>
 
       <section className={styles.split}>
         <div className={styles.splitCol}>
