@@ -313,6 +313,7 @@ func pairInBrowser(c *config.Config, target, flow string) error {
 	if err := postJSON(c, target+"/v1/cli_start", map[string]any{
 		"install_id": c.UserID,
 		"token":      c.Token,
+		"machine":    machineLabel(),
 	}, &start); err != nil {
 		return fmt.Errorf("could not start sign-in: %w", err)
 	}
@@ -391,6 +392,23 @@ func waitForClaim(c *config.Config, target, code string, ttl time.Duration) erro
 			fmt.Print(".")
 		}
 	}
+}
+
+// machineLabel is display-only, sent so the confirm page can show something
+// more legible than the bare pairing code — never anything the pairing's
+// authorization actually depends on (see cli_claim). Best-effort: a
+// hostname lookup failure just means a slightly plainer label, not an
+// error worth surfacing.
+func machineLabel() string {
+	osName := map[string]string{"darwin": "macOS", "linux": "Linux", "windows": "Windows"}[runtime.GOOS]
+	if osName == "" {
+		osName = runtime.GOOS
+	}
+	host, err := os.Hostname()
+	if err != nil || host == "" {
+		return osName
+	}
+	return host + " · " + osName
 }
 
 // openBrowser is best-effort. A machine with no display, an SSH session, or

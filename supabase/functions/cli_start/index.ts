@@ -30,6 +30,9 @@ Deno.serve(handler(async (req) => {
 
   const installID = cleanString(body.install_id, "install_id", { max: 64 });
   const token = cleanString(body.token, "token", { max: 200 });
+  // Display-only — see the migration and cli_poll's comment. Never used for
+  // anything but showing the confirm page a friendlier name than the code.
+  const machine = cleanString(body.machine, "machine", { max: 120, required: false });
 
   const db = serviceClient();
   const tokenHash = await sha256(token);
@@ -45,6 +48,7 @@ Deno.serve(handler(async (req) => {
       install_id: installID,
       token_hash: tokenHash,
       expires_at: expiresAt,
+      machine_label: machine || null,
     });
     if (!error) {
       return json({ code, expires_in: TTL_SECONDS });

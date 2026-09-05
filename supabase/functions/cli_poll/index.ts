@@ -24,7 +24,7 @@ Deno.serve(handler(async (req) => {
   const db = serviceClient();
   const { data: pairing, error } = await db
     .from("cli_pairings")
-    .select("status, claimed_by, expires_at")
+    .select("status, claimed_by, expires_at, machine_label")
     .eq("code", code)
     .maybeSingle();
 
@@ -36,7 +36,15 @@ Deno.serve(handler(async (req) => {
     return json({ status: "expired" });
   }
   if (pairing.status !== "claimed" || !pairing.claimed_by) {
-    return json({ status: "pending" });
+    // The CLI's own poll loop ignores everything but `status`; the confirm
+    // page (the other caller of this same endpoint — see cli-auth/page.tsx)
+    // is what actually reads machine/expires_at, to show something more
+    // legible than the bare code before someone approves it.
+    return json({
+      status: "pending",
+      machine: pairing.machine_label,
+      expires_at: pairing.expires_at,
+    });
   }
 
   const { data: person, error: personErr } = await db
