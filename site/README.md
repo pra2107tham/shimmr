@@ -29,10 +29,11 @@ Six parts:
   client-only state — every redirect and the CLI-pairing flow both still
   work switching between them. All three methods land on the same
   `/auth/callback` route, which exchanges whichever PKCE code comes back for
-  a session the same way regardless of provider. Google and GitHub only work
-  once their OAuth apps are turned on in **Supabase Auth → Providers** — a
-  dashboard step this repo has no write access to; until then, clicking
-  either button surfaces Supabase's own "provider not enabled" error.
+  a session the same way regardless of provider. Google and GitHub each only
+  work once their OAuth app is turned on in **Supabase Auth → Providers** — a
+  dashboard step this repo has no write access to, done once per provider.
+  Google is live; until GitHub gets the same treatment, its button surfaces
+  Supabase's own "provider not enabled" error.
 - **Connect a device** (`/cli-auth`) — confirms a `shimmr login`/`shimmr
   signup` browser pairing (ADR 0012), showing the real machine name and an
   honest "expires in" estimate by reading `cli_poll` once on render — the
@@ -129,10 +130,10 @@ Vercel deploy.
    silently at the last step.
 3. **Supabase Auth → Providers**: turn on Google and/or GitHub, each with its
    own OAuth app's client id and secret from that provider's own developer
-   console. Until this is done, the buttons on `/login` and `/signup` are
-   visible but non-functional — Supabase rejects the sign-in attempt with a
-   "provider not enabled" error, surfaced through the same error state the
-   magic link uses.
+   console. **Google is done.** Until GitHub gets the same treatment, its
+   button on `/login` and `/signup` is visible but non-functional — Supabase
+   rejects the sign-in attempt with a "provider not enabled" error, surfaced
+   through the same error state the magic link uses.
 
 ## Deploy
 
