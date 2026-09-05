@@ -47,6 +47,66 @@
   margin: 0 0 26px;
 }
 
+.oauthRow {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.oauthButton {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  height: 42px;
+  border-radius: 10px;
+  border: 1px solid var(--ink-15);
+  background: var(--surface-1);
+  color: var(--ink);
+  font-size: 13.5px;
+  font-family: var(--font-sans-family);
+  cursor: pointer;
+  transition: background 150ms, opacity 150ms;
+}
+
+.oauthButton:hover:not(:disabled) {
+  background: var(--ink-11);
+}
+
+.oauthButton:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.divider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.divider::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--ink-15);
+}
+
+.divider span {
+  position: relative;
+  padding: 0 10px;
+  background: var(--glass);
+  font-family: var(--font-mono-family);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--ink-60);
+}
+
 .field {
   text-align: left;
   margin-bottom: 16px;
