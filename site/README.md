@@ -4,29 +4,39 @@ The public face of Shimmr — a Next.js app deployed on Vercel, because this
 repository is private and this is the one thing that needs to be reachable by
 people who aren't collaborators.
 
+The design is **"Terminal Ledger"**, from Claude Design — one fixed dark
+theme (flat panels, hairline rules, a lime accent, Geist + Geist Mono), the
+same way the previous "Light Warm" design was fixed. No toggle, no light
+variant; this design doesn't have one.
+
 Five parts:
 
-- **The marketing page** (`/`) — "Light Warm" from Claude Design, with a real
-  dark palette from the same design study's dark variant under
-  `prefers-color-scheme` (no manual toggle — the system preference already
-  tells us). Fonts are Inter + JetBrains Mono, not the Instrument Serif +
-  IBM Plex pairing the original export used.
+- **The marketing page** (`/`) — hero, a terminal-style command preview, a
+  free-vs-connected split, and three cards into the other marketing pages.
 - **Three more marketing pages** — `/how-it-works`, `/use-it`, `/security` —
   sharing the same nav (`SiteNav.tsx`) and footer (`SiteFooter.tsx`) as the
   homepage. Diagram-led rather than paragraph-led, and consistent with [ADR
   0006](../docs/decisions/0006-engine-naming-and-attribution.md): what
   Shimmr does, never what it's built on.
-- **Sign up / sign in** (`/signup`, `/login`) — Supabase Auth: a magic link,
-  or Google/GitHub. All three land on the same `/auth/callback` route, which
-  exchanges whichever PKCE code comes back for a session the same way
-  regardless of provider. Google and GitHub only work once their OAuth apps
-  are turned on in **Supabase Auth → Providers** — a dashboard step this
-  repo has no write access to; until then, clicking either button surfaces
-  Supabase's own "provider not enabled" error.
+- **Sign up / sign in** (`/signup`, `/login`) — one tabbed card
+  (`AuthForm.tsx`), Supabase Auth: a magic link, or Google/GitHub. The tabs
+  are real navigation between the two routes (preserving `next`), not
+  client-only state — every redirect and the CLI-pairing flow both still
+  work switching between them. All three methods land on the same
+  `/auth/callback` route, which exchanges whichever PKCE code comes back for
+  a session the same way regardless of provider. Google and GitHub only work
+  once their OAuth apps are turned on in **Supabase Auth → Providers** — a
+  dashboard step this repo has no write access to; until then, clicking
+  either button surfaces Supabase's own "provider not enabled" error.
+- **Connect a device** (`/cli-auth`) — confirms a `shimmr login`/`shimmr
+  signup` browser pairing (ADR 0012), showing the real machine name and an
+  honest "expires in" estimate by reading `cli_poll` once on render — the
+  same unauthenticated-by-code endpoint the CLI itself polls.
 - **The dashboard** (`/dashboard`) — a signed-in person's own usage: totals,
-  a 14-day calls chart and a top-tools chart (both update live over Realtime,
-  same as the recent-activity feed below them, hand-rolled rather than a
-  charting dependency), and their connected machines. A member of an org
+  a calls-over-time chart with a real 7d/30d/90d range toggle and a
+  top-tools chart (both update live over Realtime, same as the
+  recent-activity feed below them, hand-rolled rather than a charting
+  dependency), and their connected machines. A member of an org
   additionally sees that org's aggregate totals and tool breakdown — never
   which teammate made which call. See [ADR
   0011](../docs/decisions/0011-web-auth-and-dashboard.md) and [ADR
@@ -95,16 +105,22 @@ collaborator.
 app/
   page.tsx                  marketing page
   how-it-works/, use-it/, security/   the three other marketing pages
-  SiteNav.tsx, SiteFooter.tsx         shared nav/footer, every page
-  login/, signup/           auth pages (share AuthForm.tsx: magic link + Google/GitHub OAuth)
+  marketing.module.css       shared hero/section/card primitives for those three
+  SiteNav.tsx, SiteFooter.tsx         shared nav/footer, every marketing + auth page
+                                       (the dashboard has its own header instead)
+  login/, signup/           auth pages (share AuthForm.tsx: one tabbed card,
+                                        magic link + Google/GitHub OAuth)
   auth/callback/route.ts    exchanges whatever PKCE code comes back (magic link or OAuth) for a session
   auth/signout/route.ts     clears it
-  cli-auth/                 confirms a shimmr login/signup browser pairing (ADR 0012)
+  cli-auth/                 confirms a shimmr login/signup browser pairing (ADR 0012),
+                             reading cli_poll once on render for the machine name + expiry
   dashboard/
-    page.tsx                server: fetches totals, installs, org (if any), and events for the charts/feed
-    DashboardLive.tsx        client: realtime feed + charts, folding new events in live
-    charts.tsx                CallsChart/ToolsChart — dependency-free, CSS-sized bars
-  globals.css                design tokens: light on :root, dark under prefers-color-scheme
+    page.tsx                server: fetches totals, installs, org (if any), and a
+                             bounded window of raw usage_events for the client to chart
+    DashboardLive.tsx        client: realtime feed + charts, folding new events into
+                             one usageLog array (range toggle re-buckets it, no refetch)
+    charts.tsx                CallsChart/ToolsChart + bucketDaily/topTools — dependency-free
+  globals.css                design tokens for the one fixed "Terminal Ledger" theme
 lib/supabase/
   client.ts                 browser client (Client Components)
   server.ts                 server client (Server Components, Route Handlers)

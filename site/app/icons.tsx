@@ -46,22 +46,6 @@ export function GoogleIcon({ size = 16 }: IconProps) {
   );
 }
 
-export function CheckIcon({ size = 14 }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 12.5l5.5 5.5L20 6.5" />
-    </svg>
-  );
-}
-
-export function XIcon({ size = 14 }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M5 5l14 14M19 5L5 19" />
-    </svg>
-  );
-}
-
 export function GitHubIcon({ size = 16 }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
