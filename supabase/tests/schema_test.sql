@@ -571,4 +571,123 @@ begin
   raise notice '  ok — public_totals() is granted to anon and authenticated, whichever roles exist here';
 end $$;
 
+-- ---------------------------------------------------------- public_daily
+
+-- The per-day series behind the homepage's trend line. Three things are
+-- worth asserting and none of them are obvious from reading the SQL: that
+-- the privacy floor actually withholds the series, that the window really
+-- is "three days back from today" inclusive of both ends, and that a day
+-- nobody worked stays in the result as a zero instead of being dropped —
+-- a chart that silently closes a gap draws a line that never happened.
+do $$
+declare
+  org_id   uuid := gen_random_uuid();
+  u1       uuid := gen_random_uuid();
+  u2       uuid := gen_random_uuid();
+  u3       uuid := gen_random_uuid();
+  n        int;
+  first_d  date;
+  last_d   date;
+  quiet    int;
+  bad      int;
+begin
+  -- Start from no events at all. The floor this block is testing counts
+  -- *distinct installs reporting in the window*, so any fixture left by an
+  -- earlier block in this file would silently push the count over the line
+  -- and the first assertion below would pass for the wrong reason. The
+  -- whole file runs in one transaction that rolls back, so this costs
+  -- nothing — but it does mean this block has to stay last.
+  delete from usage_events;
+
+  insert into orgs (id, name, slug) values (org_id, 'Daily Fixture', 'daily-fixture-' || org_id);
+  insert into users (id, email, org_id) values
+    (u1, u1 || '@daily.test', org_id),
+    (u2, u2 || '@daily.test', org_id),
+    (u3, u3 || '@daily.test', org_id);
+  insert into installs (id, user_id, token_hash) values
+    ('pd-1', u1, 'pd-hash-1'), ('pd-2', u2, 'pd-hash-2'), ('pd-3', u3, 'pd-hash-3');
+
+  -- Two installs reporting is below the floor: the series must be withheld
+  -- entirely rather than described for a population this small.
+  insert into usage_events (event_id, install_id, user_id, kind, tool, occurred_at) values
+    ('pd-e1', 'pd-1', u1, 'tool_call', 'search_graph', current_date),
+    ('pd-e2', 'pd-2', u2, 'tool_call', 'search_graph', current_date);
+
+  select count(*) into n from public_daily(4);
+  if n <> 0 then
+    raise exception 'FAILED: public_daily() returned % rows with only 2 installs reporting — the privacy floor did not hold', n;
+  end if;
+  raise notice '  ok — public_daily() withholds the series below its install floor';
+
+  -- A third install crosses the floor and the series appears.
+  insert into usage_events (event_id, install_id, user_id, kind, tool, occurred_at) values
+    ('pd-e3', 'pd-3', u3, 'tool_call', 'search_graph', current_date);
+
+  select count(*), min(day), max(day) into n, first_d, last_d from public_daily(4);
+  if n <> 4 then
+    raise exception 'FAILED: public_daily(4) returned % rows, want 4', n;
+  end if;
+  if first_d <> current_date - 3 or last_d <> current_date then
+    raise exception 'FAILED: public_daily(4) spans %..%, want %..%',
+      first_d, last_d, current_date - 3, current_date;
+  end if;
+  raise notice '  ok — public_daily(4) starts three days back from today and ends today';
+
+  -- Only today has any events so far, so the three days before it are
+  -- quiet. All three must still be present in the result.
+  select count(*) into quiet from public_daily(4) where calls = 0 and tokens_saved = 0;
+  if quiet <> 3 then
+    raise exception 'FAILED: public_daily() kept % quiet days, want 3 — a dropped day would bend the trend line', quiet;
+  end if;
+  raise notice '  ok — a day with no activity stays in the series as a zero';
+
+  -- The cap is applied per day, against that day's own indexed lines.
+  insert into usage_events (event_id, install_id, user_id, kind, repo, files, lines, occurred_at)
+    values ('pd-e4', 'pd-1', u1, 'index', 'salted-hash', 2, 100, current_date - 3);
+  insert into usage_events (event_id, install_id, user_id, kind, tool, occurred_at)
+    values ('pd-e5', 'pd-1', u1, 'tool_call', 'search_graph', current_date - 3);
+
+  select count(*) into bad from public_daily(4)
+  where tokens_saved <> case when lines > 0 then least(calls * 12000, lines * 10) else calls * 12000 end;
+  if bad > 0 then
+    raise exception 'FAILED: % day(s) do not match the shared tokens-saved formula', bad;
+  end if;
+  raise notice '  ok — public_daily() applies the same formula as shimmr stats --method, per day';
+
+  -- Callable by anon, so the argument is clamped rather than trusted.
+  select count(*) into n from public_daily(9999);
+  if n > 31 then
+    raise exception 'FAILED: public_daily(9999) returned % rows — the window is not clamped', n;
+  end if;
+  select count(*) into n from public_daily(0);
+  if n <> 1 then
+    raise exception 'FAILED: public_daily(0) returned % rows, want 1', n;
+  end if;
+  raise notice '  ok — the day count is clamped, so anon cannot ask for an unbounded scan';
+end $$;
+
+do $$
+declare
+  r record;
+  missing text := '';
+begin
+  for r in select rolname from (values ('anon'), ('authenticated')) as t(rolname)
+  loop
+    if exists (select 1 from pg_roles where rolname = r.rolname) then
+      if not exists (
+        select 1 from information_schema.role_routine_grants
+        where routine_schema = 'public' and routine_name = 'public_daily'
+          and grantee = r.rolname and privilege_type = 'EXECUTE'
+      ) then
+        missing := missing || r.rolname || ' ';
+      end if;
+    end if;
+  end loop;
+
+  if missing <> '' then
+    raise exception 'FAILED: public_daily() is not granted execute to: %', missing;
+  end if;
+  raise notice '  ok — public_daily() is granted to anon and authenticated, whichever roles exist here';
+end $$;
+
 rollback;

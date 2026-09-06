@@ -78,7 +78,7 @@ export default function Security() {
           </div>
           <div className={shared.cardCell} id="tokens-saved">
             <h3 className={shared.label}>NUMBERS COME WITH METHOD</h3>
-            <p className={styles.copy}>Any figure used externally has its measurement method available on request — tokens saved, shown on your dashboard and as a total on the homepage, is a conservative estimate, not measured against real model usage.</p>
+            <p className={styles.copy}>Any figure used externally has its measurement method available on request — tokens saved, shown on your dashboard and on the homepage, is a conservative estimate, not measured against real model usage. The daily line covers live-reporting installs only.</p>
             <span className={styles.cmd}>$ <code>shimmr stats --method</code></span>
           </div>
           <div className={shared.cardCell}>

@@ -162,11 +162,23 @@ ok "doctor fails loudly when the engine is missing"
 mv "$SHIMMR_HOME/config.json.bak" "$SHIMMR_HOME/config.json"
 
 echo "8. stats and payload transparency"
-"$BIN" stats | grep -q "2 files" || fail "stats did not report coverage"
-"$BIN" stats --method | grep -qi "capped" || fail "stats --method did not explain the cap"
-"$BIN" sync --show | grep -q "ci@example.com" || fail "sync --show did not print the payload"
+# Captured into a variable, then grepped, rather than piped straight from the
+# binary: `"$BIN" stats | grep -q ...` races grep's own behavior against the
+# binary's — grep -q exits the instant it finds a match, and if `stats` is
+# still writing later lines (Tokens saved, Left your laptop) when that
+# happens, the closed pipe SIGPIPEs it. Under `set -eo pipefail` that turns
+# into a spurious failure even though stats' output was completely correct —
+# grep already found what it was looking for. Capturing first removes the
+# live pipe entirely: the whole string lands in one write, well under a
+# pipe's atomic-write limit, before grep ever gets to see any of it.
+stats_out="$("$BIN" stats)"
+printf '%s\n' "$stats_out" | grep -q "2 files" || fail "stats did not report coverage"
+method_out="$("$BIN" stats --method)"
+printf '%s\n' "$method_out" | grep -qi "capped" || fail "stats --method did not explain the cap"
+sync_out="$("$BIN" sync --show)"
+printf '%s\n' "$sync_out" | grep -q "ci@example.com" || fail "sync --show did not print the payload"
 for needle in "$REPO" "UniqueSecretQueryString"; do
-  if "$BIN" sync --show | grep -qF "$needle"; then
+  if printf '%s\n' "$sync_out" | grep -qF "$needle"; then
     fail "sync payload leaked: $needle"
   fi
 done
@@ -249,9 +261,10 @@ ok "SHIMMR_NO_REPORT=1 sends nothing, and says so"
 
 echo "10. an account without an organisation works"
 "$BIN" signup --force --email solo@example.com >/dev/null
-"$BIN" whoami | grep -q "Organisation   none" \
+whoami_out="$("$BIN" whoami)"
+printf '%s\n' "$whoami_out" | grep -q "Organisation   none" \
   || fail "whoami did not handle an account with no org"
-"$BIN" whoami | grep -q "solo@example.com" || fail "whoami lost the email"
+printf '%s\n' "$whoami_out" | grep -q "solo@example.com" || fail "whoami lost the email"
 ok "signing up with no organisation is a supported state"
 
 echo
