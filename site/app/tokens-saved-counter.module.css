@@ -1,0 +1,22 @@
+.counter {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.value {
+  font-family: var(--font-mono-family);
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.link {
+  color: var(--muted-2);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.link:hover {
+  color: var(--ink);
+}

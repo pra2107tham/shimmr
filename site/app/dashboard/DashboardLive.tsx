@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { estimateTokensSaved } from "@/lib/tokensSaved";
 import { CallsChart, ToolsChart, bucketDaily, topTools, type UsageLogEntry } from "./charts";
 import styles from "./dashboard.module.css";
 
@@ -144,6 +145,10 @@ export default function DashboardLive({
   const rangeDef = RANGES.find((r) => r.key === range) ?? RANGES[1];
   const daily = useMemo(() => bucketDaily(usageLog, rangeDef.days), [usageLog, rangeDef.days]);
   const tools = useMemo(() => topTools(usageLog, 6), [usageLog]);
+  const tokensSaved = useMemo(
+    () => estimateTokensSaved(initialTotals.calls, initialTotals.lines),
+    [initialTotals.calls, initialTotals.lines],
+  );
   const callsToday = daily.find((d) => d.date === todayKey());
   const callsTodayCount = callsToday ? callsToday.ok + callsToday.failed : 0;
 
@@ -208,6 +213,14 @@ export default function DashboardLive({
               <span className={styles.statLabel}>LINES COVERED</span>
               <span className={styles.statVal}>{initialTotals.lines.toLocaleString()}</span>
               <span className={styles.statDeltaMuted}>method on request</span>
+            </div>
+            <div className={styles.stat}>
+              <span className={styles.statLabel}>TOKENS SAVED</span>
+              <span className={styles.statVal}>~{tokensSaved.toLocaleString()}</span>
+              <span className={styles.statDeltaMuted}>
+                estimate ·{" "}
+                <Link href="/security#tokens-saved" className={styles.statLink}>how this is calculated</Link>
+              </span>
             </div>
           </div>
 

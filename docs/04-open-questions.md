@@ -159,6 +159,16 @@ publicly names the engine (ADR 0006), so it is an internal sanity check rather t
 marketing anchor. Publish only numbers we measured ourselves and can show the working
 for.
 
+This question is still open — nothing below changes what the number means, only
+who can read it. `internal/usage.EstimateTokensSaved` is the actual current
+formula (not the bytes-ratio one above; that recommendation was never
+implemented), and it is now also readable by a signed-out visitor: ADR
+[0014](decisions/0014-a-public-aggregate-for-the-homepage.md) exposes a public,
+unscoped total (across every install, no per-person or per-org breakdown) for
+the homepage counter, computed the same way `shimmr stats` computes it for one
+person. The recommendation above — a real bytes-ratio measurement — remains
+the actual answer to this question, whenever someone runs it.
+
 ---
 
 ## Q11 — Nothing verifies an email address

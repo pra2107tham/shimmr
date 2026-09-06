@@ -76,9 +76,10 @@ export default function Security() {
             <p className={styles.copy}>That fallback is backed by an automated test in the build, not just a stated policy.</p>
             <span className={styles.testLine}>degrade_to_free_tier · passing</span>
           </div>
-          <div className={shared.cardCell}>
+          <div className={shared.cardCell} id="tokens-saved">
             <h3 className={shared.label}>NUMBERS COME WITH METHOD</h3>
-            <p className={styles.copy}>Any figure used externally has its measurement method available on request.</p>
+            <p className={styles.copy}>Any figure used externally has its measurement method available on request — tokens saved, shown on your dashboard and as a total on the homepage, is a conservative estimate, not measured against real model usage.</p>
+            <span className={styles.cmd}>$ <code>shimmr stats --method</code></span>
           </div>
           <div className={shared.cardCell}>
             <h3 className={`${shared.label} ${styles.muted}`}>WHAT&apos;S UNDER IT</h3>

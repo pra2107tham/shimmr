@@ -9,6 +9,7 @@ import SiteNav from "./SiteNav";
 import SiteFooter from "./SiteFooter";
 import CopyButton from "./CopyButton";
 import LinkPending from "./LinkPending";
+import TokensSavedCounter from "./TokensSavedCounter";
 
 export const metadata: Metadata = pageMetadata({
   title: "Shimmr — coming soon",
@@ -94,6 +95,7 @@ export default function Home() {
             <span className={styles.statusDot} />
             early · coming soon · actively being built
           </div>
+          <TokensSavedCounter />
         </div>
 
         <div className={styles.terminal}>

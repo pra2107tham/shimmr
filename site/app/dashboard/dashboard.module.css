@@ -210,6 +210,14 @@
   color: var(--muted);
 }
 
+.statLink {
+  color: var(--accent);
+}
+
+.statLink:hover {
+  color: var(--accent-hover);
+}
+
 .sinceOpened {
   max-width: 1180px;
   margin: 0 auto;

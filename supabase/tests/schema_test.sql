@@ -498,4 +498,77 @@ select assert(
   (select status from cli_pairings where code = 'TEST-0001') = 'claimed',
   'a pairing can be claimed once its consistency constraint is satisfied');
 
+-- --------------------------------------------------------- public_totals
+
+-- One row, always — this is what a signed-out visitor on the homepage
+-- reads, with none of their own fixtures to seed it. The check re-derives
+-- the same totals directly from install_rollup and compares, rather than
+-- hard-coding a number that would need updating every time a fixture
+-- above it in this file changes.
+do $$
+declare
+  want_calls  bigint;
+  want_lines  bigint;
+  want_tokens bigint;
+  got_calls   bigint;
+  got_lines   bigint;
+  got_tokens  bigint;
+  row_count   int;
+begin
+  select count(*) into row_count from public_totals();
+  if row_count <> 1 then
+    raise exception 'FAILED: public_totals() returned % rows, want exactly 1', row_count;
+  end if;
+
+  select coalesce(sum(calls), 0), coalesce(sum(lines), 0)
+    into want_calls, want_lines
+  from install_rollup;
+
+  want_tokens := case
+    when want_lines > 0 then least(want_calls * 12000, want_lines * 10)
+    else want_calls * 12000
+  end;
+
+  select calls, lines, tokens_saved into got_calls, got_lines, got_tokens from public_totals();
+
+  if got_calls <> want_calls or got_lines <> want_lines then
+    raise exception 'FAILED: public_totals() (calls=%, lines=%) does not match install_rollup (calls=%, lines=%)',
+      got_calls, got_lines, want_calls, want_lines;
+  end if;
+  raise notice '  ok — public_totals() sums calls and lines across every install, not just one org or person';
+
+  if got_tokens <> want_tokens then
+    raise exception 'FAILED: public_totals().tokens_saved=% does not match the formula''s own result %',
+      got_tokens, want_tokens;
+  end if;
+  raise notice '  ok — public_totals().tokens_saved applies the same formula as shimmr stats --method';
+end $$;
+
+-- Same guard pattern as the grant itself: only assert a role has the
+-- privilege when that role exists at all, since plain Postgres (what CI
+-- runs this file against) has neither anon nor authenticated.
+do $$
+declare
+  r record;
+  missing text := '';
+begin
+  for r in select rolname from (values ('anon'), ('authenticated')) as t(rolname)
+  loop
+    if exists (select 1 from pg_roles where rolname = r.rolname) then
+      if not exists (
+        select 1 from information_schema.role_routine_grants
+        where routine_schema = 'public' and routine_name = 'public_totals'
+          and grantee = r.rolname and privilege_type = 'EXECUTE'
+      ) then
+        missing := missing || r.rolname || ' ';
+      end if;
+    end if;
+  end loop;
+
+  if missing <> '' then
+    raise exception 'FAILED: public_totals() is not granted execute to: %', missing;
+  end if;
+  raise notice '  ok — public_totals() is granted to anon and authenticated, whichever roles exist here';
+end $$;
+
 rollback;
