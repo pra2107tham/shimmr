@@ -1,4 +1,6 @@
-// Runs on every request. Two jobs:
+// Runs on every request the matcher below lets through — /dashboard and
+// /cli-auth only, not the whole site. Two jobs, both scoped to those two
+// pages:
 //
 //  1. Refresh the Supabase session cookie so it does not expire out from
 //     under a Server Component mid-visit — Server Components cannot write
@@ -8,6 +10,16 @@
 //     in depth — both pages check again server-side before rendering
 //     anything — but a redirect here means an unauthenticated visitor never
 //     even requests the page.
+//
+// This used to match every route in the site, on the reasoning that a
+// session refresh is cheap and might as well happen everywhere. It isn't
+// cheap: it's a network round trip to Supabase Auth, paid by every visitor
+// on every navigation, including to `/`, `/how-it-works`, `/use-it`,
+// `/security` and `/download` — none of which read the session server-side
+// at all (SiteNav's auth state is a client-side check, see
+// NavAuthLinks.tsx). That round trip was the single biggest thing making
+// the site feel slow. Only the two routes that actually gate on a session
+// need this middleware to run.
 //
 // Named proxy.ts, not middleware.ts: Next.js 16 renamed the convention (the
 // exported function is `proxy`, not `middleware`). See the site's own
@@ -76,10 +88,9 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    // Everything except static assets and Next's own internals — cheap to
-    // run, and the session needs refreshing on any page, not only the
-    // protected ones.
-    "/((?!_next/static|_next/image|favicon.ico|icon.svg).*)",
-  ],
+  // Only the routes PROTECTED actually gates. Every other route — the
+  // marketing pages, /login, /signup, /auth/* — renders with no server-side
+  // session check at all, so running this here bought them nothing but a
+  // Supabase round trip on every load.
+  matcher: ["/dashboard/:path*", "/cli-auth/:path*"],
 };

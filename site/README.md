@@ -88,8 +88,8 @@ npm run build
 ```
 
 A real Next.js server now, not a static export — the dashboard needs a
-session cookie read per request, and `proxy.ts` needs to run on every
-request to refresh it and gate `/dashboard`. Vercel runs this natively.
+session cookie read per request, and `proxy.ts` needs to run on `/dashboard`
+and `/cli-auth` to refresh it and gate access. Vercel runs this natively.
 
 ## SEO
 
@@ -172,13 +172,27 @@ app/
                              one usageLog array (range toggle re-buckets it, no refetch)
     charts.tsx                CallsChart/ToolsChart + bucketDaily/topTools — dependency-free
   globals.css                design tokens for the one fixed "Terminal Ledger" theme
+  loading.module.css         shared by the route-level loading.tsx fallbacks below
+  LinkPending.tsx            a <Link>-child dot that appears only if that link's own
+                             navigation takes a moment — see the file's own comment
 lib/supabase/
   client.ts                 browser client (Client Components)
   server.ts                 server client (Server Components, Route Handlers)
-proxy.ts                    refreshes the session every request; gates /dashboard and /cli-auth
+proxy.ts                    refreshes the session and gates access — /dashboard and
+                             /cli-auth only (see the matcher at the bottom of the file)
 ```
 
 `proxy.ts`, not `middleware.ts` — Next.js 16 renamed the convention. See the
 comment at the top of the file, and `AGENTS.md` in this directory (written
 by `next dev` itself, not by anyone on this project) for why that kind of
 thing is worth double-checking against current docs rather than memory.
+
+`proxy.ts`'s matcher used to run on every route, on the theory that a
+session refresh is cheap. It isn't — it's a network round trip to Supabase
+Auth, paid on every navigation. Narrowed to just the two routes that
+actually gate on a session; every marketing page, `/login` and `/signup`
+now render with zero server-side auth check, which is what they always did
+anyway (`NavAuthLinks.tsx` handles auth-aware nav client-side). `/dashboard`
+and `/cli-auth` also got `loading.tsx` files, so navigating to either shows
+an instant fallback instead of a frozen page while the real one — session
+check, then a data fetch — resolves.
