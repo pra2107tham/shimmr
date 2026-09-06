@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   ...pageMetadata({
     title: "Shimmr — coming soon",
     description:
-      "Shimmr is a local-first tool that gives coding agents real understanding of a codebase — plus an account layer and usage metering. Coming soon.",
+      "Your coding agent re-reads your codebase every session, and cannot see the repo next door. Shimmr keeps the index outside the context window — built once, on your machine, across every repository. Coming soon.",
     path: "/",
   }),
 };

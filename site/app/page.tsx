@@ -14,7 +14,7 @@ import TokensSavedCounter from "./TokensSavedCounter";
 export const metadata: Metadata = pageMetadata({
   title: "Shimmr — coming soon",
   description:
-    "Shimmr is a local-first tool that gives coding agents real understanding of a codebase — plus an account layer and usage metering. Everything on your machine is free, forever.",
+    "A coding agent's only memory of your system is its context window — so it re-reads your repo to find things, pays for that reading on every turn, loses it when the session runs long, and never sees your other repositories at all. Shimmr keeps the index outside the window: built once, on your machine, across every repo. Works with Claude Code, Cursor and Windsurf.",
   path: "/",
 });
 
@@ -28,7 +28,7 @@ const softwareSchema = {
   "@type": "SoftwareApplication",
   name: "Shimmr",
   description:
-    "A local-first tool that gives AI coding agents real understanding of a codebase — plus an account layer and usage metering.",
+    "A local-first context layer for AI coding agents. The index of your repositories is built once on your machine and kept outside the model's context window, so it survives a long session and spans every repository you index.",
   url: SITE_URL,
   applicationCategory: "DeveloperApplication",
   operatingSystem: "macOS, Linux, Windows",
@@ -44,6 +44,34 @@ const icons = { mail: MailIcon, phone: PhoneIcon, linkedin: LinkedInIcon };
 
 const LOCAL = ["code understanding & indexing", "semantic search", "coverage measurement", "the usage log itself"];
 const CONNECTED = ["team sync — usage in one place", "GitHub issues & PRs as context", "scheduled automations", "multi-seat team visibility"];
+
+// One root cause — the context window is the agent's only memory of your
+// system — and the four things that follow from it, in the order a team
+// actually feels them. Every line is mechanism, not measurement: none of it
+// depends on a number we have not measured. The tokens-saved band is the
+// only quantity on this page, and it ships with its method.
+const COST = [
+  {
+    num: "01",
+    title: "It reads to find out where things are.",
+    copy: "An agent with no map locates code by opening it — list the directory, grep a name, read the file, then read the file that one imports. All of that is spent before the actual work starts.",
+  },
+  {
+    num: "02",
+    title: "Every turn re-sends the search.",
+    copy: "A model has no memory between turns, so the transcript so far goes back in each time. The files opened on turn three are still in the prompt on turn twenty, charged again on every turn in between.",
+  },
+  {
+    num: "03",
+    title: "And then it forgets anyway.",
+    copy: "Once the session runs long the history is compacted, and what the agent worked out an hour ago goes with it. So it greps for the same function again — deep in the task, when it has the most context about your intent and the least room left to go looking.",
+  },
+  {
+    num: "04",
+    title: "Your system is not one repository.",
+    copy: "An agent is rooted in the directory it was started in. When the caller that breaks lives in the service next door, it cannot read it, cannot grep it, and will tell you the function has no callers.",
+  },
+] as const;
 
 const TEASERS = [
   {
@@ -80,12 +108,14 @@ export default function Home() {
       <header className={styles.hero}>
         <div className={styles.heroText}>
           <div className={styles.eyebrow}>THE CONTEXT LAYER</div>
-          <h1 className={styles.headline}>Between AI coding agents and everything they run on.</h1>
+          <h1 className={styles.headline}>Your agent re-reads your codebase every session, and still can&apos;t see the repo next door.</h1>
           <p className={styles.subhead}>
-            Shimmr is a local-first tool that gives coding agents real
-            understanding of a codebase — plus an account layer and usage
-            metering. It runs on your machine, and by default nothing leaves
-            it.
+            An agent&apos;s only memory of your system is its context window. So
+            it finds code by reading it, pays for that reading again on every
+            turn, and loses what it found once the session runs long — and the
+            other repositories were never in scope at all. Shimmr puts the
+            index outside the window: built once, on your machine, still there
+            on turn 300, across every repository you have indexed.
           </p>
           <div className={styles.ctaRow}>
             <Link href="/download" className={styles.cta}>get started<LinkPending /></Link>
@@ -109,6 +139,26 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      <section className={styles.problem}>
+        <div className={styles.eyebrow}>WHY IT GETS EXPENSIVE, AND THEN GETS WORSE</div>
+        <div className={styles.problemGrid}>
+          {COST.map((c) => (
+            <div className={styles.problemCell} key={c.num}>
+              <span className={styles.problemNum}>{c.num}</span>
+              <h3 className={styles.problemTitle}>{c.title}</h3>
+              <p className={styles.problemCopy}>{c.copy}</p>
+            </div>
+          ))}
+        </div>
+        <p className={styles.problemNote}>
+          Shimmr replaces the reading with a lookup. The index is built once,
+          locally, and lives outside the context window — so what the agent
+          never read is never re-sent, what it found on turn 3 is still there
+          on turn 300, and a question about twelve services is answered like a
+          question about one. It works with Claude Code, Cursor and Windsurf.
+        </p>
+      </section>
 
       {/* Renders nothing at all — band, padding and rule included — until
           there is a real, non-zero number to show. */}

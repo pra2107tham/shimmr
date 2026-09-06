@@ -154,6 +154,77 @@
 
 /* ---- download ---- */
 
+/* ---- why it gets expensive, and then gets worse ---- */
+
+.problem {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 46px 22px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Two by two rather than four across: these four are the argument, not a
+   feature list, and at a quarter of 1180px the copy sets into a column too
+   narrow to read as prose. The 1px gap shows the section background through,
+   the same trick .teasers uses, so the cells read as one ruled block. */
+.problemGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--line);
+}
+
+@media (max-width: 760px) {
+  .problemGrid { grid-template-columns: 1fr; }
+}
+
+.problemCell {
+  background: var(--ground);
+  padding: 26px 26px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.problemNum {
+  font-family: var(--font-mono-family);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+}
+
+.problemTitle {
+  margin: 0;
+  font-family: var(--font-sans-family);
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+.problemCopy {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.62;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+
+.problemNote {
+  margin: 0;
+  max-width: 78ch;
+  font-size: 15px;
+  line-height: 1.62;
+  color: var(--muted-2);
+  text-wrap: pretty;
+}
+
 .savedSection {
   max-width: 1180px;
   margin: 0 auto;

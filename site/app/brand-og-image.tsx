@@ -6,7 +6,7 @@ import { ImageResponse } from "next/og";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = "Shimmr — the context layer between AI coding agents and everything they run on";
+export const alt = "Shimmr — your agent re-reads your codebase, and cannot see the repo next door";
 
 // Fetched once (this route is statically generated, so once per build) —
 // the standard way next/og examples load a real font, and not optional
@@ -63,8 +63,8 @@ export async function renderBrandImage() {
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", fontSize: 54, fontWeight: 600, color: "#e8eaed", lineHeight: 1.18 }}>
-          <div style={{ display: "flex" }}>The context layer between AI coding</div>
-          <div style={{ display: "flex" }}>agents and everything they run on.</div>
+          <div style={{ display: "flex" }}>Your agent re-reads your codebase</div>
+          <div style={{ display: "flex" }}>and can&apos;t see the repo next door.</div>
         </div>
         <div style={{ display: "flex", fontSize: 26, color: "#8b9199", marginTop: 40 }}>
           Local-first. Free, forever — until you connect something.
