@@ -95,7 +95,6 @@ export default function Home() {
             <span className={styles.statusDot} />
             early · coming soon · actively being built
           </div>
-          <TokensSavedCounter />
         </div>
 
         <div className={styles.terminal}>
@@ -110,6 +109,10 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      {/* Renders nothing at all — band, padding and rule included — until
+          there is a real, non-zero number to show. */}
+      <TokensSavedCounter className={styles.savedSection} />
 
       <section className={styles.downloadSection}>
         <div className={styles.eyebrow}>GET SHIMMR</div>

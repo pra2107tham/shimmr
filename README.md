@@ -127,6 +127,7 @@ the binary is genuinely static, and the end-to-end smoke test.
 | [`docs/roadmap.md`](docs/roadmap.md) | Phases 0–6 with dependencies |
 | [`docs/specs/`](docs/specs/) | SPEC-001 (ready to build), 002, 003 |
 | [`docs/decisions/`](docs/decisions/) | ADRs — 0004 and 0005 carry the product decisions |
+| [`docs/internal/prode-and-openhands.md`](docs/internal/prode-and-openhands.md) | Competitor research (ProdE) and a draft of what we would build on OpenHands. Notes, not decisions. **Internal only** |
 | [`docs/product-overview.html`](docs/product-overview.html) | Visual overview: what it is, what's in it, the free/paid boundary |
 | [`docs/user-journey.html`](docs/user-journey.html) | Nine moments from landing page to paid — what we offer at each, and where we lose people |
 | [`supabase/README.md`](supabase/README.md) | The backend: schema, deploy steps, and what it does about security |

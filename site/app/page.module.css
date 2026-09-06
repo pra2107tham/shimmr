@@ -154,6 +154,13 @@
 
 /* ---- download ---- */
 
+.savedSection {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 46px 22px;
+  border-bottom: 1px solid var(--line);
+}
+
 .downloadSection {
   max-width: 1180px;
   margin: 0 auto;
