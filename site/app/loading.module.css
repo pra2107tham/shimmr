@@ -1,0 +1,26 @@
+/* Shared by the route-level loading.tsx fallbacks (currently /dashboard and
+   /cli-auth — the two routes that do real server-side work before they can
+   render anything). Next wraps each route's page.tsx in a Suspense
+   boundary using its loading.tsx as the fallback, shown the instant
+   navigation starts rather than leaving the previous page frozen on
+   screen while the server works. */
+
+.wrap {
+  min-height: 50vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: var(--font-mono-family);
+  font-size: 12.5px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulseDot 1.2s infinite;
+}

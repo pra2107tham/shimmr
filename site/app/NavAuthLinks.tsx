@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import LinkPending from "./LinkPending";
 import styles from "./sitenav.module.css";
 
 // Client-side on purpose, not a server check: the marketing pages stay
@@ -38,6 +39,7 @@ export default function NavAuthLinks() {
     return (
       <Link href="/dashboard" className={styles.cta}>
         dashboard
+        <LinkPending />
       </Link>
     );
   }
@@ -46,9 +48,11 @@ export default function NavAuthLinks() {
     <>
       <Link href="/login" className={styles.signIn}>
         sign in
+        <LinkPending />
       </Link>
       <Link href="/download" className={styles.cta}>
         get started
+        <LinkPending />
       </Link>
     </>
   );

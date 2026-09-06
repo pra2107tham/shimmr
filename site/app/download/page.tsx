@@ -3,6 +3,7 @@ import Link from "next/link";
 import SiteNav from "../SiteNav";
 import SiteFooter from "../SiteFooter";
 import CopyButton from "../CopyButton";
+import LinkPending from "../LinkPending";
 import { pageMetadata } from "../seo";
 import { INSTALL_UNIX, INSTALL_WINDOWS } from "../install-commands";
 import shared from "../marketing.module.css";
@@ -80,7 +81,7 @@ export default function Download() {
       <section className={`${shared.section} ${styles.ctaSection}`}>
         <p className={shared.subhead}>
           Already installed and signed in somewhere?{" "}
-          <Link href="/login" className={styles.inlineLink}>Sign in</Link> to
+          <Link href="/login" className={styles.inlineLink}>Sign in<LinkPending /></Link> to
           see your dashboard, or read{" "}
           <Link href="/how-it-works" className={styles.inlineLink}>how it works</Link>{" "}
           first.

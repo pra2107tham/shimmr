@@ -99,6 +99,7 @@ export default function DashboardLive({
   const [reportingCount, setReportingCount] = useState(initialReportingCount);
   const [range, setRange] = useState<RangeKey>("30d");
   const [sinceOpened, setSinceOpened] = useState(0);
+  const [signingOut, setSigningOut] = useState(false);
   // Re-render periodically so relative timestamps keep advancing without a refresh.
   const [, forceTick] = useState(0);
 
@@ -163,8 +164,13 @@ export default function DashboardLive({
             {liveLabel}
           </span>
           <Link href="/download" className={styles.download}>+ machine</Link>
-          <form action="/auth/signout" method="post">
-            <button className={styles.signout} type="submit">sign out</button>
+          {/* A real form POST, not a client-side call — see auth/signout's
+              own comment for why. onSubmit here only adds a pending label;
+              it never prevents the actual submission. */}
+          <form action="/auth/signout" method="post" onSubmit={() => setSigningOut(true)}>
+            <button className={styles.signout} type="submit" disabled={signingOut}>
+              {signingOut ? "signing out…" : "sign out"}
+            </button>
           </form>
         </div>
       </header>

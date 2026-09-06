@@ -1,0 +1,24 @@
+.dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-left: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0;
+  visibility: hidden; /* reserves no space of its own either way — fixed size, just invisible */
+}
+
+.dotPending {
+  visibility: visible;
+  /* Appears only if the navigation actually takes a moment: fades in after
+     a 100ms delay rather than on click, so a fast/prefetched transition
+     never flashes it. */
+  animation: dotFadeIn 200ms ease 100ms forwards, pulseDot 1s ease-in-out 100ms infinite;
+}
+
+@keyframes dotFadeIn {
+  to {
+    opacity: 0.7;
+  }
+}
